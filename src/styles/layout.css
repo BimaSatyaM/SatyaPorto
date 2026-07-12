@@ -1,0 +1,324 @@
+/* ===== APP GRID ===== */
+.app {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    grid-template-rows: 100%;
+    height: 100vh;
+    max-height: 100vh;
+    gap: 0;
+    padding: 0;
+    background: var(--bg-main);
+    overflow: hidden;
+}
+
+/* ===== SIDEBAR (Panel Kiri) ===== */
+.app>.sidebar {
+    grid-column: 1;
+    grid-row: 1;
+    background: var(--bg-sidebar);
+    border: none;
+    border-right: 1px solid var(--border);
+    border-radius: 0;
+    padding: 24px 16px;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    position: relative;
+    gap: 20px;
+}
+
+.logo {
+    display: none;
+}
+
+.nav-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 12px;
+    list-style: none;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: var(--radius-btn);
+    transition: var(--ease);
+    border: 1px solid transparent;
+}
+
+.nav-item-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 12px;
+    width: 20px;
+    height: 20px;
+}
+
+.nav-item-label {
+    flex: 1;
+}
+
+.nav-item-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    opacity: 0.6;
+    animation: fadeIn 0.2s ease-in-out;
+}
+
+.nav-item:hover {
+    color: #fff;
+    background: var(--bg-card-hover);
+    transform: scale(1.02);
+}
+
+.nav-item.active {
+    color: #fff;
+    background: var(--bg-card);
+    border-color: var(--border);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.verified-badge {
+    color: #1d9bf0;
+    font-size: 14px;
+    margin-left: 6px;
+    vertical-align: middle;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateX(-5px);
+    }
+
+    to {
+        opacity: 0.6;
+        transform: translateX(0);
+    }
+}
+
+/* Hide legacy playlist */
+.playlist-section {
+    display: none;
+}
+
+.sidebar-footer {
+    display: none;
+}
+
+/* ===== MAIN CONTENT (Panel Tengah) ===== */
+.app>.main-content {
+    grid-column: 2;
+    grid-row: 1;
+    background: var(--bg-main);
+    border: none;
+    border-radius: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    position: relative;
+}
+
+/* ===== MENU TOGGLE (Mobile) ===== */
+.menu-toggle {
+    display: none;
+    /* Mencegah tombol ini merusak grid desktop */
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    z-index: 1001;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: #000;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    align-items: center;
+    justify-content: center;
+}
+
+.content-wrapper {
+    padding: 24px 32px 60px;
+}
+
+.section {
+    margin-bottom: 48px;
+    scroll-margin-top: 80px;
+}
+
+/* ===== SIDEBAR PROFILE SECTION ===== */
+.sidebar-profile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    margin-bottom: 12px;
+}
+
+.sidebar-avatar {
+    width: 90px;
+    height: 90px;
+    border-radius: var(--radius-avatar);
+    overflow: hidden;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+    border: 2px solid var(--border);
+    transition: var(--ease);
+    margin-bottom: 12px;
+}
+
+.sidebar-avatar:hover {
+    transform: scale(1.04);
+    border-color: var(--primary);
+}
+
+.sidebar-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.sidebar-profile-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 2px;
+}
+
+.sidebar-profile-username {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+/* ===== SIDEBAR CONTROLS BAR ===== */
+.sidebar-controls {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.lang-toggle-pill,
+.theme-toggle-pill {
+    display: flex;
+    background: #181818;
+    border: 1px solid var(--border);
+    transition: var(--ease);
+    border-radius: var(--radius-pill);
+
+}
+
+.theme-toggle-pill {
+    cursor: pointer;
+}
+
+.lang-btn,
+.theme-btn {
+    background: transparent;
+    border: none;
+    color: #ffffff;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--ease);
+    border-radius: var(--radius-pill);
+}
+
+.lang-btn.active,
+.theme-btn.active {
+    background: var(--primary);
+    color: #000;
+    box-shadow: 0 2px 6px rgba(34, 197, 94, 0.4);
+}
+
+.lang-btn:hover:not(.active),
+.theme-btn:hover:not(.active) {
+    color: #fff;
+}
+
+/* ===== SMART ASSISTANT ===== */
+.smart-assistant-btn {
+    width: 100%;
+    padding: 12px;
+    background: rgba(34, 197, 94, 0.08);
+    border: 1.5px solid var(--primary);
+    color: var(--primary);
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: var(--radius-btn);
+    cursor: pointer;
+    transition: var(--ease);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.smart-assistant-btn:hover {
+    background: var(--primary);
+    color: #000;
+    transform: scale(1.02);
+    box-shadow: var(--glow);
+}
+
+/* ===== SIDEBAR DIVIDER ===== */
+.sidebar-divider {
+    border-top: 1px solid #2a2a2a;
+    margin: 16px 0;
+    width: 100%;
+}
+
+/* ===== SIDEBAR COPYRIGHT ===== */
+.sidebar-copyright {
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 11px;
+    margin-top: auto;
+    padding-top: 20px;
+    line-height: 1.5;
+}
+
+.copyright-author {
+    color: #fff;
+    font-weight: 500;
+}
+
+/* ===== SPOTIFY TOAST ===== */
+.spotify-toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--primary);
+    color: #000;
+    padding: 12px 24px;
+    border-radius: var(--radius-btn);
+    font-weight: 600;
+    font-size: 14px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    z-index: 1002;
+    animation: slideIn 250ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateY(50px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
