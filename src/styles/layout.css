@@ -84,7 +84,6 @@
     color: #fff;
     background: var(--bg-card);
     border-color: var(--border);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
 }
 
 .verified-badge {
@@ -171,7 +170,6 @@
     border-radius: var(--radius-avatar);
     overflow: hidden;
     cursor: pointer;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
     border: 2px solid var(--border);
     transition: var(--ease);
     margin-bottom: 12px;
@@ -239,7 +237,6 @@
 .theme-btn.active {
     background: var(--primary);
     color: #000;
-    box-shadow: 0 2px 6px rgba(56, 189, 248, 0.4);
 }
 
 .lang-btn:hover:not(.active),
@@ -270,7 +267,6 @@
     background: var(--primary);
     color: #000;
     transform: scale(1.02);
-    box-shadow: var(--glow);
 }
 
 /* ===== SIDEBAR DIVIDER ===== */
@@ -306,7 +302,6 @@
     border-radius: var(--radius-btn);
     font-weight: 600;
     font-size: 14px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
     z-index: 1002;
     animation: slideIn 250ms cubic-bezier(0.4, 0, 0.2, 1);
 }
