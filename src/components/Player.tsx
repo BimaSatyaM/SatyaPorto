@@ -163,7 +163,7 @@ export const Player: React.FC = () => {
                         <p id="songArtist">{currentTrack.artist}</p>
                     </div>
                 </div>
-                <button 
+                <button
                     className={`like-btn ${isLiked ? 'liked' : ''}`}
                     onClick={() => toggleLike(currentTrackIndex)}
                 >
@@ -173,8 +173,8 @@ export const Player: React.FC = () => {
 
             {/* CONTROLS ROW */}
             <div className="player-controls-row">
-                <button 
-                    id="shuffleBtn" 
+                <button
+                    id="shuffleBtn"
                     onClick={toggleShuffle}
                     style={{ color: shuffle ? '#22c55e' : '' }}
                 >
@@ -189,8 +189,8 @@ export const Player: React.FC = () => {
                 <button id="nextBtn" onClick={nextTrack}>
                     <i className="fas fa-step-forward"></i>
                 </button>
-                <button 
-                    id="repeatBtn" 
+                <button
+                    id="repeatBtn"
                     onClick={toggleRepeat}
                     style={{ color: repeat ? '#22c55e' : '' }}
                 >
@@ -201,19 +201,19 @@ export const Player: React.FC = () => {
             {/* PROGRESS ROW */}
             <div className="player-progress-row">
                 <span id="currentTime">
-                    {localProgressPct !== null 
-                        ? formatTime((localProgressPct / 100) * duration) 
+                    {localProgressPct !== null
+                        ? formatTime((localProgressPct / 100) * duration)
                         : formatTime(currentTime)}
                 </span>
-                <div 
-                    className="progress-bar" 
+                <div
+                    className="progress-bar"
                     id="progressBar"
                     ref={progressBarRef}
                     onMouseDown={handleProgressMouseDown}
                     onTouchStart={handleProgressTouchStart}
                 >
-                    <div 
-                        className="progress-fill" 
+                    <div
+                        className="progress-fill"
                         id="progressFill"
                         style={{ width: `${progressPct}%` }}
                     ></div>
@@ -223,22 +223,22 @@ export const Player: React.FC = () => {
 
             {/* BOTTOM VOLUME ROW */}
             <div className="player-volume-row">
-                <button 
-                    id="volumeIcon" 
+                <button
+                    id="volumeIcon"
                     title="Volume"
                     onClick={() => changeVolume(volume > 0 ? 0 : 0.5)}
                 >
                     <i className={getVolumeIcon()}></i>
                 </button>
-                <div 
-                    className="volume-bar" 
+                <div
+                    className="volume-bar"
                     id="volumeBar"
                     ref={volumeBarRef}
                     onMouseDown={handleVolumeMouseDown}
                     onTouchStart={handleVolumeTouchStart}
                 >
-                    <div 
-                        className="volume-fill" 
+                    <div
+                        className="volume-fill"
                         id="volumeFill"
                         style={{ width: `${volume * 100}%` }}
                     ></div>

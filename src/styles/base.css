@@ -1,5 +1,7 @@
 /* ===== RESET ===== */
-*, *::before, *::after {
+*,
+*::before,
+*::after {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
@@ -12,39 +14,81 @@ body {
     color: #ffffff;
 }
 
-html { scroll-behavior: smooth; }
-html, body { height: 100%; overflow: hidden; }
+html {
+    scroll-behavior: smooth;
+}
+
+html,
+body {
+    height: 100%;
+    overflow: hidden;
+}
 
 :root {
-    --primary: #22c55e;
-    --primary-hover: #16a34a;
-    --bg-main: #111111; 
+    --primary: #38bdf8;
+    --primary-hover: #0ea5e9;
+    --bg-main: #111111;
     --bg-sidebar: #111111;
-    --bg-card: #181818; 
+    --bg-card: #181818;
     --bg-card-hover: #222222;
     --text-secondary: #9ca3af;
-    --border: #2a2a2a; 
-    --glow: 0 0 15px rgba(34, 197, 94, 0.25); 
-    --radius: 18px; 
+    --border: #2a2a2a;
+    --glow: 0 0 15px rgba(56, 189, 248, 0.25);
+    --radius: 18px;
     --radius-btn: 14px;
     --radius-avatar: 999px;
     --ease: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
     --player-h: 0px;
 }
 
-::-webkit-scrollbar { width: 8px; }
-::-webkit-scrollbar-track { background: var(--bg-main); border-left: 1px solid var(--border); }
-::-webkit-scrollbar-thumb { background: var(--border); }
-::-webkit-scrollbar-thumb:hover { background: var(--text-secondary); }
-
-.fa, .fas, .far, .fab, .fa-solid, .fa-regular, .fa-brands {
-    font-family: "Font Awesome 6 Free" !important;
-    font-style: normal; font-variant: normal;
-    text-rendering: auto; -webkit-font-smoothing: antialiased;
+::-webkit-scrollbar {
+    width: 8px;
 }
-.fab, .fa-brands { font-family: "Font Awesome 6 Brands" !important; font-weight: 400; }
-.far, .fa-regular { font-family: "Font Awesome 6 Free" !important; font-weight: 400; }
-.fas, .fa-solid { font-family: "Font Awesome 6 Free" !important; font-weight: 900; }
+
+::-webkit-scrollbar-track {
+    background: var(--bg-main);
+    border-left: 1px solid var(--border);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--text-secondary);
+}
+
+.fa,
+.fas,
+.far,
+.fab,
+.fa-solid,
+.fa-regular,
+.fa-brands {
+    font-family: "Font Awesome 6 Free" !important;
+    font-style: normal;
+    font-variant: normal;
+    text-rendering: auto;
+    -webkit-font-smoothing: antialiased;
+}
+
+.fab,
+.fa-brands {
+    font-family: "Font Awesome 6 Brands" !important;
+    font-weight: 400;
+}
+
+.far,
+.fa-regular {
+    font-family: "Font Awesome 6 Free" !important;
+    font-weight: 400;
+}
+
+.fas,
+.fa-solid {
+    font-family: "Font Awesome 6 Free" !important;
+    font-weight: 900;
+}
 
 /* ===== LIGHT THEME VARIABLES OVERRIDES ===== */
 body.light-theme {
@@ -72,4 +116,4 @@ body.light-theme .nav-item.active {
 body.light-theme .lang-toggle-pill,
 body.light-theme .theme-toggle-pill {
     background: #e5e7eb;
-}
+}

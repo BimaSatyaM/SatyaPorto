@@ -73,9 +73,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         EN
                     </button>
                 </div>
-
-
             </div>
+
+            {/* DIVIDER LINE BELOW CONTROLS */}
+            <div className="sidebar-divider"></div>
 
             {/* NAVIGATION MENU */}
             <nav className="nav-menu">
