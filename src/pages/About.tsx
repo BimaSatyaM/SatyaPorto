@@ -61,14 +61,7 @@ export const About: React.FC<AboutProps> = ({ openDetailPage }) => {
                 </a>
             </div>
 
-            <h3 className="skills-title">Technical Skills</h3>
-            <div className="skills-items">
-                <div className="skill-badge"><i className="fab fa-flutter"></i> Flutter</div>
-                <div className="skill-badge"><i className="fab fa-python"></i> Python</div>
-                <div className="skill-badge"><i className="fab fa-react"></i> React</div>
-                <div className="skill-badge"><i className="fas fa-code"></i> C/C++</div>
-                <div className="skill-badge"><i className="fab fa-figma"></i> Figma</div>
-            </div>
+
         </section>
     );
 };
