@@ -283,12 +283,14 @@
     font-size: 11px;
     margin-top: auto;
     padding-top: 20px;
-    line-height: 1.5;
+    line-height: 1.6;
+    font-family: 'Inter', sans-serif;
+    letter-spacing: 0.02em;
 }
 
 .copyright-author {
-    color: #fff;
-    font-weight: 500;
+    color: var(--text-secondary);
+    font-weight: 400;
 }
 
 /* ===== SPOTIFY TOAST ===== */

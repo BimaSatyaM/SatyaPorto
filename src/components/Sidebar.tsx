@@ -110,10 +110,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <Player />
             </div>
 
+            {/* DIVIDER LINE */}
+            <div className="sidebar-divider"></div>
+
             {/* COPYRIGHT */}
             <div className="sidebar-copyright">
-                <p>COPYRIGHT © 2025</p>
-                <p className="copyright-author">Bima Satya Mahendra. All rights reserved.</p>
+                <p>COPYRIGHT © 2026</p>
+                <p className="copyright-author">Bima Satya. All rights reserved.</p>
             </div>
         </aside>
     );
