@@ -7,9 +7,47 @@
 }
 
 .section-header h2 {
-    font-size: 28px;
-    font-weight: 700;
+    font-size: 24px;
+    font-weight: 500;
     color: #fff;
+}
+
+/* ===== ABOUT PAGE SPECIFIC HEADER ===== */
+.about-header {
+    margin-bottom: 8px;
+}
+
+.about-title {
+    font-size: 24px;
+    font-weight: 500;
+    color: #fff;
+    margin-bottom: 2px;
+}
+
+.about-subtitle {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+}
+
+.about-signature {
+    font-size: 14px !important;
+    color: var(--text-secondary) !important;
+    font-family: inherit;
+}
+
+.about-divider {
+    border-top: 1px solid var(--border);
+    margin: 20px 0;
+    opacity: 0.8;
+}
+
+.about-content-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 30px;
+    margin-top: 16px;
 }
 
 .see-all {
@@ -467,13 +505,17 @@
 }
 
 .country-code {
-    font-size: 11px;
-    background: #2a2a2a;
-    color: #fff;
-    padding: 1px 4px;
-    border-radius: 3px;
-    font-weight: 600;
-    margin-left: 4px;
+    font-size: 11px !important;
+    background: #2a2a2a !important;
+    color: #ffffff !important;
+    padding: 2px 6px !important;
+    border-radius: 4px !important;
+    font-weight: 600 !important;
+    margin-left: 6px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    vertical-align: middle !important;
+    border: 1px solid var(--border) !important;
 }
 
 .meta-divider {
@@ -902,7 +944,7 @@
     align-items: center;
     gap: 10px;
     cursor: default;
-    
+
     /* 3D Entry Animation (moving scene from background to front) */
     opacity: 0;
     transform-style: preserve-3d;
@@ -1086,5 +1128,126 @@
 
     .warning-banner-icon {
         font-size: 18px;
+    }
+}
+
+/* ===== EDUCATION SECTION STYLES ===== */
+.education-section {
+    margin-top: 24px;
+    font-family: 'Inter', sans-serif;
+}
+
+.education-section-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+    letter-spacing: -0.01em;
+}
+
+.education-section-subtitle {
+    font-size: 15px;
+    color: var(--text-secondary);
+    margin-bottom: 20px;
+}
+
+.education-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.education-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px 30px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    transition: border-color 0.25s, transform 0.25s;
+}
+
+.education-card:hover {
+    border-color: rgba(255, 255, 255, 0.15);
+    transform: translateY(-2px);
+}
+
+.education-logo {
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.logo-itera {
+    background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+    color: #ffffff;
+}
+
+.logo-sman3 {
+    background: linear-gradient(135deg, #065f46, #10b981);
+    color: #ffffff;
+}
+
+.education-info h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #ffffff;
+    margin-bottom: 6px;
+    letter-spacing: -0.01em;
+}
+
+.education-details {
+    font-size: 14px;
+    color: #9ca3af;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.education-details span {
+    color: var(--border);
+    font-size: 12px;
+}
+
+.education-meta {
+    font-size: 13px;
+    color: #9ca3af;
+    opacity: 0.85;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.education-meta span {
+    color: var(--border);
+    font-size: 12px;
+}
+
+@media (max-width: 768px) {
+    .education-card {
+        padding: 16px 20px;
+        gap: 16px;
+    }
+    .education-logo {
+        width: 50px;
+        height: 50px;
+        font-size: 20px;
+    }
+    .education-info h3 {
+        font-size: 16px;
+    }
+    .education-details,
+    .education-meta {
+        font-size: 13px;
     }
 }

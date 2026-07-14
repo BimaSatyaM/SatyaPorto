@@ -47,9 +47,7 @@ export const Home: React.FC = () => {
                 <div className="hero-page-left">
                     <h1 className="hero-page-title">Hi, I'm Bima Satya Mahendra</h1>
                     <div className="hero-page-meta">
-                        <span>Based in Lampung, Indonesia <span className="country-code">ID</span></span>
-                        <span className="meta-divider">•</span>
-                        <span>Onsite</span>
+                        <span>Based in Lampung, Indonesia <span className="country-code"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 3 2" width="12" height="8" style={{ marginRight: '4px', verticalAlign: 'middle', borderRadius: '1px' }}><rect width="3" height="1" fill="#E21F26"/><rect y="1" width="3" height="1" fill="#FFFFFF"/></svg>ID</span></span>
                     </div>
                     <div className="hero-page-content">
                         <p>

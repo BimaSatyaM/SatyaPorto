@@ -1,7 +1,6 @@
 // ===== src/App.tsx =====
 import React, { useState, useEffect, useRef } from 'react';
 import { Sidebar } from './components/Sidebar';
-import { DetailView } from './components/DetailView';
 import { ImageModal } from './components/ImageModal';
 import { AudioProvider, useAudio } from './context/AudioContext';
 
@@ -16,7 +15,6 @@ const PortfolioContent: React.FC = () => {
 
     // UI and Navigation State
     const [activeSection, setActiveSection] = useState('home');
-    const [detailPageKey, setDetailPageKey] = useState<string | null>(null);
 
     // Toast Notification State
     const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -27,14 +25,11 @@ const PortfolioContent: React.FC = () => {
     // Profile Modal State
     const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
 
-
-
     const mainContentRef = useRef<HTMLDivElement | null>(null);
 
     // Dynamic Navigation helper exposed to window for embedded HTML onclick support
     useEffect(() => {
         window.goTo = (secId: string) => {
-            setDetailPageKey(null);
             setActiveSection(secId);
         };
         return () => {
@@ -42,38 +37,23 @@ const PortfolioContent: React.FC = () => {
         };
     }, []);
 
-    // Scroll container to top when page changes or details view changes
+    // Scroll container to top when page changes
     useEffect(() => {
         if (mainContentRef.current) {
             mainContentRef.current.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
         }
-    }, [activeSection, detailPageKey]);
+    }, [activeSection]);
 
     const navigateTo = (secId: string) => {
         if (['dashboard'].includes(secId)) {
             setActiveSection(secId);
-            setDetailPageKey(null);
             setToastMessage(`🤖 ${secId.replace('-', ' ').toUpperCase()} features are coming soon!`);
             setTimeout(() => setToastMessage(null), 3000);
             return;
         }
 
-        setDetailPageKey(null);
         setActiveSection(secId);
     };
-
-    const openDetailPage = (key: string) => {
-        setDetailPageKey(key);
-    };
-
-    const handleBack = () => {
-        if (detailPageKey) {
-            setDetailPageKey(null);
-            setActiveSection('about');
-        }
-    };
-
-
 
     return (
         <div className="app">
@@ -102,19 +82,12 @@ const PortfolioContent: React.FC = () => {
                 <div className="content-wrapper" onClick={() => {
                     if (sidebarActive) setSidebarActive(false);
                 }}>
-                    {detailPageKey ? (
-                        <DetailView
-                            pageKey={detailPageKey}
-                            onBack={handleBack}
-                        />
-                    ) : (
-                        <div id="mainView">
-                            {activeSection === 'home' && <Home />}
-                            {activeSection === 'about' && <About openDetailPage={openDetailPage} />}
-                            {activeSection === 'projects' && <Projects playTrack={playTrack} />}
-                            {activeSection === 'contact' && <Contact />}
-                        </div>
-                    )}
+                    <div id="mainView">
+                        {activeSection === 'home' && <Home />}
+                        {activeSection === 'about' && <About />}
+                        {activeSection === 'projects' && <Projects playTrack={playTrack} />}
+                        {activeSection === 'contact' && <Contact />}
+                    </div>
                 </div>
             </main>
 
