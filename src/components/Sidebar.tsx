@@ -1,6 +1,7 @@
 // ===== src/components/Sidebar.tsx =====
 import React, { useState } from 'react';
 import { Player } from './Player';
+import { useAuth } from '../context/AuthContext';
 
 // Import exact React Icons matching the reference image
 import { GoHome, GoVerified } from 'react-icons/go';
@@ -24,6 +25,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     onAvatarClick
 }) => {
     const [lang, setLang] = useState<'EN' | 'ID'>('ID');
+    const { user, loginWithGoogle, loginWithGitHub, logout } = useAuth();
 
 
     const menuItems = [
@@ -108,6 +110,39 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {/* AUDIO PLAYER */}
             <div className="sidebar-player-wrapper">
                 <Player />
+            </div>
+
+            {/* DIVIDER LINE */}
+            <div className="sidebar-divider"></div>
+
+            {/* USER AUTHENTICATION PANEL */}
+            <div className="sidebar-auth">
+                {!user ? (
+                    <div className="auth-login-buttons">
+                        <button onClick={loginWithGoogle} className="auth-btn google-btn">
+                            <i className="fab fa-google"></i> Login with Google
+                        </button>
+                        <button onClick={loginWithGitHub} className="auth-btn github-btn">
+                            <i className="fab fa-github"></i> Login with GitHub
+                        </button>
+                    </div>
+                ) : (
+                    <div className="auth-user-info">
+                        <img 
+                            src={user.photoURL || 'assets/foto.jpg'} 
+                            alt={user.displayName || 'User'} 
+                            className="auth-user-avatar" 
+                        />
+                        <div className="auth-user-details">
+                            <span className="auth-user-name" title={user.displayName || ''}>
+                                {user.displayName || 'User'}
+                            </span>
+                            <button onClick={logout} className="auth-logout-btn">
+                                <i className="fas fa-sign-out-alt"></i> Logout
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* DIVIDER LINE */}

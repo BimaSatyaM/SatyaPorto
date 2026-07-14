@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { ImageModal } from './components/ImageModal';
 import { AudioProvider, useAudio } from './context/AudioContext';
+import { AuthProvider } from './context/AuthContext';
 
 // Import dedicated page components
 import { Home } from './pages/Home';
@@ -112,9 +113,11 @@ const PortfolioContent: React.FC = () => {
 
 export default function App() {
     return (
-        <AudioProvider>
-            <PortfolioContent />
-        </AudioProvider>
+        <AuthProvider>
+            <AudioProvider>
+                <PortfolioContent />
+            </AudioProvider>
+        </AuthProvider>
     );
 }
 

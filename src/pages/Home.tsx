@@ -1,5 +1,6 @@
 // ===== src/pages/Home.tsx =====
 import React, { useState } from 'react';
+import { PostList } from '../components/PostList';
 import {
     SiFlutter, SiCplusplus, SiC, SiPython, SiHtml5,
     SiReact, SiCss, SiGithub, SiNpm, SiTypescript, SiTailwindcss
@@ -117,6 +118,18 @@ export const Home: React.FC = () => {
                     <div className="warning-banner-text">
                         I'm still learning all these languages/frameworks, and there's likely more to come in the future!
                     </div>
+                </div>
+
+                {/* Divider Line */}
+                <div className="about-divider"></div>
+
+                {/* COMMUNITY PROJECT FEED SECTION */}
+                <div className="education-section" style={{ marginTop: '24px' }}>
+                    <h3 className="education-section-title">
+                        <i className="fas fa-project-diagram"></i> Community Showcase
+                    </h3>
+                    <p className="education-section-subtitle">Latest projects posted by our community visitors.</p>
+                    <PostList limitCount={3} />
                 </div>
             </div>
         </section>

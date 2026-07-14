@@ -3,4 +3,5 @@
 @import './styles/layout.css';
 @import './styles/sections.css';
 @import './styles/player.css';
+@import './styles/auth.css';
 @import './styles/responsive.css';

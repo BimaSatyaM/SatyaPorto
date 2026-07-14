@@ -1,0 +1,427 @@
+import React, { useState, useEffect } from 'react';
+import { collection, query, orderBy, onSnapshot, doc, deleteDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { db } from '../firebase/config';
+import { useAuth } from '../context/AuthContext';
+import { getTechIcon } from '../constants/techStack';
+
+interface Comment {
+    id: string;
+    userId: string;
+    userDisplayName: string;
+    userPhotoURL?: string;
+    text: string;
+    createdAt: number;
+}
+
+interface Post {
+    id: string;
+    title: string;
+    description: string;
+    techStack: string[];
+    projectLink?: string;
+    userId: string;
+    userDisplayName: string;
+    userPhotoURL?: string;
+    createdAt: any;
+    likes?: string[];
+    comments?: Comment[];
+    type?: 'web' | 'mobile';
+    category?: 'personal' | 'internship' | 'freelance' | 'lomba';
+    imageUrl?: string;
+    featured?: boolean;
+}
+
+interface PostListProps {
+    limitCount?: number;
+    onEditPost?: (post: Post) => void;
+}
+
+export const PostList: React.FC<PostListProps> = ({ limitCount, onEditPost }) => {
+    const { user, isAdmin } = useAuth();
+    const [posts, setPosts] = useState<Post[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    // Filters state
+    const [selectedType, setSelectedType] = useState<string>('all');
+    const [selectedCategory, setSelectedCategory] = useState<string>('all');
+
+    // Track expanded comments section per post
+    const [expandedComments, setExpandedComments] = useState<Record<string, boolean>>({});
+    // Track comment input values per post
+    const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
+
+    useEffect(() => {
+        const postsCollection = collection(db, 'posts');
+        const q = query(postsCollection, orderBy('createdAt', 'desc'));
+
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const fetchedPosts: Post[] = [];
+            snapshot.forEach((docSnap) => {
+                fetchedPosts.push({
+                    id: docSnap.id,
+                    ...docSnap.data()
+                } as Post);
+            });
+            
+            // Apply optional limit count
+            if (limitCount && limitCount > 0) {
+                setPosts(fetchedPosts.slice(0, limitCount));
+            } else {
+                setPosts(fetchedPosts);
+            }
+            setLoading(false);
+        }, (err) => {
+            setError('Failed to fetch posts: ' + err.message);
+            setLoading(false);
+        });
+
+        return () => unsubscribe();
+    }, [limitCount]);
+
+    const handleDelete = async (e: React.MouseEvent, postId: string) => {
+        e.stopPropagation();
+        if (!window.confirm('Are you sure you want to delete this project post?')) {
+            return;
+        }
+
+        try {
+            const docRef = doc(db, 'posts', postId);
+            await deleteDoc(docRef);
+        } catch (err: any) {
+            alert('Failed to delete post: ' + err.message);
+        }
+    };
+
+    const handleLike = async (e: React.MouseEvent, post: Post) => {
+        e.stopPropagation();
+        if (!user) {
+            alert('Please log in using the sidebar to react to this project!');
+            return;
+        }
+
+        const postRef = doc(db, 'posts', post.id);
+        const postLikes = post.likes || [];
+        const hasLiked = postLikes.includes(user.uid);
+
+        try {
+            await updateDoc(postRef, {
+                likes: hasLiked ? arrayRemove(user.uid) : arrayUnion(user.uid)
+            });
+        } catch (err: any) {
+            console.error('Error toggling like:', err);
+        }
+    };
+
+    const handleAddComment = async (e: React.FormEvent, postId: string) => {
+        e.preventDefault();
+        if (!user) {
+            alert('Please log in using the sidebar to write a comment.');
+            return;
+        }
+
+        const commentText = commentInputs[postId] || '';
+        if (!commentText.trim()) return;
+
+        const postRef = doc(db, 'posts', postId);
+        const newComment: Comment = {
+            id: Math.random().toString(36).substring(2, 9),
+            userId: user.uid,
+            userDisplayName: user.displayName || 'Anonymous User',
+            userPhotoURL: user.photoURL || undefined,
+            text: commentText.trim(),
+            createdAt: Date.now()
+        };
+
+        try {
+            await updateDoc(postRef, {
+                comments: arrayUnion(newComment)
+            });
+            // Reset input
+            setCommentInputs((prev) => ({
+                ...prev,
+                [postId]: ''
+            }));
+        } catch (err: any) {
+            console.error('Error adding comment:', err);
+        }
+    };
+
+    const handleCommentInputChange = (postId: string, value: string) => {
+        setCommentInputs((prev) => ({
+            ...prev,
+            [postId]: value
+        }));
+    };
+
+    const toggleComments = (e: React.MouseEvent, postId: string) => {
+        e.stopPropagation();
+        setExpandedComments((prev) => ({
+            ...prev,
+            [postId]: !prev[postId]
+        }));
+    };
+
+    const formatCommentDate = (timeNumber: number) => {
+        const date = new Date(timeNumber);
+        return date.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    };
+
+    // Real-time local filtering
+    const filteredPosts = posts.filter(post => {
+        const typeMatches = selectedType === 'all' || (post.type && post.type.toLowerCase() === selectedType.toLowerCase());
+        
+        let categoryMatches = false;
+        if (selectedCategory === 'all') {
+            categoryMatches = true;
+        } else {
+            const mappedCat = selectedCategory === 'Personal Project' ? 'personal' : selectedCategory.toLowerCase();
+            categoryMatches = !!(post.category && post.category.toLowerCase() === mappedCat);
+        }
+        
+        return typeMatches && categoryMatches;
+    });
+
+    if (loading) {
+        return (
+            <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>
+                <i className="fas fa-spinner post-spinner" style={{ fontSize: '24px', marginBottom: '12px' }}></i>
+                <p>Loading project showcase...</p>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="post-error-alert" style={{ margin: '20px 0' }}>
+                <i className="fas fa-exclamation-circle"></i> {error}
+            </div>
+        );
+    }
+
+    const typeFilters = ['all', 'web', 'mobile'];
+    const categoryFilters = ['all', 'Personal Project', 'internship', 'freelance', 'lomba'];
+
+    return (
+        <div className="project-feed-wrapper">
+            {/* FILTER PILLS */}
+            <div className="project-filters-container">
+                <div className="filter-group">
+                    <span className="filter-label">TYPE</span>
+                    <div className="filter-pills">
+                        {typeFilters.map(type => (
+                            <button
+                                key={type}
+                                onClick={() => setSelectedType(type)}
+                                className={`filter-pill-btn ${selectedType === type ? 'active' : ''}`}
+                            >
+                                {type.charAt(0).toUpperCase() + type.slice(1)}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                <div className="filter-group" style={{ marginTop: '12px' }}>
+                    <span className="filter-label">CATEGORY</span>
+                    <div className="filter-pills">
+                        {categoryFilters.map(cat => {
+                            const isActive = selectedCategory === cat;
+                            return (
+                                <button
+                                    key={cat}
+                                    onClick={() => setSelectedCategory(cat)}
+                                    className={`filter-pill-btn ${isActive ? 'active' : ''}`}
+                                >
+                                    {cat === 'all' ? 'All' : cat === 'Personal Project' ? 'Personal Project' : cat.charAt(0).toUpperCase() + cat.slice(1)}
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
+            </div>
+
+            <div className="about-divider" style={{ margin: '24px 0' }}></div>
+
+            {filteredPosts.length === 0 ? (
+                <div className="auth-notice-card" style={{ padding: '40px 20px', maxWidth: '100%' }}>
+                    <i className="fas fa-folder-open auth-notice-icon" style={{ fontSize: '32px' }}></i>
+                    <p>No projects match the selected filters.</p>
+                </div>
+            ) : (
+                /* GRID LAYOUT */
+                <div className="projects-grid-layout">
+                    {filteredPosts.map((post) => {
+                        const postLikes = post.likes || [];
+                        const postComments = post.comments || [];
+                        const hasLiked = user ? postLikes.includes(user.uid) : false;
+                        const isCommentsOpen = expandedComments[post.id] || false;
+
+                        return (
+                            <div key={post.id} className="project-grid-card">
+                                {/* Thumbnail Image Section */}
+                                <div className="project-card-image-wrapper">
+                                    {post.imageUrl ? (
+                                        <img 
+                                            src={post.imageUrl} 
+                                            alt={post.title} 
+                                            className="project-card-image" 
+                                        />
+                                    ) : (
+                                        /* Placeholder Vector Mountain/Sun Illustration */
+                                        <svg className="placeholder-svg-mockup" viewBox="0 0 400 240" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <rect width="100%" height="100%" fill="#1a1a1a" />
+                                            <circle cx="200" cy="90" r="26" fill="#2d2d2d" />
+                                            <path d="M60 240 L180 130 L270 190 L340 150 L400 240 Z" fill="#242424" />
+                                        </svg>
+                                    )}
+
+                                    {/* Featured Ribbon Badge */}
+                                    {post.featured && (
+                                        <span className="featured-ribbon-badge">
+                                            <i className="fas fa-thumbtack"></i> Featured
+                                        </span>
+                                    )}
+                                </div>
+
+                                {/* Project Info Area */}
+                                <div className="project-card-details">
+                                    <div className="project-title-row">
+                                        <h4>{post.title}</h4>
+
+                                        {/* Admin action overlays */}
+                                        {user && isAdmin && (
+                                            <div className="card-admin-actions">
+                                                {onEditPost && (
+                                                    <button 
+                                                        onClick={() => onEditPost(post)} 
+                                                        className="card-admin-btn edit-btn"
+                                                        title="Edit"
+                                                    >
+                                                        <i className="fas fa-edit"></i>
+                                                    </button>
+                                                )}
+                                                <button 
+                                                    onClick={(e) => handleDelete(e, post.id)} 
+                                                    className="card-admin-btn delete-btn"
+                                                    title="Delete"
+                                                >
+                                                    <i className="fas fa-trash-alt"></i>
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <p className="project-card-desc">{post.description}</p>
+
+                                    {/* Tech stack icons representation */}
+                                    {post.techStack && post.techStack.length > 0 && (
+                                        <div className="project-tech-icons-row">
+                                            {post.techStack.map((tech) => {
+                                                const info = getTechIcon(tech);
+                                                if (info) {
+                                                    return (
+                                                        <span key={tech} className="tech-logo-icon" style={{ color: info.color }} title={tech}>
+                                                            {info.icon}
+                                                        </span>
+                                                    );
+                                                }
+                                                return (
+                                                    <span key={tech} className="tech-logo-text" title={tech}>
+                                                        {tech}
+                                                    </span>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+
+                                    {/* Card Footer Interactions Bar */}
+                                    <div className="project-card-actions-row">
+                                        <button 
+                                            onClick={(e) => handleLike(e, post)} 
+                                            className={`reaction-pill-btn ${hasLiked ? 'active' : ''}`}
+                                        >
+                                            <i className={hasLiked ? "fas fa-heart" : "far fa-heart"}></i> 
+                                            <span>{postLikes.length}</span>
+                                        </button>
+                                        <button 
+                                            onClick={(e) => toggleComments(e, post.id)} 
+                                            className="reaction-pill-btn"
+                                        >
+                                            <i className="far fa-comment"></i> 
+                                            <span>{postComments.length}</span>
+                                        </button>
+
+                                        {post.projectLink && (
+                                            <a 
+                                                href={post.projectLink} 
+                                                target="_blank" 
+                                                rel="noopener noreferrer" 
+                                                className="card-visit-link-btn"
+                                            >
+                                                <i className="fas fa-external-link-alt"></i> Visit Project
+                                            </a>
+                                        )}
+                                    </div>
+
+                                    {/* Comments drawers in the card */}
+                                    {isCommentsOpen && (
+                                        <div className="post-comments-section" style={{ borderTop: '1px solid var(--border)', marginTop: '16px', paddingTop: '16px' }}>
+                                            {postComments.length > 0 && (
+                                                <div className="comments-list" style={{ maxHeight: '150px' }}>
+                                                    {postComments.map((comment) => (
+                                                        <div key={comment.id} className="comment-item">
+                                                            <img 
+                                                                src={comment.userPhotoURL || 'assets/foto.jpg'} 
+                                                                alt={comment.userDisplayName} 
+                                                                className="comment-avatar" 
+                                                            />
+                                                            <div className="comment-content">
+                                                                <span className="comment-author">
+                                                                    {comment.userDisplayName} 
+                                                                    <span style={{ fontSize: '9px', color: 'var(--text-secondary)', marginLeft: '8px', fontWeight: '400' }}>
+                                                                        {formatCommentDate(comment.createdAt)}
+                                                                    </span>
+                                                                </span>
+                                                                <p className="comment-text">{comment.text}</p>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+
+                                            {user ? (
+                                                <form onSubmit={(e) => handleAddComment(e, post.id)} className="comment-form">
+                                                    <input 
+                                                        type="text" 
+                                                        placeholder="Write a comment..." 
+                                                        value={commentInputs[post.id] || ''} 
+                                                        onChange={(e) => handleCommentInputChange(post.id, e.target.value)}
+                                                        className="comment-input"
+                                                        maxLength={300}
+                                                        required
+                                                    />
+                                                    <button type="submit" className="comment-send-btn">
+                                                        <i className="fas fa-paper-plane"></i>
+                                                    </button>
+                                                </form>
+                                            ) : (
+                                                <p style={{ fontSize: '11px', color: 'var(--text-secondary)', textAlign: 'center', marginTop: '4px' }}>
+                                                    🔒 Please log in to leave a comment.
+                                                </p>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
+        </div>
+    );
+};
