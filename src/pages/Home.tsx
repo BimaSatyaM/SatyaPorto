@@ -126,7 +126,7 @@ export const Home: React.FC = () => {
                 {/* COMMUNITY PROJECT FEED SECTION */}
                 <div className="education-section" style={{ marginTop: '24px' }}>
                     <h3 className="education-section-title">
-                        <i className="fas fa-project-diagram"></i> Community Showcase
+                        <i className="fas fa-project-diagram"></i> Project Showcase
                     </h3>
                     <p className="education-section-subtitle">Latest projects posted by our community visitors.</p>
                     <PostList limitCount={3} />
