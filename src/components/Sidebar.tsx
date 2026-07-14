@@ -63,16 +63,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <div className="lang-toggle-pill">
                     {/* Language switch */}
                     <button
-                        onClick={() => setLang('ID')}
-                        className={`lang-btn ${lang === 'ID' ? 'active' : ''}`}
-                    >
-                        ID
-                    </button>
-                    <button
-                        className={`lang-btn ${lang === 'EN' ? 'active' : ''}`}
                         onClick={() => setLang('EN')}
+                        className={`lang-btn ${lang === 'EN' ? 'active' : ''}`}
                     >
                         EN
+                    </button>
+                    <button
+                        className={`lang-btn ${lang === 'ID' ? 'active' : ''}`}
+                        onClick={() => setLang('ID')}
+                    >
+                        ID
                     </button>
                 </div>
             </div>
@@ -128,10 +128,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     </div>
                 ) : (
                     <div className="auth-user-info">
-                        <img 
-                            src={user.photoURL || 'assets/foto.jpg'} 
-                            alt={user.displayName || 'User'} 
-                            className="auth-user-avatar" 
+                        <img
+                            src={user.photoURL || 'assets/foto.jpg'}
+                            alt={user.displayName || 'User'}
+                            className="auth-user-avatar"
                         />
                         <div className="auth-user-details">
                             <span className="auth-user-name" title={user.displayName || ''}>
