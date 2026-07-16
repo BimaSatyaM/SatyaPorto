@@ -293,9 +293,6 @@ export const PostForm: React.FC<PostFormProps> = ({ editData, onCancelEdit }) =>
                             className="post-select"
                         >
                             <option value="personal">Personal Project</option>
-                            <option value="internship">Internship</option>
-                            <option value="freelance">Freelance</option>
-                            <option value="lomba">Lomba</option>
                         </select>
                     </div>
                 </div>

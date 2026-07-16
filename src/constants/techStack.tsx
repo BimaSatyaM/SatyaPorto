@@ -9,7 +9,10 @@ import {
     SiRailway, SiRender, SiDocker, SiKubernetes, SiGithubactions, SiGitlab, SiJenkins,
     SiTerraform, SiAnsible, SiSwift, SiKotlin, SiFlutter, SiElectron, SiTauri,
     SiGithub, SiNpm, SiCplusplus, SiC, SiPython, SiGo, SiRust,
-    SiElasticsearch, SiGooglecloud, SiMilvus
+    SiElasticsearch, SiGooglecloud, SiMilvus, SiVite,
+    SiSqlite, SiFirebase, SiSupabase, SiCockroachlabs, SiNeo4J, SiApachecouchdb,
+    SiInfluxdb, SiClickhouse, SiPlanetscale, SiPrisma, SiSurrealdb, SiFauna,
+    SiMeilisearch, SiArangodb
 } from 'react-icons/si';
 import { FaAws, FaMicrosoft, FaDatabase } from 'react-icons/fa';
 
@@ -46,6 +49,7 @@ export const AVAILABLE_TECH: TechItem[] = [
     { name: 'Tailwind CSS', icon: <SiTailwindcss />, color: '#06B6D4' },
     { name: 'Bootstrap', icon: <SiBootstrap />, color: '#7952B3' },
     { name: 'Sass', icon: <SiSass />, color: '#CC6699' },
+    { name: 'Vite', icon: <SiVite />, color: '#646CFF' },
 
     // Backend & Runtimes
     { name: 'Node.js', icon: <SiNodedotjs />, color: '#339933' },
@@ -75,6 +79,20 @@ export const AVAILABLE_TECH: TechItem[] = [
     { name: 'Elasticsearch', icon: <SiElasticsearch />, color: '#005571' },
     { name: 'Pinecone', icon: <FaDatabase />, color: '#0A85EA' },
     { name: 'Milvus', icon: <SiMilvus />, color: '#00FFB2' },
+    { name: 'SQLite', icon: <SiSqlite />, color: '#003B57' },
+    { name: 'Firebase', icon: <SiFirebase />, color: '#FFCA28' },
+    { name: 'Supabase', icon: <SiSupabase />, color: '#3ECF8E' },
+    { name: 'CockroachDB', icon: <SiCockroachlabs />, color: '#6933FF' },
+    { name: 'Neo4j', icon: <SiNeo4J />, color: '#008CC1' },
+    { name: 'CouchDB', icon: <SiApachecouchdb />, color: '#EFEFEF' },
+    { name: 'InfluxDB', icon: <SiInfluxdb />, color: '#22ADF6' },
+    { name: 'ClickHouse', icon: <SiClickhouse />, color: '#F38020' },
+    { name: 'PlanetScale', icon: <SiPlanetscale />, color: '#FFFFFF' },
+    { name: 'Prisma', icon: <SiPrisma />, color: '#2D3748' },
+    { name: 'SurrealDB', icon: <SiSurrealdb />, color: '#FF00A0' },
+    { name: 'FaunaDB', icon: <SiFauna />, color: '#3A1AB6' },
+    { name: 'Meilisearch', icon: <SiMeilisearch />, color: '#FF5C39' },
+    { name: 'ArangoDB', icon: <SiArangodb />, color: '#DDE500' },
 
     // Cloud & Platforms
     { name: 'AWS', icon: <FaAws />, color: '#FF9900' },
@@ -134,6 +152,9 @@ export const getTechIcon = (techName: string): TechItem | null => {
     if (clean === 'milvus') {
         return { name: techName, icon: <SiMilvus />, color: '#00FFB2' };
     }
+    if (clean === 'sqlite') return AVAILABLE_TECH.find(t => t.name === 'SQLite') || null;
+    if (clean === 'firebase' || clean === 'firestore') return AVAILABLE_TECH.find(t => t.name === 'Firebase') || null;
+    if (clean === 'supabase') return AVAILABLE_TECH.find(t => t.name === 'Supabase') || null;
 
     return null;
 };

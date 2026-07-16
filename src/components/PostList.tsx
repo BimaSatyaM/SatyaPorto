@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { collection, query, orderBy, onSnapshot, doc, deleteDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { useAuth } from '../context/AuthContext';
@@ -34,13 +34,58 @@ interface Post {
 interface PostListProps {
     limitCount?: number;
     onEditPost?: (post: Post) => void;
+    showFilters?: boolean;
+    layout?: 'grid' | 'slider';
 }
 
-export const PostList: React.FC<PostListProps> = ({ limitCount, onEditPost }) => {
+export const PostList: React.FC<PostListProps> = ({ 
+    limitCount, 
+    onEditPost, 
+    showFilters = true, 
+    layout = 'grid' 
+}) => {
     const { user, isAdmin } = useAuth();
     const [posts, setPosts] = useState<Post[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+
+    // Ref for horizontal slider
+    const sliderRef = useRef<HTMLDivElement>(null);
+    const [scrollRatio, setScrollRatio] = useState({ left: 0, width: 0 });
+
+    const handleScroll = () => {
+        if (sliderRef.current) {
+            const { scrollLeft, scrollWidth, clientWidth } = sliderRef.current;
+            if (scrollWidth > 0) {
+                const widthPercent = (clientWidth / scrollWidth) * 100;
+                const leftPercent = (scrollLeft / scrollWidth) * 100;
+                setScrollRatio({ left: leftPercent, width: widthPercent });
+            }
+        }
+    };
+
+    // Scroll slider function
+    const scrollSlider = (direction: 'left' | 'right') => {
+        if (sliderRef.current) {
+            const scrollAmount = 370; // 350px card + 20px gap
+            sliderRef.current.scrollBy({
+                left: direction === 'left' ? -scrollAmount : scrollAmount,
+                behavior: 'smooth'
+            });
+        }
+    };
+
+    useEffect(() => {
+        if (!loading && posts.length > 0) {
+            const timer = setTimeout(handleScroll, 150);
+            return () => clearTimeout(timer);
+        }
+    }, [loading, posts]);
+
+    useEffect(() => {
+        window.addEventListener('resize', handleScroll);
+        return () => window.removeEventListener('resize', handleScroll);
+    }, []);
 
     // Filters state
     const [selectedType, setSelectedType] = useState<string>('all');
@@ -62,6 +107,17 @@ export const PostList: React.FC<PostListProps> = ({ limitCount, onEditPost }) =>
                     id: docSnap.id,
                     ...docSnap.data()
                 } as Post);
+            });
+            // Client-side sorting: Pinned (featured) projects go first, then sorted by createdAt
+            fetchedPosts.sort((a, b) => {
+                const aFeatured = a.featured ? 1 : 0;
+                const bFeatured = b.featured ? 1 : 0;
+                if (aFeatured !== bFeatured) {
+                    return bFeatured - aFeatured; // Featured (1) before non-featured (0)
+                }
+                const aTime = a.createdAt?.seconds || 0;
+                const bTime = b.createdAt?.seconds || 0;
+                return bTime - aTime;
             });
             
             // Apply optional limit count
@@ -205,47 +261,50 @@ export const PostList: React.FC<PostListProps> = ({ limitCount, onEditPost }) =>
     }
 
     const typeFilters = ['all', 'web', 'mobile'];
-    const categoryFilters = ['all', 'Personal Project', 'internship', 'freelance', 'lomba'];
+    const categoryFilters = ['all', 'Personal Project'];
 
     return (
         <div className="project-feed-wrapper">
             {/* FILTER PILLS */}
-            <div className="project-filters-container">
-                <div className="filter-group">
-                    <span className="filter-label">TYPE</span>
-                    <div className="filter-pills">
-                        {typeFilters.map(type => (
-                            <button
-                                key={type}
-                                onClick={() => setSelectedType(type)}
-                                className={`filter-pill-btn ${selectedType === type ? 'active' : ''}`}
-                            >
-                                {type.charAt(0).toUpperCase() + type.slice(1)}
-                            </button>
-                        ))}
-                    </div>
-                </div>
+            {showFilters && (
+                <>
+                    <div className="project-filters-container">
+                        <div className="filter-group">
+                            <span className="filter-label">TYPE</span>
+                            <div className="filter-pills">
+                                {typeFilters.map(type => (
+                                    <button
+                                        key={type}
+                                        onClick={() => setSelectedType(type)}
+                                        className={`filter-pill-btn ${selectedType === type ? 'active' : ''}`}
+                                    >
+                                        {type.charAt(0).toUpperCase() + type.slice(1)}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
 
-                <div className="filter-group" style={{ marginTop: '12px' }}>
-                    <span className="filter-label">CATEGORY</span>
-                    <div className="filter-pills">
-                        {categoryFilters.map(cat => {
-                            const isActive = selectedCategory === cat;
-                            return (
-                                <button
-                                    key={cat}
-                                    onClick={() => setSelectedCategory(cat)}
-                                    className={`filter-pill-btn ${isActive ? 'active' : ''}`}
-                                >
-                                    {cat === 'all' ? 'All' : cat === 'Personal Project' ? 'Personal Project' : cat.charAt(0).toUpperCase() + cat.slice(1)}
-                                </button>
-                            );
-                        })}
+                        <div className="filter-group" style={{ marginTop: '12px' }}>
+                            <span className="filter-label">CATEGORY</span>
+                            <div className="filter-pills">
+                                {categoryFilters.map(cat => {
+                                    const isActive = selectedCategory === cat;
+                                    return (
+                                        <button
+                                            key={cat}
+                                            onClick={() => setSelectedCategory(cat)}
+                                            className={`filter-pill-btn ${isActive ? 'active' : ''}`}
+                                        >
+                                            {cat === 'all' ? 'All' : cat === 'Personal Project' ? 'Personal Project' : cat.charAt(0).toUpperCase() + cat.slice(1)}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
                     </div>
-                </div>
-            </div>
-
-            <div className="about-divider" style={{ margin: '24px 0' }}></div>
+                    <div className="about-divider" style={{ margin: '24px 0' }}></div>
+                </>
+            )}
 
             {filteredPosts.length === 0 ? (
                 <div className="auth-notice-card" style={{ padding: '40px 20px', maxWidth: '100%' }}>
@@ -253,9 +312,24 @@ export const PostList: React.FC<PostListProps> = ({ limitCount, onEditPost }) =>
                     <p>No projects match the selected filters.</p>
                 </div>
             ) : (
-                /* GRID LAYOUT */
-                <div className="projects-grid-layout">
-                    {filteredPosts.map((post) => {
+                <div className={layout === 'slider' ? "slider-outer-wrapper" : ""}>
+                    {layout === 'slider' && (
+                        <button 
+                            type="button"
+                            className="slider-nav-btn left" 
+                            onClick={() => scrollSlider('left')}
+                            aria-label="Scroll left"
+                        >
+                            <i className="fas fa-chevron-left"></i>
+                        </button>
+                    )}
+
+                    <div 
+                        className={layout === 'slider' ? "projects-slider-layout" : "projects-grid-layout"}
+                        ref={layout === 'slider' ? sliderRef : undefined}
+                        onScroll={layout === 'slider' ? handleScroll : undefined}
+                    >
+                        {filteredPosts.map((post) => {
                         const postLikes = post.likes || [];
                         const postComments = post.comments || [];
                         const hasLiked = user ? postLikes.includes(user.uid) : false;
@@ -420,6 +494,30 @@ export const PostList: React.FC<PostListProps> = ({ limitCount, onEditPost }) =>
                             </div>
                         );
                     })}
+                    </div>
+
+                    {layout === 'slider' && (
+                        <button 
+                            type="button"
+                            className="slider-nav-btn right" 
+                            onClick={() => scrollSlider('right')}
+                            aria-label="Scroll right"
+                        >
+                            <i className="fas fa-chevron-right"></i>
+                        </button>
+                    )}
+                </div>
+            )}
+
+            {layout === 'slider' && posts.length > 0 && (
+                <div className="slider-scrollbar-track">
+                    <div 
+                        className="slider-scrollbar-thumb" 
+                        style={{ 
+                            left: `${scrollRatio.left}%`, 
+                            width: `${scrollRatio.width}%` 
+                        }}
+                    />
                 </div>
             )}
         </div>

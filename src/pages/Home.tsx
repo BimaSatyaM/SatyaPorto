@@ -48,7 +48,7 @@ export const Home: React.FC = () => {
                 <div className="hero-page-left">
                     <h1 className="hero-page-title">Hi, I'm Bima Satya Mahendra</h1>
                     <div className="hero-page-meta">
-                        <span>Based in Lampung, Indonesia <span className="country-code"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 3 2" width="12" height="8" style={{ marginRight: '4px', verticalAlign: 'middle', borderRadius: '1px' }}><rect width="3" height="1" fill="#E21F26"/><rect y="1" width="3" height="1" fill="#FFFFFF"/></svg>ID</span></span>
+                        <span>Based in Lampung, Indonesia <span className="country-code"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 3 2" width="12" height="8" style={{ marginRight: '4px', verticalAlign: 'middle', borderRadius: '1px' }}><rect width="3" height="1" fill="#E21F26" /><rect y="1" width="3" height="1" fill="#FFFFFF" /></svg>ID</span></span>
                     </div>
                     <div className="hero-page-content">
                         <p>
@@ -126,10 +126,10 @@ export const Home: React.FC = () => {
                 {/* COMMUNITY PROJECT FEED SECTION */}
                 <div className="education-section" style={{ marginTop: '24px' }}>
                     <h3 className="education-section-title">
-                        <i className="fas fa-project-diagram"></i> Community Showcase
+                        <i className="fas fa-project-diagram"></i> Project Showcase
                     </h3>
-                    <p className="education-section-subtitle">Latest projects posted by our community visitors.</p>
-                    <PostList limitCount={3} />
+                    <p className="education-section-subtitle">Latest projects That I've Made.</p>
+                    <PostList limitCount={8} showFilters={false} layout="slider" />
                 </div>
             </div>
         </section>
