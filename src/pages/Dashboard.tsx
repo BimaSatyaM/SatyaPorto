@@ -28,7 +28,13 @@ const classifyTechnology = (name: string): string[] => {
     }
 
     // 4. Database checks
-    const database = ['postgres', 'mysql', 'mariadb', 'sql server', 'mongodb', 'cassandra', 'dynamodb', 'redis', 'memcached', 'elasticsearch', 'pinecone', 'milvus', 'sqlite', 'database', 'firebase', 'supabase'];
+    const database = [
+        'postgres', 'mysql', 'mariadb', 'sql server', 'mongodb', 'cassandra', 
+        'dynamodb', 'redis', 'memcached', 'elasticsearch', 'pinecone', 'milvus', 
+        'sqlite', 'database', 'firebase', 'supabase', 'cockroach', 'neo4j', 
+        'couch', 'influx', 'clickhouse', 'planetscale', 'prisma', 'surreal', 
+        'fauna', 'meili', 'arango'
+    ];
     if (database.some(d => clean.includes(d))) {
         categories.push('Database');
     }

@@ -37,19 +37,40 @@ export const Home: React.FC = () => {
         return () => unsubscribe();
     }, []);
 
+    // Ensure all databases are automatically tagged as 'Database' and 'Back End'
+    const isKnownDatabase = (name: string): boolean => {
+        const dbs = [
+            'postgresql', 'mysql', 'mariadb', 'sql server', 'mongodb', 
+            'cassandra', 'dynamodb', 'redis', 'memcached', 'elasticsearch', 
+            'pinecone', 'milvus', 'sqlite', 'firebase', 'supabase', 
+            'cockroachdb', 'neo4j', 'couchdb', 'influxdb', 'clickhouse', 
+            'planetscale', 'prisma', 'surrealdb', 'faunadb', 'meilisearch', 
+            'arangodb'
+        ];
+        const clean = name.toLowerCase().trim();
+        return dbs.some(db => clean.includes(db));
+    };
+
     const categories = [
         { id: 'all', label: 'All', count: skills.length },
-        { id: 'Language', label: 'Language', count: skills.filter(s => s.categories && s.categories.includes('Language')).length },
+        { id: 'Language', label: 'Language', count: skills.filter(s => s.categories && (s.categories.includes('Language') || s.name.toLowerCase() === 'flutter')).length },
         { id: 'Front End', label: 'Front End', count: skills.filter(s => s.categories && s.categories.includes('Front End')).length },
-        { id: 'Back End', label: 'Back End', count: skills.filter(s => s.categories && s.categories.includes('Back End')).length },
-        { id: 'Database', label: 'Database', count: skills.filter(s => s.categories && s.categories.includes('Database')).length },
-        { id: 'Mobile', label: 'Mobile', count: skills.filter(s => s.categories && s.categories.includes('Mobile')).length },
+        { id: 'Back End', label: 'Back End', count: skills.filter(s => s.categories && (s.categories.includes('Back End') || isKnownDatabase(s.name))).length },
+        { id: 'Database', label: 'Database', count: skills.filter(s => s.categories && (s.categories.includes('Database') || isKnownDatabase(s.name))).length },
+        { id: 'Mobile', label: 'Mobile', count: skills.filter(s => s.categories && (s.categories.includes('Mobile') || s.name.toLowerCase() === 'flutter')).length },
         { id: 'Tools', label: 'Tools', count: skills.filter(s => s.categories && s.categories.includes('Tools')).length }
     ];
 
     const filteredSkills = selectedCategory === 'all'
         ? skills
-        : skills.filter(s => s.categories && s.categories.includes(selectedCategory));
+        : skills.filter(s => {
+            const hasCat = s.categories && s.categories.includes(selectedCategory);
+            if (selectedCategory === 'Database' && isKnownDatabase(s.name)) return true;
+            if (selectedCategory === 'Back End' && isKnownDatabase(s.name)) return true;
+            if (selectedCategory === 'Mobile' && s.name.toLowerCase() === 'flutter') return true;
+            if (selectedCategory === 'Language' && s.name.toLowerCase() === 'flutter') return true;
+            return hasCat;
+        });
 
     return (
         <section id="home" className="section hero-page">
