@@ -53,11 +53,11 @@ export const Home: React.FC = () => {
 
     const categories = [
         { id: 'all', label: 'All', count: skills.length },
-        { id: 'Language', label: 'Language', count: skills.filter(s => s.categories && (s.categories.includes('Language') || s.name.toLowerCase() === 'flutter')).length },
+        { id: 'Language', label: 'Language', count: skills.filter(s => (s.categories && s.categories.includes('Language')) || s.name.toLowerCase() === 'flutter').length },
         { id: 'Front End', label: 'Front End', count: skills.filter(s => s.categories && s.categories.includes('Front End')).length },
-        { id: 'Back End', label: 'Back End', count: skills.filter(s => s.categories && (s.categories.includes('Back End') || isKnownDatabase(s.name))).length },
-        { id: 'Database', label: 'Database', count: skills.filter(s => s.categories && (s.categories.includes('Database') || isKnownDatabase(s.name))).length },
-        { id: 'Mobile', label: 'Mobile', count: skills.filter(s => s.categories && (s.categories.includes('Mobile') || s.name.toLowerCase() === 'flutter')).length },
+        { id: 'Back End', label: 'Back End', count: skills.filter(s => (s.categories && s.categories.includes('Back End')) || isKnownDatabase(s.name)).length },
+        { id: 'Database', label: 'Database', count: skills.filter(s => (s.categories && s.categories.includes('Database')) || isKnownDatabase(s.name)).length },
+        { id: 'Mobile', label: 'Mobile', count: skills.filter(s => (s.categories && s.categories.includes('Mobile')) || s.name.toLowerCase() === 'flutter').length },
         { id: 'Tools', label: 'Tools', count: skills.filter(s => s.categories && s.categories.includes('Tools')).length }
     ];
 

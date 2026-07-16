@@ -77,6 +77,9 @@ export const Dashboard: React.FC = () => {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
+    const [isClassifierOpen, setIsClassifierOpen] = useState(true);
+    const [isSkillsListOpen, setIsSkillsListOpen] = useState(false);
+
     // Classifier States
     const [selectedTechName, setSelectedTechName] = useState('');
     const [selectedColor, setSelectedColor] = useState('#38bdf8');
@@ -237,17 +240,26 @@ export const Dashboard: React.FC = () => {
 
                 {/* 1. TECH SKILL CLASSIFIER PANEL CARD */}
                 <div className="post-form-container" style={{ margin: 0, width: '100%' }}>
-                    <h3 className="post-form-title">
-                        <i className="fas fa-robot"></i> Tech Skill Classifier
+                    <h3 
+                        className="post-form-title"
+                        onClick={() => setIsClassifierOpen(!isClassifierOpen)}
+                        style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', userSelect: 'none', margin: 0 }}
+                    >
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <i className="fas fa-robot"></i> Tech Skill Classifier
+                        </span>
+                        <i className={`fas fa-chevron-${isClassifierOpen ? 'up' : 'down'}`} style={{ fontSize: '14px', color: 'var(--text-secondary)' }}></i>
                     </h3>
 
-                    {error && (
-                        <div className="post-error-alert" style={{ marginBottom: '16px' }}>
-                            <i className="fas fa-exclamation-circle"></i> {error}
-                        </div>
-                    )}
+                    {isClassifierOpen && (
+                        <>
+                            {error && (
+                                <div className="post-error-alert" style={{ marginBottom: '16px', marginTop: '16px' }}>
+                                    <i className="fas fa-exclamation-circle"></i> {error}
+                                </div>
+                            )}
 
-                    <div className="post-form">
+                            <div className="post-form" style={{ marginTop: '16px' }}>
                         {/* Autocomplete Input Select */}
                         <div className="post-form-group" ref={dropdownRef} style={{ position: 'relative' }}>
                             <label>Search & Select Technology</label>
@@ -368,21 +380,31 @@ export const Dashboard: React.FC = () => {
                                 </div>
                             </form>
                         )}
-                    </div>
+                            </div>
+                        </>
+                    )}
                 </div>
 
                 {/* 2. CURRENT ACTIVE SKILLS LIST CARD */}
                 <div className="about-content-box" style={{ margin: 0, padding: '24px 30px' }}>
-                    <h3 style={{ fontSize: '18px', fontWeight: '500', color: '#fff', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <i className="fas fa-list-ul" style={{ color: 'var(--primary)' }}></i> Current Skills ({skillsList.length})
+                    <h3 
+                        onClick={() => setIsSkillsListOpen(!isSkillsListOpen)}
+                        style={{ fontSize: '18px', fontWeight: '500', color: '#fff', marginBottom: isSkillsListOpen ? '16px' : '0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', cursor: 'pointer', userSelect: 'none' }}
+                    >
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <i className="fas fa-list-ul" style={{ color: 'var(--primary)' }}></i> Current Skills ({skillsList.length})
+                        </span>
+                        <i className={`fas fa-chevron-${isSkillsListOpen ? 'up' : 'down'}`} style={{ fontSize: '14px', color: 'var(--text-secondary)' }}></i>
                     </h3>
 
-                    {skillsList.length === 0 ? (
-                        <p style={{ fontSize: '13px', color: 'var(--text-secondary)', textAlign: 'center', padding: '20px' }}>
-                            No skills added yet. Select a technology above to classify and showcase it!
-                        </p>
-                    ) : (
-                        <div className="dashboard-skills-list" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {isSkillsListOpen && (
+                        <>
+                            {skillsList.length === 0 ? (
+                                <p style={{ fontSize: '13px', color: 'var(--text-secondary)', textAlign: 'center', padding: '20px' }}>
+                                    No skills added yet. Select a technology above to classify and showcase it!
+                                </p>
+                            ) : (
+                                <div className="dashboard-skills-list" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                             {skillsList.map((skill) => {
                                 const skillName = skill.name || 'Unnamed Skill';
                                 const info = getTechIcon(skillName);
@@ -419,6 +441,8 @@ export const Dashboard: React.FC = () => {
                                 );
                             })}
                         </div>
+                    )}
+                        </>
                     )}
                 </div>
 
