@@ -1138,8 +1138,8 @@
 }
 
 .education-section-title {
-    font-size: 22px;
-    font-weight: 700;
+    font-size: 24px;
+    font-weight: 500;
     color: #ffffff;
     display: flex;
     align-items: center;
@@ -1149,7 +1149,7 @@
 }
 
 .education-section-subtitle {
-    font-size: 15px;
+    font-size: 14px;
     color: var(--text-secondary);
     margin-bottom: 20px;
 }

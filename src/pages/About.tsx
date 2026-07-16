@@ -5,7 +5,9 @@ export const About: React.FC = () => {
     return (
         <section id="about" className="section">
             <div className="about-header">
-                <h2 className="about-title">About Me</h2>
+                <h2 className="about-title">
+                    <i className="fas fa-user" style={{ marginRight: '10px' }}></i>About Me
+                </h2>
                 <p className="about-subtitle">A brief introduction about who I am.</p>
             </div>
             <div className="about-divider"></div>
