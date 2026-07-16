@@ -10,6 +10,7 @@ import { Home } from './pages/Home';
 import { About } from './pages/About';
 import { Projects } from './pages/Projects';
 import { Contact } from './pages/Contact';
+import { Dashboard } from './pages/Dashboard';
 
 const PortfolioContent: React.FC = () => {
     const { playTrack } = useAudio();
@@ -17,8 +18,7 @@ const PortfolioContent: React.FC = () => {
     // UI and Navigation State
     const [activeSection, setActiveSection] = useState('home');
 
-    // Toast Notification State
-    const [toastMessage, setToastMessage] = useState<string | null>(null);
+
 
     // Sidebar Mobile Toggle State
     const [sidebarActive, setSidebarActive] = useState(false);
@@ -46,13 +46,6 @@ const PortfolioContent: React.FC = () => {
     }, [activeSection]);
 
     const navigateTo = (secId: string) => {
-        if (['dashboard'].includes(secId)) {
-            setActiveSection(secId);
-            setToastMessage(`🤖 ${secId.replace('-', ' ').toUpperCase()} features are coming soon!`);
-            setTimeout(() => setToastMessage(null), 3000);
-            return;
-        }
-
         setActiveSection(secId);
     };
 
@@ -88,6 +81,7 @@ const PortfolioContent: React.FC = () => {
                         {activeSection === 'about' && <About />}
                         {activeSection === 'projects' && <Projects playTrack={playTrack} />}
                         {activeSection === 'contact' && <Contact />}
+                        {activeSection === 'dashboard' && <Dashboard />}
                     </div>
                 </div>
             </main>
@@ -99,14 +93,7 @@ const PortfolioContent: React.FC = () => {
                 onClose={() => setIsAvatarModalOpen(false)}
             />
 
-            {/* SPOTIFY-STYLE TOAST */}
-            {
-                toastMessage && (
-                    <div className="spotify-toast">
-                        {toastMessage}
-                    </div>
-                )
-            }
+
         </div>
     );
 };

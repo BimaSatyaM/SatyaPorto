@@ -1,46 +1,55 @@
-// ===== src/pages/Home.tsx =====
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PostList } from '../components/PostList';
-import {
-    SiFlutter, SiCplusplus, SiC, SiPython, SiHtml5,
-    SiReact, SiCss, SiGithub, SiNpm, SiTypescript, SiTailwindcss
-} from 'react-icons/si';
+import { db } from '../firebase/config';
+import { collection, onSnapshot } from 'firebase/firestore';
+import { getTechIcon } from '../constants/techStack';
 
 interface SkillItem {
+    id: string;
     name: string;
-    icon: React.ReactNode;
-    category: 'languages' | 'frontend' | 'mobile' | 'tools';
+    categories: string[];
     color: string;
 }
 
 export const Home: React.FC = () => {
     const [selectedCategory, setSelectedCategory] = useState<string>('all');
+    const [skills, setSkills] = useState<SkillItem[]>([]);
+    const [loadingSkills, setLoadingSkills] = useState(true);
 
-    const skills: SkillItem[] = [
-        { name: 'Flutter', icon: <SiFlutter />, category: 'mobile', color: '#02569B' },
-        { name: 'C++', icon: <SiCplusplus />, category: 'languages', color: '#00599C' },
-        { name: 'C', icon: <SiC />, category: 'languages', color: '#A8B9CC' },
-        { name: 'Python', icon: <SiPython />, category: 'languages', color: '#3776AB' },
-        { name: 'HTML5', icon: <SiHtml5 />, category: 'frontend', color: '#E34F26' },
-        { name: 'React.js', icon: <SiReact />, category: 'frontend', color: '#61DAFB' },
-        { name: 'CSS3', icon: <SiCss />, category: 'frontend', color: '#1572B6' },
-        { name: 'GitHub', icon: <SiGithub />, category: 'tools', color: '#ffffff' },
-        { name: 'npm', icon: <SiNpm />, category: 'tools', color: '#CB3837' },
-        { name: 'TypeScript', icon: <SiTypescript />, category: 'frontend', color: '#3178C6' },
-        { name: 'Tailwind CSS', icon: <SiTailwindcss />, category: 'frontend', color: '#06B6D4' }
-    ];
+    // Fetch skills from Firestore in real-time
+    useEffect(() => {
+        const skillsCollection = collection(db, 'skills');
+        const unsubscribe = onSnapshot(skillsCollection, (snapshot) => {
+            const fetched: SkillItem[] = [];
+            snapshot.forEach(docSnap => {
+                fetched.push({
+                    id: docSnap.id,
+                    ...docSnap.data()
+                } as SkillItem);
+            });
+            setSkills(fetched);
+            setLoadingSkills(false);
+        }, (err) => {
+            console.error('Error fetching skills list for Home:', err);
+            setLoadingSkills(false);
+        });
+
+        return () => unsubscribe();
+    }, []);
 
     const categories = [
         { id: 'all', label: 'All', count: skills.length },
-        { id: 'languages', label: 'Languages', count: skills.filter(s => s.category === 'languages').length },
-        { id: 'frontend', label: 'Frontend', count: skills.filter(s => s.category === 'frontend').length },
-        { id: 'mobile', label: 'Mobile', count: skills.filter(s => s.category === 'mobile').length },
-        { id: 'tools', label: 'Tools', count: skills.filter(s => s.category === 'tools').length }
+        { id: 'Language', label: 'Language', count: skills.filter(s => s.categories && s.categories.includes('Language')).length },
+        { id: 'Front End', label: 'Front End', count: skills.filter(s => s.categories && s.categories.includes('Front End')).length },
+        { id: 'Back End', label: 'Back End', count: skills.filter(s => s.categories && s.categories.includes('Back End')).length },
+        { id: 'Database', label: 'Database', count: skills.filter(s => s.categories && s.categories.includes('Database')).length },
+        { id: 'Mobile', label: 'Mobile', count: skills.filter(s => s.categories && s.categories.includes('Mobile')).length },
+        { id: 'Tools', label: 'Tools', count: skills.filter(s => s.categories && s.categories.includes('Tools')).length }
     ];
 
     const filteredSkills = selectedCategory === 'all'
         ? skills
-        : skills.filter(s => s.category === selectedCategory);
+        : skills.filter(s => s.categories && s.categories.includes(selectedCategory));
 
     return (
         <section id="home" className="section hero-page">
@@ -96,18 +105,36 @@ export const Home: React.FC = () => {
 
                 {/* Skills badges grid */}
                 <div className="skills-grid" key={selectedCategory}>
-                    {filteredSkills.map(skill => (
-                        <div
-                            key={skill.name}
-                            className="skill-badge"
-                            style={{ '--skill-color': skill.color } as React.CSSProperties}
-                        >
-                            <span className="skill-icon" style={{ color: skill.color }}>
-                                {skill.icon}
-                            </span>
-                            <span className="skill-name">{skill.name}</span>
+                    {loadingSkills ? (
+                        <div style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '20px', gridColumn: '1 / -1' }}>
+                            <i className="fas fa-spinner post-spinner"></i> Loading skills...
                         </div>
-                    ))}
+                    ) : filteredSkills.length === 0 ? (
+                        <div style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '20px', gridColumn: '1 / -1' }}>
+                            No skills to showcase in this category.
+                        </div>
+                    ) : (
+                        filteredSkills.map(skill => {
+                            const info = getTechIcon(skill.name);
+                            const skillColor = info ? info.color : (skill.color || '#38bdf8');
+                            return (
+                                <div
+                                    key={skill.name}
+                                    className="skill-badge"
+                                    style={{ 
+                                        '--skill-color': skillColor,
+                                        background: `color-mix(in srgb, ${skillColor} 8%, transparent)`,
+                                        border: `1px solid color-mix(in srgb, ${skillColor} 20%, transparent)`
+                                    } as React.CSSProperties}
+                                >
+                                    <span className="skill-icon" style={{ color: skillColor }}>
+                                        {info ? info.icon : <i className="fas fa-code"></i>}
+                                    </span>
+                                    <span className="skill-name">{skill.name}</span>
+                                </div>
+                            );
+                        })
+                    )}
                 </div>
 
                 {/* Animated Warning Banner */}
