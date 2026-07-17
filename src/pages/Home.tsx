@@ -40,11 +40,11 @@ export const Home: React.FC = () => {
     // Ensure all databases are automatically tagged as 'Database' and 'Back End'
     const isKnownDatabase = (name: string): boolean => {
         const dbs = [
-            'postgresql', 'mysql', 'mariadb', 'sql server', 'mongodb', 
-            'cassandra', 'dynamodb', 'redis', 'memcached', 'elasticsearch', 
-            'pinecone', 'milvus', 'sqlite', 'firebase', 'supabase', 
-            'cockroachdb', 'neo4j', 'couchdb', 'influxdb', 'clickhouse', 
-            'planetscale', 'prisma', 'surrealdb', 'faunadb', 'meilisearch', 
+            'postgresql', 'mysql', 'mariadb', 'sql server', 'mongodb',
+            'cassandra', 'dynamodb', 'redis', 'memcached', 'elasticsearch',
+            'pinecone', 'milvus', 'sqlite', 'firebase', 'supabase',
+            'cockroachdb', 'neo4j', 'couchdb', 'influxdb', 'clickhouse',
+            'planetscale', 'prisma', 'surrealdb', 'faunadb', 'meilisearch',
             'arangodb'
         ];
         const clean = name.toLowerCase().trim();
@@ -53,23 +53,31 @@ export const Home: React.FC = () => {
 
     const categories = [
         { id: 'all', label: 'All', count: skills.length },
-        { id: 'Language', label: 'Language', count: skills.filter(s => {
-            if (s.categories && s.categories.length > 0) return s.categories.includes('Language');
-            return s.name.toLowerCase() === 'flutter';
-        }).length },
+        {
+            id: 'Language', label: 'Language', count: skills.filter(s => {
+                if (s.categories && s.categories.length > 0) return s.categories.includes('Language');
+                return s.name.toLowerCase() === 'flutter';
+            }).length
+        },
         { id: 'Front End', label: 'Front End', count: skills.filter(s => s.categories && s.categories.includes('Front End')).length },
-        { id: 'Back End', label: 'Back End', count: skills.filter(s => {
-            if (s.categories && s.categories.length > 0) return s.categories.includes('Back End');
-            return isKnownDatabase(s.name);
-        }).length },
-        { id: 'Database', label: 'Database', count: skills.filter(s => {
-            if (s.categories && s.categories.length > 0) return s.categories.includes('Database');
-            return isKnownDatabase(s.name);
-        }).length },
-        { id: 'Mobile', label: 'Mobile', count: skills.filter(s => {
-            if (s.categories && s.categories.length > 0) return s.categories.includes('Mobile');
-            return s.name.toLowerCase() === 'flutter';
-        }).length },
+        {
+            id: 'Back End', label: 'Back End', count: skills.filter(s => {
+                if (s.categories && s.categories.length > 0) return s.categories.includes('Back End');
+                return isKnownDatabase(s.name);
+            }).length
+        },
+        {
+            id: 'Database', label: 'Database', count: skills.filter(s => {
+                if (s.categories && s.categories.length > 0) return s.categories.includes('Database');
+                return isKnownDatabase(s.name);
+            }).length
+        },
+        {
+            id: 'Mobile', label: 'Mobile', count: skills.filter(s => {
+                if (s.categories && s.categories.length > 0) return s.categories.includes('Mobile');
+                return s.name.toLowerCase() === 'flutter';
+            }).length
+        },
         { id: 'Tools', label: 'Tools', count: skills.filter(s => s.categories && s.categories.includes('Tools')).length }
     ];
 
@@ -157,7 +165,7 @@ export const Home: React.FC = () => {
                                 <div
                                     key={skill.name}
                                     className="skill-badge"
-                                    style={{ 
+                                    style={{
                                         '--skill-color': skillColor,
                                         background: `color-mix(in srgb, ${skillColor} 8%, transparent)`,
                                         border: `1px solid color-mix(in srgb, ${skillColor} 20%, transparent)`
@@ -172,6 +180,8 @@ export const Home: React.FC = () => {
                         })
                     )}
                 </div>
+
+                <div className="about-divider"></div>
 
                 {/* Animated Warning Banner */}
                 <div className="skills-warning-banner">
