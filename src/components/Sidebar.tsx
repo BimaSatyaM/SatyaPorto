@@ -24,7 +24,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     setSidebarActive,
     onAvatarClick
 }) => {
-    const [lang, setLang] = useState<'EN' | 'ID'>('ID');
+    const [lang, setLang] = useState<'EN' | 'ID'>('EN');
     const { user, loginWithGoogle, loginWithGitHub, logout } = useAuth();
 
 

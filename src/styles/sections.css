@@ -902,13 +902,13 @@
 }
 
 .filter-pill.active {
-    background: #38BDF8;
-    color: #000000;
-    border-color: #38BDF8;
+    background: rgba(56, 189, 248, 0.12);
+    color: var(--primary);
+    border-color: transparent;
 }
 
 .pill-count {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.08);
     color: var(--text-secondary);
     padding: 1px 6px;
     border-radius: 500px;
@@ -917,9 +917,9 @@
 }
 
 .filter-pill.active .pill-count {
-    background: rgba(0, 0, 0, 0.15);
-    color: #000000;
-    opacity: 0.8;
+    background: rgba(56, 189, 248, 0.2);
+    color: var(--primary);
+    opacity: 1;
 }
 
 /* Skills badges grid */
