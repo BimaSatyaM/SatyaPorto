@@ -1062,5 +1062,141 @@
     transition: left 0.1s ease-out, width 0.1s ease-out;
 }
 
+/* Multi-Emoji Reaction Styles */
+.reaction-add-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 1px dashed var(--border);
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.reaction-add-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: rgba(56, 189, 248, 0.05);
+}
+
+/* Inline emoji selection drawer */
+.reaction-emoji-picker-inline {
+    background: #161616;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin-top: 14px;
+    animation: slideDownFade 0.2s ease-out forwards;
+}
+
+@keyframes slideDownFade {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.picker-inline-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.picker-inline-header span {
+    font-size: 11px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 700;
+}
+
+.picker-inline-close-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 11px;
+    padding: 2px 6px;
+    transition: color 0.15s ease;
+}
+
+.picker-inline-close-btn:hover {
+    color: #ffffff;
+}
+
+.picker-inline-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 8px;
+}
+
+.picker-inline-emoji-btn {
+    background: transparent;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+}
+
+.picker-inline-emoji-btn:hover {
+    transform: scale(1.15);
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.picker-inline-emoji-btn.active {
+    background: rgba(56, 189, 248, 0.15);
+}
+
+.reaction-login-tooltip {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 0;
+    background: #ffffff;
+    color: #000000;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 6px;
+    white-space: nowrap;
+    z-index: 110;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    animation: fadeInUpTooltip 0.2s ease forwards;
+}
+
+.reaction-login-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 12px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: #ffffff transparent transparent transparent;
+}
+
+@keyframes fadeInUpTooltip {
+    from {
+        opacity: 0;
+        transform: translateY(4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 
 

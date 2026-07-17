@@ -25,6 +25,7 @@ interface Post {
     createdAt: any;
     likes?: string[];
     comments?: Comment[];
+    reactions?: Record<string, string[]>;
     type?: 'web' | 'mobile';
     category?: 'personal' | 'internship' | 'freelance' | 'lomba';
     imageUrl?: string;
@@ -96,6 +97,44 @@ export const PostList: React.FC<PostListProps> = ({
     // Track comment input values per post
     const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
 
+    // Track which post has the emoji picker dropdown open
+    const [activePickerPostId, setActivePickerPostId] = useState<string | null>(null);
+    // Track which post & reaction element has the login tooltip active
+    const [tooltipState, setTooltipState] = useState<{ postId: string; key: string } | null>(null);
+
+    const pickerRef = useRef<HTMLDivElement>(null);
+    const COMMON_EMOJIS = [
+        '👍', '❤️', '🔥', '🚀', '💡', '🎉', '🤪', '🍉', '🌐', 
+        '👏', '😂', '🥳', '😢', '😱', '😎', '🤔', '👀', '💯', 
+        '✨', '⚡', '💻', '🎨', '🍕', '🍻', '👑', '👾', '🎮', 
+        '💎', '🌍', '🐱', '🐶', '🍿', '☕', '🎂', '🎈', '🏁',
+        '😊', '🤩', '😉', '😴', '😡', '😭', '🙄', '🤥', '🤫',
+        '🤭', '🤯', '🤠'
+    ];
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (pickerRef.current && !pickerRef.current.contains(event.target as Node)) {
+                setActivePickerPostId(null);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    useEffect(() => {
+        if (tooltipState) {
+            const timer = setTimeout(() => {
+                setTooltipState(null);
+            }, 2500);
+            return () => clearTimeout(timer);
+        }
+    }, [tooltipState]);
+
+    const triggerLoginTooltip = (postId: string, key: string) => {
+        setTooltipState({ postId, key });
+    };
+
     useEffect(() => {
         const postsCollection = collection(db, 'posts');
         const q = query(postsCollection, orderBy('createdAt', 'desc'));
@@ -149,23 +188,33 @@ export const PostList: React.FC<PostListProps> = ({
         }
     };
 
-    const handleLike = async (e: React.MouseEvent, post: Post) => {
-        e.stopPropagation();
+    const handleReact = async (postId: string, emoji: string, currentReactions: Record<string, string[]> | undefined) => {
         if (!user) {
-            alert('Please log in using the sidebar to react to this project!');
+            triggerLoginTooltip(postId, emoji);
             return;
         }
 
-        const postRef = doc(db, 'posts', post.id);
-        const postLikes = post.likes || [];
-        const hasLiked = postLikes.includes(user.uid);
+        const postRef = doc(db, 'posts', postId);
+        const reactions = { ...(currentReactions || {}) };
+        const userList = reactions[emoji] ? [...reactions[emoji]] : [];
+        
+        const index = userList.indexOf(user.uid);
+        if (index > -1) {
+            userList.splice(index, 1);
+        } else {
+            userList.push(user.uid);
+        }
+        
+        if (userList.length === 0) {
+            delete reactions[emoji];
+        } else {
+            reactions[emoji] = userList;
+        }
 
         try {
-            await updateDoc(postRef, {
-                likes: hasLiked ? arrayRemove(user.uid) : arrayUnion(user.uid)
-            });
+            await updateDoc(postRef, { reactions });
         } catch (err: any) {
-            console.error('Error toggling like:', err);
+            console.error('Error toggling reaction:', err);
         }
     };
 
@@ -208,6 +257,21 @@ export const PostList: React.FC<PostListProps> = ({
             ...prev,
             [postId]: value
         }));
+    };
+
+    const handleDeleteComment = async (postId: string, commentToDelete: Comment) => {
+        if (!window.confirm('Are you sure you want to delete this comment?')) {
+            return;
+        }
+
+        try {
+            const postRef = doc(db, 'posts', postId);
+            await updateDoc(postRef, {
+                comments: arrayRemove(commentToDelete)
+            });
+        } catch (err: any) {
+            alert('Failed to delete comment: ' + err.message);
+        }
     };
 
     const toggleComments = (e: React.MouseEvent, postId: string) => {
@@ -330,9 +394,7 @@ export const PostList: React.FC<PostListProps> = ({
                         onScroll={layout === 'slider' ? handleScroll : undefined}
                     >
                         {filteredPosts.map((post) => {
-                        const postLikes = post.likes || [];
                         const postComments = post.comments || [];
-                        const hasLiked = user ? postLikes.includes(user.uid) : false;
                         const isCommentsOpen = expandedComments[post.id] || false;
 
                         return (
@@ -414,14 +476,59 @@ export const PostList: React.FC<PostListProps> = ({
                                     )}
 
                                     {/* Card Footer Interactions Bar */}
-                                    <div className="project-card-actions-row">
-                                        <button 
-                                            onClick={(e) => handleLike(e, post)} 
-                                            className={`reaction-pill-btn ${hasLiked ? 'active' : ''}`}
-                                        >
-                                            <i className={hasLiked ? "fas fa-heart" : "far fa-heart"}></i> 
-                                            <span>{postLikes.length}</span>
-                                        </button>
+                                    <div className="project-card-actions-row" style={{ flexWrap: 'wrap', gap: '8px' }}>
+                                        {/* Render active reactions, sorted by count */}
+                                        {Object.entries(post.reactions || {})
+                                            .filter(([_, uids]) => uids && uids.length > 0)
+                                            .sort((a, b) => b[1].length - a[1].length)
+                                            .map(([emoji, uids]) => {
+                                            const hasReacted = user && uids.includes(user.uid);
+                                            const showTooltip = tooltipState && tooltipState.postId === post.id && tooltipState.key === emoji;
+
+                                            return (
+                                                <div key={emoji} style={{ position: 'relative', display: 'inline-block' }}>
+                                                    {showTooltip && (
+                                                        <div className="reaction-login-tooltip">
+                                                            Please login first to react
+                                                        </div>
+                                                    )}
+                                                    <button 
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleReact(post.id, emoji, post.reactions);
+                                                        }} 
+                                                        className={`reaction-pill-btn ${hasReacted ? 'active' : ''}`}
+                                                    >
+                                                        <span style={{ fontSize: '13px' }}>{emoji}</span> 
+                                                        <span>{uids.length}</span>
+                                                    </button>
+                                                </div>
+                                            );
+                                        })}
+
+                                        {/* Add reaction picker button */}
+                                        <div style={{ position: 'relative', display: 'inline-block' }}>
+                                            {tooltipState && tooltipState.postId === post.id && tooltipState.key === 'add-btn' && (
+                                                <div className="reaction-login-tooltip">
+                                                    Please login first to react
+                                                </div>
+                                            )}
+                                            <button 
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    if (!user) {
+                                                        triggerLoginTooltip(post.id, 'add-btn');
+                                                        return;
+                                                    }
+                                                    setActivePickerPostId(activePickerPostId === post.id ? null : post.id);
+                                                }}
+                                                className="reaction-add-btn"
+                                                title="Add reaction"
+                                            >
+                                                <i className="fas fa-plus" style={{ fontSize: '10px' }}></i>
+                                            </button>
+                                        </div>
+
                                         <button 
                                             onClick={(e) => toggleComments(e, post.id)} 
                                             className="reaction-pill-btn"
@@ -442,6 +549,42 @@ export const PostList: React.FC<PostListProps> = ({
                                         )}
                                     </div>
 
+                                    {/* Inline Emoji Selector Drawer */}
+                                    {activePickerPostId === post.id && (
+                                        <div className="reaction-emoji-picker-inline" ref={pickerRef}>
+                                            <div className="picker-inline-header">
+                                                <span>Select Reaction</span>
+                                                <button 
+                                                    className="picker-inline-close-btn"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setActivePickerPostId(null);
+                                                    }}
+                                                >
+                                                    <i className="fas fa-times"></i>
+                                                </button>
+                                            </div>
+                                            <div className="picker-inline-grid">
+                                                {COMMON_EMOJIS.map((emoji) => {
+                                                    const uids = (post.reactions && post.reactions[emoji]) || [];
+                                                    const hasReacted = user && uids.includes(user.uid);
+                                                    return (
+                                                        <button
+                                                            key={emoji}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleReact(post.id, emoji, post.reactions);
+                                                            }}
+                                                            className={`picker-inline-emoji-btn ${hasReacted ? 'active' : ''}`}
+                                                        >
+                                                            {emoji}
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    )}
+
                                     {/* Comments drawers in the card */}
                                     {isCommentsOpen && (
                                         <div className="post-comments-section" style={{ borderTop: '1px solid var(--border)', marginTop: '16px', paddingTop: '16px' }}>
@@ -455,12 +598,25 @@ export const PostList: React.FC<PostListProps> = ({
                                                                 className="comment-avatar" 
                                                             />
                                                             <div className="comment-content">
-                                                                <span className="comment-author">
-                                                                    {comment.userDisplayName} 
-                                                                    <span style={{ fontSize: '9px', color: 'var(--text-secondary)', marginLeft: '8px', fontWeight: '400' }}>
-                                                                        {formatCommentDate(comment.createdAt)}
+                                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                                    <span className="comment-author">
+                                                                        {comment.userDisplayName} 
+                                                                        <span style={{ fontSize: '9px', color: 'var(--text-secondary)', marginLeft: '8px', fontWeight: '400' }}>
+                                                                            {formatCommentDate(comment.createdAt)}
+                                                                        </span>
                                                                     </span>
-                                                                </span>
+                                                                    {isAdmin && (
+                                                                        <button
+                                                                            onClick={() => handleDeleteComment(post.id, comment)}
+                                                                            style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: '10px', transition: 'color 0.2s ease', padding: '0 4px' }}
+                                                                            onMouseEnter={(e) => e.currentTarget.style.color = '#ef4444'}
+                                                                            onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(255,255,255,0.4)'}
+                                                                            title="Delete Comment"
+                                                                        >
+                                                                            <i className="fas fa-trash-alt"></i>
+                                                                        </button>
+                                                                    )}
+                                                                </div>
                                                                 <p className="comment-text">{comment.text}</p>
                                                             </div>
                                                         </div>
