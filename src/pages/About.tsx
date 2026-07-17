@@ -37,6 +37,28 @@ export const About: React.FC = () => {
                 </div>
             </div>
 
+            {/* CV DOWNLOAD SECTION */}
+            <div className="cv-download-container" style={{ marginTop: '20px', marginBottom: '20px' }}>
+                <a 
+                    href="assets/cv.pdf" 
+                    download="CV_Bima_Satya_Mahendra.pdf" 
+                    className="cv-download-box"
+                >
+                    <div className="cv-download-left">
+                        <div className="cv-icon-wrapper">
+                            <i className="fas fa-file-pdf"></i>
+                        </div>
+                        <div className="cv-details">
+                            <h4>Curriculum Vitae (CV)</h4>
+                            <p>Download my professional resume (PDF)</p>
+                        </div>
+                    </div>
+                    <div className="cv-download-btn-circle">
+                        <i className="fas fa-download"></i>
+                    </div>
+                </a>
+            </div>
+
             <div className="about-divider"></div>
 
             {/* EDUCATION SECTION */}

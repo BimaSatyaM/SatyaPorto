@@ -53,7 +53,7 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     useEffect(() => {
         const audio = new Audio(currentTrack.file);
         audio.volume = volume;
-        audio.preload = 'metadata';
+        audio.preload = 'none';
         audioRef.current = audio;
 
         const handleTimeUpdate = () => {

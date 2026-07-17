@@ -308,10 +308,42 @@ export const PostList: React.FC<PostListProps> = ({
     });
 
     if (loading) {
+        const skeletonCards = [1, 2, 3];
         return (
-            <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>
-                <i className="fas fa-spinner post-spinner" style={{ fontSize: '24px', marginBottom: '12px' }}></i>
-                <p>Loading project showcase...</p>
+            <div className="project-feed-wrapper">
+                {showFilters && (
+                    <div className="project-filters-container">
+                        <div className="filter-group">
+                            <span className="filter-label">TYPE</span>
+                            <div className="filter-pills">
+                                <div className="skeleton-pill shimmer"></div>
+                                <div className="skeleton-pill shimmer"></div>
+                                <div className="skeleton-pill shimmer"></div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+                <div className={layout === 'slider' ? "projects-slider-layout" : "projects-grid-layout"}>
+                    {skeletonCards.map((num) => (
+                        <div key={num} className="project-grid-card skeleton-card">
+                            <div className="skeleton-image shimmer"></div>
+                            <div className="project-card-details">
+                                <div className="skeleton-title shimmer"></div>
+                                <div className="skeleton-text shimmer"></div>
+                                <div className="skeleton-text short shimmer"></div>
+                                <div className="skeleton-tech-row">
+                                    <div className="skeleton-tech-icon shimmer"></div>
+                                    <div className="skeleton-tech-icon shimmer"></div>
+                                    <div className="skeleton-tech-icon shimmer"></div>
+                                </div>
+                                <div className="skeleton-actions-row">
+                                    <div className="skeleton-action-btn shimmer"></div>
+                                    <div className="skeleton-action-btn shimmer"></div>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
             </div>
         );
     }
