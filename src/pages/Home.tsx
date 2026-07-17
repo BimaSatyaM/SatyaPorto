@@ -53,23 +53,38 @@ export const Home: React.FC = () => {
 
     const categories = [
         { id: 'all', label: 'All', count: skills.length },
-        { id: 'Language', label: 'Language', count: skills.filter(s => (s.categories && s.categories.includes('Language')) || s.name.toLowerCase() === 'flutter').length },
+        { id: 'Language', label: 'Language', count: skills.filter(s => {
+            if (s.categories && s.categories.length > 0) return s.categories.includes('Language');
+            return s.name.toLowerCase() === 'flutter';
+        }).length },
         { id: 'Front End', label: 'Front End', count: skills.filter(s => s.categories && s.categories.includes('Front End')).length },
-        { id: 'Back End', label: 'Back End', count: skills.filter(s => (s.categories && s.categories.includes('Back End')) || isKnownDatabase(s.name)).length },
-        { id: 'Database', label: 'Database', count: skills.filter(s => (s.categories && s.categories.includes('Database')) || isKnownDatabase(s.name)).length },
-        { id: 'Mobile', label: 'Mobile', count: skills.filter(s => (s.categories && s.categories.includes('Mobile')) || s.name.toLowerCase() === 'flutter').length },
+        { id: 'Back End', label: 'Back End', count: skills.filter(s => {
+            if (s.categories && s.categories.length > 0) return s.categories.includes('Back End');
+            return isKnownDatabase(s.name);
+        }).length },
+        { id: 'Database', label: 'Database', count: skills.filter(s => {
+            if (s.categories && s.categories.length > 0) return s.categories.includes('Database');
+            return isKnownDatabase(s.name);
+        }).length },
+        { id: 'Mobile', label: 'Mobile', count: skills.filter(s => {
+            if (s.categories && s.categories.length > 0) return s.categories.includes('Mobile');
+            return s.name.toLowerCase() === 'flutter';
+        }).length },
         { id: 'Tools', label: 'Tools', count: skills.filter(s => s.categories && s.categories.includes('Tools')).length }
     ];
 
     const filteredSkills = selectedCategory === 'all'
         ? skills
         : skills.filter(s => {
-            const hasCat = s.categories && s.categories.includes(selectedCategory);
+            if (s.categories && s.categories.length > 0) {
+                return s.categories.includes(selectedCategory);
+            }
+            // Fallback for legacy items with empty categories
             if (selectedCategory === 'Database' && isKnownDatabase(s.name)) return true;
             if (selectedCategory === 'Back End' && isKnownDatabase(s.name)) return true;
             if (selectedCategory === 'Mobile' && s.name.toLowerCase() === 'flutter') return true;
             if (selectedCategory === 'Language' && s.name.toLowerCase() === 'flutter') return true;
-            return hasCat;
+            return s.categories && s.categories.includes(selectedCategory);
         });
 
     return (
