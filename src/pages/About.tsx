@@ -40,7 +40,7 @@ export const About: React.FC = () => {
             {/* CV DOWNLOAD SECTION */}
             <div className="cv-download-container" style={{ marginTop: '20px', marginBottom: '20px' }}>
                 <a 
-                    href="assets/cv.pdf" 
+                    href="assets/CV_Bima_Satya_Mahendra.pdf" 
                     download="CV_Bima_Satya_Mahendra.pdf" 
                     className="cv-download-box"
                 >
