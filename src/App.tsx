@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { ImageModal } from './components/ImageModal';
-import { AudioProvider, useAudio } from './context/AudioContext';
+import { AudioProvider } from './context/AudioContext';
 import { AuthProvider } from './context/AuthContext';
 
 // Import dedicated page components
@@ -13,8 +13,6 @@ import { Contact } from './pages/Contact';
 import { Dashboard } from './pages/Dashboard';
 
 const PortfolioContent: React.FC = () => {
-    const { playTrack } = useAudio();
-
     // UI and Navigation State
     const [activeSection, setActiveSection] = useState('home');
 
@@ -79,7 +77,7 @@ const PortfolioContent: React.FC = () => {
                     <div id="mainView">
                         {activeSection === 'home' && <Home />}
                         {activeSection === 'about' && <About />}
-                        {activeSection === 'projects' && <Projects playTrack={playTrack} />}
+                        {activeSection === 'projects' && <Projects />}
                         {activeSection === 'contact' && <Contact />}
                         {activeSection === 'dashboard' && <Dashboard />}
                     </div>

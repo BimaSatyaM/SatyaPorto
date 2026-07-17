@@ -3,11 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { PostForm } from '../components/PostForm';
 import { PostList } from '../components/PostList';
 
-interface ProjectsProps {
-    playTrack?: (index: number) => void;
-}
-
-export const Projects: React.FC<ProjectsProps> = () => {
+export const Projects: React.FC = () => {
     const { user, isAdmin } = useAuth();
     const [editingPost, setEditingPost] = useState<any | null>(null);
 
