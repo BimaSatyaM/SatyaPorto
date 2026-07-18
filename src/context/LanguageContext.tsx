@@ -191,7 +191,7 @@ const translations: Record<Language, Record<string, string>> = {
         'contact.sendBtn': 'Kirim Pesan',
         'contact.sendingBtn': 'Mengirim...',
         'contact.sentBtn': 'Pesan Terkirim!',
-        'dashboard.title': 'Dasbor Admin',
+        'dashboard.title': 'Dasbor',
         'dashboard.subtitle': 'Kelola pameran proyek dan entri pengklasifikasi.',
         'dashboard.unauthorized': 'Akses Tidak Sah',
         'dashboard.underConstruction': 'Halaman ini masih dalam tahap pengembangan. Silakan kembali lagi nanti setelah halaman ini diluncurkan!',
