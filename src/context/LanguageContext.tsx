@@ -127,7 +127,7 @@ const translations: Record<Language, Record<string, string>> = {
         'sidebar.copyright2': 'Bima Satya. Hak cipta dilindungi.',
         'sidebar.loginGoogle': 'Masuk dengan Google',
         'sidebar.loginGitHub': 'Masuk dengan GitHub',
-        'home.bio1': 'Mahasiswa Informatika dan developer yang berdedikasi untuk membangun solusi digital yang berdampak. Saya berspesialisasi dalam mengembangkan platform web yang skalabel dan aplikasi seluler menggunakan tumpukan teknologi modern, terutama React, Flutter, Python, dan Go.',
+        'home.bio1': 'Aku adalah Mahasiswa Informatika dan seorang developer yang berdedikasi untuk membangun solusi digital yang berdampak. Saya berspesialisasi dalam mengembangkan platform web yang skalabel dan aplikasi seluler menggunakan tumpukan teknologi modern, terutama React, Flutter, Python, dan Go.',
         'home.bio2': 'Saat ini saya sedang fokus meningkatkan kemampuan saya dalam beberapa bahasa pemrograman dan kerangka kerja karena saya masih berstatus mahasiswa. Saya menggabungkan keahlian teknis dengan komunikasi dan kolaborasi yang efektif untuk memastikan setiap proyek mencapai kejelasan logis dan dampak nyata yang bermakna. Saya juga terbuka untuk peluang dan kolaborasi baru, jadi jangan ragu untuk menghubungi!',
         'home.skillsTitle': 'Keahlian',
         'home.skillsSubtitle': 'Keahlian profesional saya.',
