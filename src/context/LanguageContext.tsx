@@ -194,7 +194,7 @@ const translations: Record<Language, Record<string, string>> = {
         'dashboard.title': 'Dasbor Admin',
         'dashboard.subtitle': 'Kelola pameran proyek dan entri pengklasifikasi.',
         'dashboard.unauthorized': 'Akses Tidak Sah',
-        'dashboard.underConstruction': 'Halaman ini sedang dalam pembangunan atau dibatasi untuk administrator.',
+        'dashboard.underConstruction': 'Halaman ini masih dalam tahap pengembangan. Silakan kembali lagi nanti setelah halaman ini diluncurkan!',
         'dashboard.createPost': 'Buat Postingan Baru',
         'dashboard.editPost': 'Edit Postingan',
         'dashboard.postTitle': 'Judul',
