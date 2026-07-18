@@ -88,7 +88,7 @@ const PortfolioContent: React.FC = () => {
             {/* Mobile Sidebar Hamburger Toggle Header */}
             <button 
                 type="button"
-                className="mobile-toggle-btn" 
+                className="menu-toggle" 
                 onClick={(e) => {
                     e.stopPropagation();
                     setSidebarActive(prev => !prev);
