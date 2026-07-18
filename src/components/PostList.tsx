@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { collection, query, orderBy, onSnapshot, doc, deleteDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import { getTechIcon } from '../constants/techStack';
 
 interface Comment {
@@ -45,6 +46,7 @@ export const PostList: React.FC<PostListProps> = ({
     showFilters = true, 
     layout = 'grid' 
 }) => {
+    const { t } = useLanguage();
     const { user, isAdmin } = useAuth();
     const [posts, setPosts] = useState<Post[]>([]);
     const [loading, setLoading] = useState(true);
@@ -521,7 +523,7 @@ export const PostList: React.FC<PostListProps> = ({
                                                 <div key={emoji} style={{ position: 'relative', display: 'inline-block' }}>
                                                     {showTooltip && (
                                                         <div className="reaction-login-tooltip">
-                                                            Please login first to react
+                                                            {t('projects.loginReact')}
                                                         </div>
                                                     )}
                                                     <button 
@@ -542,7 +544,7 @@ export const PostList: React.FC<PostListProps> = ({
                                         <div style={{ position: 'relative', display: 'inline-block' }}>
                                             {tooltipState && tooltipState.postId === post.id && tooltipState.key === 'add-btn' && (
                                                 <div className="reaction-login-tooltip">
-                                                    Please login first to react
+                                                    {t('projects.loginReact')}
                                                 </div>
                                             )}
                                             <button 
@@ -576,7 +578,7 @@ export const PostList: React.FC<PostListProps> = ({
                                                 rel="noopener noreferrer" 
                                                 className="card-visit-link-btn"
                                             >
-                                                <i className="fas fa-external-link-alt"></i> Visit Project
+                                                <i className="fas fa-external-link-alt"></i> {t('projects.visit')}
                                             </a>
                                         )}
                                     </div>
@@ -585,7 +587,7 @@ export const PostList: React.FC<PostListProps> = ({
                                     {activePickerPostId === post.id && (
                                         <div className="reaction-emoji-picker-inline" ref={pickerRef}>
                                             <div className="picker-inline-header">
-                                                <span>Select Reaction</span>
+                                                <span>{t('projects.selectReaction')}</span>
                                                 <button 
                                                     className="picker-inline-close-btn"
                                                     onClick={(e) => {
@@ -625,7 +627,7 @@ export const PostList: React.FC<PostListProps> = ({
                                                     {postComments.map((comment) => (
                                                         <div key={comment.id} className="comment-item">
                                                             <img 
-                                                                src={comment.userPhotoURL || 'assets/foto.jpg'} 
+                                                                src={comment.userPhotoURL || '/assets/foto.jpg'} 
                                                                 alt={comment.userDisplayName} 
                                                                 className="comment-avatar" 
                                                             />
@@ -660,7 +662,7 @@ export const PostList: React.FC<PostListProps> = ({
                                                 <form onSubmit={(e) => handleAddComment(e, post.id)} className="comment-form">
                                                     <input 
                                                         type="text" 
-                                                        placeholder="Write a comment..." 
+                                                        placeholder={t('projects.writeComment')} 
                                                         value={commentInputs[post.id] || ''} 
                                                         onChange={(e) => handleCommentInputChange(post.id, e.target.value)}
                                                         className="comment-input"
@@ -673,7 +675,7 @@ export const PostList: React.FC<PostListProps> = ({
                                                 </form>
                                             ) : (
                                                 <p style={{ fontSize: '11px', color: 'var(--text-secondary)', textAlign: 'center', marginTop: '4px' }}>
-                                                    🔒 Please log in to leave a comment.
+                                                    🔒 {t('projects.loginComment')}
                                                 </p>
                                             )}
                                         </div>

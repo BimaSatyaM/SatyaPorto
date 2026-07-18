@@ -1,35 +1,24 @@
-// ===== src/pages/About.tsx =====
 import React from 'react';
+import { useLanguage } from '../context/LanguageContext';
 
 export const About: React.FC = () => {
+    const { t } = useLanguage();
     return (
         <section id="about" className="section">
             <div className="about-header">
                 <h2 className="about-title">
-                    <i className="fas fa-user" style={{ marginRight: '10px' }}></i>About Me
+                    <i className="fas fa-user" style={{ marginRight: '10px' }}></i>{t('about.title')}
                 </h2>
-                <p className="about-subtitle">A brief introduction about who I am.</p>
+                <p className="about-subtitle">{t('about.subtitle')}</p>
             </div>
             <div className="about-divider"></div>
 
             <div className="hero-page-content">
-                <p>
-                    I'm Bima Satya Mahendra (Satya), currently studying at Informatics Departement, Sumatra Institute Of Technology.
-                    I have an interest in software engineering development, web3, blockchain technology, and AI, Especially web3 and AI. I’ve been spending most of my time building projects and improving my skills in those areas.
-                </p>
-                <p>
-                    Right now i'm still improving on my skills in several programming languages and frameworks since i'm still a student.
-                    especially blockchain and AI. I enjoy turning ideas into working products, while making sure the code is not just functional, but also clean, structured, and easy to maintain. For me, good software isn’t just about making things work, but it’s about building them the right way.
-                </p>
-                <p>
-                    Lately, I’ve been exploring blockchain and AI more deeply, experimenting with different tools and technologies, and understanding how systems actually work behind that.
-                </p>
-                <p>
-                    Recently, I’ve been working on project that called "ACTS (Adaptive Confluence Trading System)" a Self Learning Trading Bot. I’m still learning all of that and improving myself. I’m open to collaborations, opportunities, or just connecting with people in the same space.
-                </p>
-                <p>
-                    Best Regards,
-                </p>
+                <p>{t('about.bio1')}</p>
+                <p>{t('about.bio2')}</p>
+                <p>{t('about.bio3')}</p>
+                <p>{t('about.bio4')}</p>
+                <p>{t('about.bestRegards')}</p>
                 <p className="about-signature">
                     Bima Satya Mahendra
                 </p>
@@ -38,7 +27,7 @@ export const About: React.FC = () => {
             {/* CV DOWNLOAD SECTION */}
             <div className="cv-download-container" style={{ marginTop: '20px', marginBottom: '20px' }}>
                 <a 
-                    href="assets/CV_Bima_Satya_Mahendra.pdf" 
+                    href="/assets/CV_Bima_Satya_Mahendra.pdf" 
                     download="CV_Bima_Satya_Mahendra.pdf" 
                     className="cv-download-box"
                 >
@@ -47,8 +36,8 @@ export const About: React.FC = () => {
                             <i className="fas fa-file-pdf"></i>
                         </div>
                         <div className="cv-details">
-                            <h4>Curriculum Vitae (CV)</h4>
-                            <p>Download my professional resume (PDF)</p>
+                            <h4>{t('about.cvTitle')}</h4>
+                            <p>{t('about.cvSubtitle')}</p>
                         </div>
                     </div>
                     <div className="cv-download-btn-circle">
@@ -62,27 +51,27 @@ export const About: React.FC = () => {
             {/* EDUCATION SECTION */}
             <div className="education-section">
                 <h3 className="education-section-title">
-                    <i className="fas fa-graduation-cap"></i> Education
+                    <i className="fas fa-graduation-cap"></i> {t('about.eduTitle')}
                 </h3>
-                <p className="education-section-subtitle">My educational journey.</p>
+                <p className="education-section-subtitle">{t('about.eduSubtitle')}</p>
                 
                 <div className="education-list">
                     {/* ITERA Card */}
                     <div className="education-card">
                         <div className="education-logo">
                             <img 
-                                src="assets/itera.png" 
+                                src="/assets/itera.png" 
                                 alt="ITERA Logo" 
                                 style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
                             />
                         </div>
                         <div className="education-info">
-                            <h3>Institut Teknologi Sumatera</h3>
+                            <h3>{t('about.edu1Title')}</h3>
                             <p className="education-details">
-                                Bachelor's degree <span>•</span> Informatics Engineering, (S.Kom) <span>•</span> GPA: -
+                                {t('about.edu1Details')}
                             </p>
                             <p className="education-meta">
-                                2025 - Present <span>•</span> Lampung, Indonesia <span className="country-code"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 3 2" width="12" height="8" style={{ marginRight: '4px', verticalAlign: 'middle', borderRadius: '1px' }}><rect width="3" height="1" fill="#E21F26"/><rect y="1" width="3" height="1" fill="#FFFFFF"/></svg>ID</span>
+                                {t('about.edu1Meta')} <span className="country-code"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 3 2" width="12" height="8" style={{ marginRight: '4px', verticalAlign: 'middle', borderRadius: '1px' }}><rect width="3" height="1" fill="#E21F26"/><rect y="1" width="3" height="1" fill="#FFFFFF"/></svg>ID</span>
                             </p>
                         </div>
                     </div>
@@ -91,24 +80,24 @@ export const About: React.FC = () => {
                     <div className="education-card">
                         <div className="education-logo">
                             <img 
-                                src="assets/sman3.png" 
+                                src="/assets/sman3.png" 
                                 alt="SMAN 3 Logo" 
                                 style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
                             />
                         </div>
                         <div className="education-info">
-                            <h3>SMAN 3 Bandar Lampung</h3>
+                            <h3>{t('about.edu2Title')}</h3>
                             <p className="education-details">
-                                Senior High School <span>•</span> Merdeka Curriculum
+                                {t('about.edu2Details')}
                             </p>
                             <p className="education-meta">
-                                2022 - 2025 <span>•</span> Bandar Lampung, Lampung, Indonesia <span className="country-code"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 3 2" width="12" height="8" style={{ marginRight: '4px', verticalAlign: 'middle', borderRadius: '1px' }}><rect width="3" height="1" fill="#E21F26"/><rect y="1" width="3" height="1" fill="#FFFFFF"/></svg>ID</span>
+                                {t('about.edu2Meta')} <span className="country-code"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 3 2" width="12" height="8" style={{ marginRight: '4px', verticalAlign: 'middle', borderRadius: '1px' }}><rect width="3" height="1" fill="#E21F26"/><rect y="1" width="3" height="1" fill="#FFFFFF"/></svg>ID</span>
                             </p>
                         </div>
                     </div>
-                </div>
             </div>
+        </div>
 
-        </section>
+    </section>
     );
 };

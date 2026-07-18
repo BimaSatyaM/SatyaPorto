@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import { PostForm } from '../components/PostForm';
 import { PostList } from '../components/PostList';
 
 export const Projects: React.FC = () => {
+    const { t } = useLanguage();
     const { user, isAdmin } = useAuth();
     const [editingPost, setEditingPost] = useState<any | null>(null);
 
@@ -19,8 +21,8 @@ export const Projects: React.FC = () => {
     return (
         <section id="projects" className="section">
             <div className="about-header">
-                <h2 className="about-title">Featured Projects</h2>
-                <p className="about-subtitle">A showcase of recent creations shared by our community.</p>
+                <h2 className="about-title">{t('projects.title')}</h2>
+                <p className="about-subtitle">{t('projects.subtitle')}</p>
             </div>
             <div className="about-divider"></div>
 

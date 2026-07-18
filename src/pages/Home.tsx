@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { PostList } from '../components/PostList';
 import { db } from '../firebase/config';
+import { useLanguage } from '../context/LanguageContext';
 import { collection, onSnapshot } from 'firebase/firestore';
 import { getTechIcon } from '../constants/techStack';
 
@@ -12,6 +13,7 @@ interface SkillItem {
 }
 
 export const Home: React.FC = () => {
+    const { t } = useLanguage();
     const [selectedCategory, setSelectedCategory] = useState<string>('all');
     const [skills, setSkills] = useState<SkillItem[]>([]);
     const [loadingSkills, setLoadingSkills] = useState(true);
@@ -52,33 +54,33 @@ export const Home: React.FC = () => {
     };
 
     const categories = [
-        { id: 'all', label: 'All', count: skills.length },
+        { id: 'all', label: t('skills.all'), count: skills.length },
         {
-            id: 'Language', label: 'Language', count: skills.filter(s => {
+            id: 'Language', label: t('skills.language'), count: skills.filter(s => {
                 if (s.categories && s.categories.length > 0) return s.categories.includes('Language');
                 return s.name.toLowerCase() === 'flutter';
             }).length
         },
-        { id: 'Front End', label: 'Front End', count: skills.filter(s => s.categories && s.categories.includes('Front End')).length },
+        { id: 'Front End', label: t('skills.frontend'), count: skills.filter(s => s.categories && s.categories.includes('Front End')).length },
         {
-            id: 'Back End', label: 'Back End', count: skills.filter(s => {
+            id: 'Back End', label: t('skills.backend'), count: skills.filter(s => {
                 if (s.categories && s.categories.length > 0) return s.categories.includes('Back End');
                 return isKnownDatabase(s.name);
             }).length
         },
         {
-            id: 'Database', label: 'Database', count: skills.filter(s => {
+            id: 'Database', label: t('skills.database'), count: skills.filter(s => {
                 if (s.categories && s.categories.length > 0) return s.categories.includes('Database');
                 return isKnownDatabase(s.name);
             }).length
         },
         {
-            id: 'Mobile', label: 'Mobile', count: skills.filter(s => {
+            id: 'Mobile', label: t('skills.mobile'), count: skills.filter(s => {
                 if (s.categories && s.categories.length > 0) return s.categories.includes('Mobile');
                 return s.name.toLowerCase() === 'flutter';
             }).length
         },
-        { id: 'Tools', label: 'Tools', count: skills.filter(s => s.categories && s.categories.includes('Tools')).length }
+        { id: 'Tools', label: t('skills.tools'), count: skills.filter(s => s.categories && s.categories.includes('Tools')).length }
     ];
 
     const filteredSkills = selectedCategory === 'all'
@@ -104,22 +106,13 @@ export const Home: React.FC = () => {
                         <span>Based in Lampung, Indonesia <span className="country-code"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 3 2" width="12" height="8" style={{ marginRight: '4px', verticalAlign: 'middle', borderRadius: '1px' }}><rect width="3" height="1" fill="#E21F26" /><rect y="1" width="3" height="1" fill="#FFFFFF" /></svg>ID</span></span>
                     </div>
                     <div className="hero-page-content">
-                        <p>
-                            An Informatics Student and developer dedicated to building impactful digital solutions.
-                            I specialize in developing scalable web platforms and mobile applications using a modern tech stack,
-                            primarily React, Python, and Flutter.
-                        </p>
-                        <p>
-                            Right now i'm focusing on improving my skills in several programming languages and frameworks since i'm still a student.
-                            I combine technical expertise with proactive communication and dedication
-                            to ensure every project delivers logical clarity and a meaningful real-world impact. I'm also
-                            open to new opportunities and collaborations, so feel free to reach out!
-                        </p>
+                        <p>{t('home.bio1')}</p>
+                        <p>{t('home.bio2')}</p>
                     </div>
                 </div>
                 <div className="hero-page-right">
                     <div className="hero-photo-box">
-                        <img src="assets/foto2.jpg" alt="Bima Satya Mahendra" />
+                        <img src="/assets/foto2.jpg" alt="Bima Satya Mahendra" />
                     </div>
                 </div>
             </div>
@@ -130,9 +123,9 @@ export const Home: React.FC = () => {
             {/* SKILLS CONTAINER SECTION */}
             <div className="skills-section">
                 <h3 className="skills-title">
-                    <span className="code-bracket">&lt;/&gt;</span> Skills
+                    <span className="code-bracket">&lt;/&gt;</span> {t('home.skillsTitle')}
                 </h3>
-                <p className="skills-subtitle">My professional skills.</p>
+                <p className="skills-subtitle">{t('home.skillsSubtitle')}</p>
 
                 {/* Categories filter pills */}
                 <div className="skills-filters">
@@ -189,7 +182,7 @@ export const Home: React.FC = () => {
                         <i className="fas fa-exclamation-triangle"></i>
                     </div>
                     <div className="warning-banner-text">
-                        I'm still learning all these languages/frameworks, and there's likely more to come in the future!
+                        {t('home.warning')}
                     </div>
                 </div>
 
@@ -199,9 +192,9 @@ export const Home: React.FC = () => {
                 {/* COMMUNITY PROJECT FEED SECTION */}
                 <div className="education-section" style={{ marginTop: '24px' }}>
                     <h3 className="education-section-title">
-                        <i className="fas fa-project-diagram"></i> Project Showcase
+                        <i className="fas fa-project-diagram"></i> {t('home.projectShowcaseTitle')}
                     </h3>
-                    <p className="education-section-subtitle">Latest projects That I've Made.</p>
+                    <p className="education-section-subtitle">{t('home.projectShowcaseSubtitle')}</p>
                     <PostList limitCount={8} showFilters={false} layout="slider" />
                 </div>
             </div>

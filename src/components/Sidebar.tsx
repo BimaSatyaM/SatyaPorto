@@ -1,7 +1,8 @@
 // ===== src/components/Sidebar.tsx =====
-import React, { useState } from 'react';
+import React from 'react';
 import { Player } from './Player';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 
 // Import exact React Icons matching the reference image
 import { GoHome, GoVerified } from 'react-icons/go';
@@ -10,36 +11,32 @@ import { LuLayoutGrid, LuBook } from 'react-icons/lu';
 
 
 interface SidebarProps {
-    activeSection: string;
-    onNavigate: (section: string) => void;
     sidebarActive: boolean;
     setSidebarActive: (active: boolean) => void;
     onAvatarClick: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
-    activeSection,
-    onNavigate,
     sidebarActive,
     setSidebarActive,
     onAvatarClick
 }) => {
-    const [lang, setLang] = useState<'EN' | 'ID'>('EN');
+    const { lang, setLang, t, activeSection, setActiveSection } = useLanguage();
     const { user, loginWithGoogle, loginWithGitHub, logout } = useAuth();
 
 
     const menuItems = [
-        { id: 'home', label: 'Home', icon: <GoHome size={20} /> },
-        { id: 'about', label: 'About', icon: <FiUser size={20} /> },
-        { id: 'projects', label: 'Projects', icon: <FiBox size={20} /> },
-        { id: 'dashboard', label: 'Dashboard', icon: <LuLayoutGrid size={20} /> },
-        { id: 'contact', label: 'Contact', icon: <LuBook size={20} /> }
+        { id: 'home', label: t('nav.home'), icon: <GoHome size={20} /> },
+        { id: 'about', label: t('nav.about'), icon: <FiUser size={20} /> },
+        { id: 'projects', label: t('nav.projects'), icon: <FiBox size={20} /> },
+        { id: 'dashboard', label: t('nav.dashboard'), icon: <LuLayoutGrid size={20} /> },
+        { id: 'contact', label: t('nav.contact'), icon: <LuBook size={20} /> }
     ];
 
 
 
     const handleItemClick = (id: string) => {
-        onNavigate(id);
+        setActiveSection(id);
         if (window.innerWidth <= 768) {
             setSidebarActive(false);
         }
@@ -50,7 +47,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {/* PROFILE/AVATAR SECTION */}
             <div className="sidebar-profile">
                 <div className="sidebar-avatar" onClick={onAvatarClick}>
-                    <img src="assets/foto.jpg" alt="Bima Satya Mahendra" />
+                    <img src="/assets/foto.jpg" alt="Bima Satya Mahendra" />
                 </div>
                 <h3 className="sidebar-profile-name">
                     Bima Satya Mahendra <GoVerified className="verified-badge" />
@@ -120,16 +117,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 {!user ? (
                     <div className="auth-login-buttons">
                         <button onClick={loginWithGoogle} className="auth-btn google-btn">
-                            <i className="fab fa-google"></i> Login with Google
+                            <i className="fab fa-google"></i> {t('sidebar.loginGoogle')}
                         </button>
                         <button onClick={loginWithGitHub} className="auth-btn github-btn">
-                            <i className="fab fa-github"></i> Login with GitHub
+                            <i className="fab fa-github"></i> {t('sidebar.loginGitHub')}
                         </button>
                     </div>
                 ) : (
                     <div className="auth-user-info">
                         <img
-                            src={user.photoURL || 'assets/foto.jpg'}
+                            src={user.photoURL || '/assets/foto.jpg'}
                             alt={user.displayName || 'User'}
                             className="auth-user-avatar"
                         />
@@ -138,7 +135,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                 {user.displayName || 'User'}
                             </span>
                             <button onClick={logout} className="auth-logout-btn">
-                                <i className="fas fa-sign-out-alt"></i> Logout
+                                <i className="fas fa-sign-out-alt"></i> {t('sidebar.logout')}
                             </button>
                         </div>
                     </div>
@@ -150,8 +147,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
             {/* COPYRIGHT */}
             <div className="sidebar-copyright">
-                <p>COPYRIGHT © 2026</p>
-                <p className="copyright-author">Bima Satya. All rights reserved.</p>
+                <p>{t('sidebar.copyright1')}</p>
+                <p className="copyright-author">{t('sidebar.copyright2')}</p>
             </div>
         </aside>
     );

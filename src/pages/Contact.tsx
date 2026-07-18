@@ -2,8 +2,10 @@
 import React, { useState } from 'react';
 import { SiGmail, SiInstagram, SiGithub } from 'react-icons/si';
 import { FaLinkedin } from 'react-icons/fa';
+import { useLanguage } from '../context/LanguageContext';
 
 export const Contact: React.FC = () => {
+    const { t } = useLanguage();
     const [formName, setFormName] = useState('');
     const [formEmail, setFormEmail] = useState('');
     const [formMessage, setFormMessage] = useState('');
@@ -26,15 +28,15 @@ export const Contact: React.FC = () => {
     return (
         <section id="contact" className="section contact-page">
             <div className="contact-page-header">
-                <h1>Contact</h1>
-                <p>Let's get in touch.</p>
+                <h1>{t('contact.title')}</h1>
+                <p>{t('contact.subtitle')}</p>
             </div>
             <div className="contact-page-divider"></div>
             
-            <h2 className="contact-section-title">Find me on social media</h2>
+            <h2 className="contact-section-title">{t('contact.socialTitle')}</h2>
             
             <div className="contact-grid-container">
-                {/* Stay in Touch (Gmail) - Full Width */}
+                {/* Gmail Card */}
                 <a 
                     href="mailto:bmasatyaa@gmail.com" 
                     target="_blank" 
@@ -45,10 +47,10 @@ export const Contact: React.FC = () => {
                         <SiGmail size={180} />
                     </div>
                     <div className="contact-card-content">
-                        <h3>Stay in Touch</h3>
-                        <p>Reach out via email for inquiries or collaborations.</p>
+                        <h3>{t('contact.gmailTitle')}</h3>
+                        <p>{t('contact.gmailSub')}</p>
                         <span className="contact-card-btn btn-gmail">
-                            Go to Gmail <span className="arrow">↗</span>
+                            {t('contact.gmailBtn')} <span className="arrow">↗</span>
                         </span>
                     </div>
                     <div className="contact-card-icon">
@@ -56,7 +58,7 @@ export const Contact: React.FC = () => {
                     </div>
                 </a>
 
-                {/* Follow My Journey (Instagram) */}
+                {/* Instagram Card */}
                 <a 
                     href="https://www.instagram.com/bmasatyaa/" 
                     target="_blank" 
@@ -67,10 +69,10 @@ export const Contact: React.FC = () => {
                         <SiInstagram size={160} />
                     </div>
                     <div className="contact-card-content">
-                        <h3>Follow My Journey</h3>
-                        <p>Follow my creative journey.</p>
+                        <h3>{t('contact.igTitle')}</h3>
+                        <p>{t('contact.igSub')}</p>
                         <span className="contact-card-btn btn-instagram">
-                            Go to Instagram <span className="arrow">↗</span>
+                            {t('contact.igBtn')} <span className="arrow">↗</span>
                         </span>
                     </div>
                     <div className="contact-card-icon">
@@ -78,7 +80,7 @@ export const Contact: React.FC = () => {
                     </div>
                 </a>
 
-                {/* Let's Connect (LinkedIn) */}
+                {/* LinkedIn Card */}
                 <a 
                     href="https://www.linkedin.com/in/bimasatya/" 
                     target="_blank" 
@@ -89,10 +91,10 @@ export const Contact: React.FC = () => {
                         <FaLinkedin size={160} />
                     </div>
                     <div className="contact-card-content">
-                        <h3>Let's Connect</h3>
-                        <p>Connect with me professionally.</p>
+                        <h3>{t('contact.liTitle')}</h3>
+                        <p>{t('contact.liSub')}</p>
                         <span className="contact-card-btn btn-linkedin">
-                            Go to Linkedin <span className="arrow">↗</span>
+                            {t('contact.liBtn')} <span className="arrow">↗</span>
                         </span>
                     </div>
                     <div className="contact-card-icon">
@@ -100,7 +102,7 @@ export const Contact: React.FC = () => {
                     </div>
                 </a>
 
-                {/* Explore the Code (Github) - Full Width at bottom */}
+                {/* Github Card */}
                 <a 
                     href="https://github.com/BimaSatyaM" 
                     target="_blank" 
@@ -111,10 +113,10 @@ export const Contact: React.FC = () => {
                         <SiGithub size={180} />
                     </div>
                     <div className="contact-card-content">
-                        <h3>Explore the Code</h3>
-                        <p>Explore my open-source work.</p>
+                        <h3>{t('contact.ghTitle')}</h3>
+                        <p>{t('contact.ghSub')}</p>
                         <span className="contact-card-btn btn-github">
-                            Go to Github <span className="arrow">↗</span>
+                            {t('contact.ghBtn')} <span className="arrow">↗</span>
                         </span>
                     </div>
                     <div className="contact-card-icon">
@@ -125,37 +127,37 @@ export const Contact: React.FC = () => {
 
             {/* SEND ME A MESSAGE SECTION */}
             <div className="contact-form-section">
-                <h2 className="contact-section-title">Send me a message</h2>
+                <h2 className="contact-section-title">{t('contact.sendTitle')}</h2>
                 <form id="contactForm" className="contact-form" onSubmit={handleContactSubmit}>
                     <div className="form-group">
-                        <label>Name</label>
+                        <label>{t('contact.nameLabel')}</label>
                         <input
                             type="text"
                             id="name"
                             required
-                            placeholder="Your name"
+                            placeholder={t('contact.namePlaceholder')}
                             value={formName}
                             onChange={(e) => setFormName(e.target.value)}
                         />
                     </div>
                     <div className="form-group">
-                        <label>Email</label>
+                        <label>{t('contact.emailLabel')}</label>
                         <input
                             type="email"
                             id="email"
                             required
-                            placeholder="your@email.com"
+                            placeholder={t('contact.emailPlaceholder')}
                             value={formEmail}
                             onChange={(e) => setFormEmail(e.target.value)}
                         />
                     </div>
                     <div className="form-group">
-                        <label>Message</label>
+                        <label>{t('contact.msgLabel')}</label>
                         <textarea
                             id="message"
                             required
                             rows={5}
-                            placeholder="Your message..."
+                            placeholder={t('contact.msgPlaceholder')}
                             value={formMessage}
                             onChange={(e) => setFormMessage(e.target.value)}
                         ></textarea>
@@ -163,17 +165,17 @@ export const Contact: React.FC = () => {
                     <button type="submit" className="btn-primary" disabled={formStatus !== 'idle'}>
                         {formStatus === 'idle' && (
                             <>
-                                <i className="fas fa-paper-plane"></i> Send Message
+                                <i className="fas fa-paper-plane"></i> {t('contact.sendBtn')}
                             </>
                         )}
                         {formStatus === 'sending' && (
                             <>
-                                <i className="fas fa-spinner fa-spin"></i> Sending...
+                                <i className="fas fa-spinner fa-spin"></i> {t('contact.sendingBtn')}
                             </>
                         )}
                         {formStatus === 'sent' && (
                             <>
-                                <i className="fas fa-check"></i> Sent!
+                                <i className="fas fa-check"></i> {t('contact.sentBtn')}
                             </>
                         )}
                     </button>

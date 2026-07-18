@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import { db } from '../firebase/config';
 import { collection, addDoc, onSnapshot, doc, deleteDoc, serverTimestamp } from 'firebase/firestore';
 import { AVAILABLE_TECH, getTechIcon } from '../constants/techStack';
@@ -69,6 +70,7 @@ interface SkillDoc {
 }
 
 export const Dashboard: React.FC = () => {
+    const { t } = useLanguage();
     const { user, isAdmin } = useAuth();
     const [skillsList, setSkillsList] = useState<SkillDoc[]>([]);
 
@@ -214,9 +216,9 @@ export const Dashboard: React.FC = () => {
             <section id="dashboard" className="section" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', textAlign: 'center', padding: '40px 20px' }}>
                 <div className="auth-notice-card" style={{ maxWidth: '480px', padding: '40px 30px' }}>
                     <i className="fas fa-tools auth-notice-icon" style={{ fontSize: '48px', color: 'var(--primary)', marginBottom: '20px' }}></i>
-                    <h2 style={{ fontSize: '24px', fontWeight: '500', color: '#fff', marginBottom: '10px' }}>Dashboard</h2>
+                    <h2 style={{ fontSize: '24px', fontWeight: '500', color: '#fff', marginBottom: '10px' }}>{t('dashboard.title')}</h2>
                     <p style={{ fontSize: '15px', color: 'var(--text-secondary)', lineHeight: '1.6' }}>
-                        Dashboard features are still under development. Comeback later when updated!
+                        {t('dashboard.underConstruction')}
                     </p>
                 </div>
             </section>
@@ -230,9 +232,9 @@ export const Dashboard: React.FC = () => {
         <section id="dashboard" className="section">
             <div className="about-header">
                 <h2 className="about-title">
-                    <i className="fas fa-sliders-h" style={{ marginRight: '10px' }}></i>Dashboard Admin
+                    <i className="fas fa-sliders-h" style={{ marginRight: '10px' }}></i>{t('dashboard.title')} Admin
                 </h2>
-                <p className="about-subtitle">Manage skills, auto-classify technologies, and configure portfolio pages.</p>
+                <p className="about-subtitle">{t('dashboard.subtitle')}</p>
             </div>
             <div className="about-divider"></div>
 
