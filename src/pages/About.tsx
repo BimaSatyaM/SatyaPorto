@@ -2,7 +2,17 @@ import React from 'react';
 import { useLanguage } from '../context/LanguageContext';
 
 export const About: React.FC = () => {
-    const { t } = useLanguage();
+    const { t, lang } = useLanguage();
+    
+    // Dynamic CV paths based on active language
+    const cvPath = lang === 'ID' 
+        ? "/assets/cv/BIMA SATYA MAHENDRA-resume (id).pdf" 
+        : "/assets/cv/BIMA SATYA MAHENDRA-resume (en).pdf";
+        
+    const cvFilename = lang === 'ID'
+        ? "BIMA SATYA MAHENDRA-resume (id).pdf"
+        : "BIMA SATYA MAHENDRA-resume (en).pdf";
+
     return (
         <section id="about" className="section">
             <div className="about-header">
@@ -27,8 +37,8 @@ export const About: React.FC = () => {
             {/* CV DOWNLOAD SECTION */}
             <div className="cv-download-container" style={{ marginTop: '20px', marginBottom: '20px' }}>
                 <a 
-                    href="/assets/CV_Bima_Satya_Mahendra.pdf" 
-                    download="CV_Bima_Satya_Mahendra.pdf" 
+                    href={cvPath} 
+                    download={cvFilename} 
                     className="cv-download-box"
                 >
                     <div className="cv-download-left">
