@@ -12,29 +12,27 @@ export const About: React.FC = () => {
             </div>
             <div className="about-divider"></div>
 
-            <div className="about-content-box">
-                <div className="hero-page-content">
-                    <p>
-                        I'm Bima Satya Mahendra (Satya), currently studying at Informatics Departement, Sumatra Institute Of Technology.
-                        I have an interest in software engineering development, web3, blockchain technology, and AI, Especially web3 and AI. I’ve been spending most of my time building projects and improving my skills in those areas.
-                    </p>
-                    <p>
-                        Right now i'm still improving on my skills in several programming languages and frameworks since i'm still a student.
-                        especially blockchain and AI. I enjoy turning ideas into working products, while making sure the code is not just functional, but also clean, structured, and easy to maintain. For me, good software isn’t just about making things work, but it’s about building them the right way.
-                    </p>
-                    <p>
-                        Lately, I’ve been exploring blockchain and AI more deeply, experimenting with different tools and technologies, and understanding how systems actually work behind that.
-                    </p>
-                    <p>
-                        Recently, I’ve been working on project that called "ACTS (Adaptive Confluence Trading System)" a Self Learning Trading Bot. I’m still learning all of that and improving myself. I’m open to collaborations, opportunities, or just connecting with people in the same space.
-                    </p>
-                    <p>
-                        Best Regards,
-                    </p>
-                    <p className="about-signature">
-                        Bima Satya Mahendra
-                    </p>
-                </div>
+            <div className="hero-page-content">
+                <p>
+                    I'm Bima Satya Mahendra (Satya), currently studying at Informatics Departement, Sumatra Institute Of Technology.
+                    I have an interest in software engineering development, web3, blockchain technology, and AI, Especially web3 and AI. I’ve been spending most of my time building projects and improving my skills in those areas.
+                </p>
+                <p>
+                    Right now i'm still improving on my skills in several programming languages and frameworks since i'm still a student.
+                    especially blockchain and AI. I enjoy turning ideas into working products, while making sure the code is not just functional, but also clean, structured, and easy to maintain. For me, good software isn’t just about making things work, but it’s about building them the right way.
+                </p>
+                <p>
+                    Lately, I’ve been exploring blockchain and AI more deeply, experimenting with different tools and technologies, and understanding how systems actually work behind that.
+                </p>
+                <p>
+                    Recently, I’ve been working on project that called "ACTS (Adaptive Confluence Trading System)" a Self Learning Trading Bot. I’m still learning all of that and improving myself. I’m open to collaborations, opportunities, or just connecting with people in the same space.
+                </p>
+                <p>
+                    Best Regards,
+                </p>
+                <p className="about-signature">
+                    Bima Satya Mahendra
+                </p>
             </div>
 
             {/* CV DOWNLOAD SECTION */}
