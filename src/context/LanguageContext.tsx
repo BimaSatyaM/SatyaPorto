@@ -60,7 +60,7 @@ const translations: Record<Language, Record<string, string>> = {
         'about.edu2Details': 'Senior High School • Merdeka Curriculum',
         'about.edu2Meta': '2022 - 2025 • Bandar Lampung, Lampung, Indonesia',
         'projects.title': 'Featured Projects',
-        'projects.subtitle': 'A showcase of recent creations shared by our community.',
+        'projects.subtitle': 'A showcase of recent projects by me.',
         'projects.visit': 'Visit Project',
         'projects.selectReaction': 'Select Reaction',
         'projects.writeComment': 'Write a comment...',
