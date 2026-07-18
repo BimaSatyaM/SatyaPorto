@@ -49,7 +49,7 @@ const translations: Record<Language, Record<string, string>> = {
         'about.bio3': "Lately, I’ve been exploring blockchain and AI more deeply, experimenting with different tools and technologies, and understanding how systems actually work behind that.",
         'about.bio4': 'Recently, I’ve been working on project that called "ACTS (Adaptive Confluence Trading System)" a Self Learning Trading Bot. I’m still learning all of that and improving myself. I’m open to collaborations, opportunities, or just connecting with people in the same space.',
         'about.bestRegards': 'Best Regards,',
-        'about.cvTitle': 'Curriculum Vitae',
+        'about.cvTitle': 'Curriculum Vitae (CV)',
         'about.cvSubtitle': 'Download my professional resume (PDF)',
         'about.eduTitle': 'Education',
         'about.eduSubtitle': 'My educational journey.',
