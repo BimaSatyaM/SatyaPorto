@@ -159,7 +159,7 @@ const translations: Record<Language, Record<string, string>> = {
         'about.edu2Details': 'Sekolah Menengah Atas • Kurikulum Merdeka',
         'about.edu2Meta': '2022 - 2025 • Bandar Lampung, Lampung, Indonesia',
         'projects.title': 'Proyek Unggulan',
-        'projects.subtitle': 'Pameran kreasi terbaru yang dibagikan oleh komunitas kami.',
+        'projects.subtitle': 'Pameran proyek terbaru yang dibagikan oleh saya.',
         'projects.visit': 'Kunjungi Proyek',
         'projects.selectReaction': 'Pilih Reaksi',
         'projects.writeComment': 'Tulis komentar...',
