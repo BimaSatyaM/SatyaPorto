@@ -108,6 +108,25 @@ export const About: React.FC = () => {
             </div>
         </div>
 
+        <div className="about-divider"></div>
+
+        {/* EXPERIENCE SECTION */}
+        <div className="education-section" style={{ marginTop: '30px' }}>
+            <h3 className="education-section-title">
+                <i className="fas fa-briefcase"></i> {t('about.expTitle')}
+            </h3>
+            <p className="education-section-subtitle">{t('about.expSubtitle')}</p>
+            
+            <div className="education-list">
+                <div className="education-card" style={{ justifyContent: 'center', textAlign: 'center', padding: '40px 20px', borderStyle: 'dashed' }}>
+                    <p style={{ color: 'var(--text-secondary)', fontStyle: 'italic', fontSize: '15px' }}>
+                        <i className="fas fa-tools" style={{ marginRight: '8px' }}></i>
+                        {t('about.expPlaceholder')}
+                    </p>
+                </div>
+            </div>
+        </div>
+
     </section>
     );
 };
