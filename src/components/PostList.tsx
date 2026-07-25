@@ -442,12 +442,14 @@ export const PostList: React.FC<PostListProps> = ({
                                             className="project-card-image" 
                                         />
                                     ) : (
-                                        /* Placeholder Vector Mountain/Sun Illustration */
-                                        <svg className="placeholder-svg-mockup" viewBox="0 0 400 240" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                            <rect width="100%" height="100%" fill="#1a1a1a" />
-                                            <circle cx="200" cy="90" r="26" fill="#2d2d2d" />
-                                            <path d="M60 240 L180 130 L270 190 L340 150 L400 240 Z" fill="#242424" />
-                                        </svg>
+                                        <div className="project-card-placeholder">
+                                            <div className="placeholder-content">
+                                                <div className="placeholder-icon-animate">
+                                                    <i className="fas fa-laptop-code"></i>
+                                                </div>
+                                                <span className="placeholder-text">{t('projects.stillOnDevelopment')}</span>
+                                            </div>
+                                        </div>
                                     )}
 
                                     {/* Featured Ribbon Badge */}
