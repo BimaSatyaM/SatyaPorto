@@ -7,7 +7,7 @@ import { useLanguage } from '../context/LanguageContext';
 // Import exact React Icons matching the reference image
 import { GoHome, GoVerified } from 'react-icons/go';
 import { FiUser, FiBox, FiArrowRight } from 'react-icons/fi';
-import { LuLayoutGrid, LuBook } from 'react-icons/lu';
+import { LuLayoutGrid, LuBook, LuNewspaper } from 'react-icons/lu';
 
 
 interface SidebarProps {
@@ -29,6 +29,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         { id: 'home', label: t('nav.home'), icon: <GoHome size={20} /> },
         { id: 'about', label: t('nav.about'), icon: <FiUser size={20} /> },
         { id: 'projects', label: t('nav.projects'), icon: <FiBox size={20} /> },
+        { id: 'news', label: t('nav.news'), icon: <LuNewspaper size={20} /> },
         { id: 'dashboard', label: t('nav.dashboard'), icon: <LuLayoutGrid size={20} /> },
         { id: 'contact', label: t('nav.contact'), icon: <LuBook size={20} /> }
     ];

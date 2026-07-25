@@ -18,6 +18,7 @@ const translations: Record<Language, Record<string, string>> = {
         'nav.home': 'Home',
         'nav.about': 'About',
         'nav.projects': 'Projects',
+        'nav.news': 'News',
         'nav.dashboard': 'Dashboard',
         'nav.contact': 'Contact',
         'sidebar.guest': 'Guest Account',
@@ -73,6 +74,11 @@ const translations: Record<Language, Record<string, string>> = {
         'projects.noComments': 'No comments yet. Be the first to share your thoughts!',
         'projects.loginReact': 'Please login first to react',
         'projects.loginComment': 'Please login first to comment',
+        'news.title': 'Announcement Channel',
+        'news.subtitle': 'Broadcast messages and updates from Bima.',
+        'news.noMessages': 'No announcements posted yet.',
+        'news.inputPlaceholder': 'Type an announcement...',
+        'news.readOnlyNotice': 'Only Bima can post announcements here.',
         'contact.title': 'Contact',
         'contact.subtitle': "Let's get in touch.",
         'contact.socialTitle': 'Find me on social media',
@@ -123,6 +129,7 @@ const translations: Record<Language, Record<string, string>> = {
         'nav.home': 'Beranda',
         'nav.about': 'Tentang Saya',
         'nav.projects': 'Proyek',
+        'nav.news': 'Berita',
         'nav.dashboard': 'Dasbor',
         'nav.contact': 'Kontak',
         'sidebar.guest': 'Akun Tamu',
@@ -178,6 +185,11 @@ const translations: Record<Language, Record<string, string>> = {
         'projects.noComments': 'Belum ada komentar. Jadilah yang pertama membagikan pendapat Anda!',
         'projects.loginReact': 'Silakan login terlebih dahulu untuk memberikan reaksi',
         'projects.loginComment': 'Silakan login terlebih dahulu untuk memberikan komentar',
+        'news.title': 'Saluran Pengumuman',
+        'news.subtitle': 'Pesan siaran dan pembaruan dari Bima.',
+        'news.noMessages': 'Belum ada pengumuman yang diposting.',
+        'news.inputPlaceholder': 'Ketik pengumuman...',
+        'news.readOnlyNotice': 'Hanya Bima yang dapat memposting pengumuman di sini.',
         'contact.title': 'Hubungi',
         'contact.subtitle': 'Mari saling terhubung.',
         'contact.socialTitle': 'Temukan saya di media sosial',
@@ -226,7 +238,7 @@ const translations: Record<Language, Record<string, string>> = {
     }
 };
 
-const VALID_SECTIONS = ['home', 'about', 'projects', 'dashboard', 'contact'];
+const VALID_SECTIONS = ['home', 'about', 'projects', 'news', 'dashboard', 'contact'];
 
 const parseUrlPath = (): { section: string; lang: Language } => {
     const parts = window.location.pathname.toLowerCase().split('/').filter(Boolean);

@@ -12,6 +12,7 @@ const About = React.lazy(() => import('./pages/About').then(m => ({ default: m.A
 const Projects = React.lazy(() => import('./pages/Projects').then(m => ({ default: m.Projects })));
 const Contact = React.lazy(() => import('./pages/Contact').then(m => ({ default: m.Contact })));
 const Dashboard = React.lazy(() => import('./pages/Dashboard').then(m => ({ default: m.Dashboard })));
+const News = React.lazy(() => import('./pages/News').then(m => ({ default: m.News })));
 
 // Shimmer page skeleton loader component
 const PageSkeleton: React.FC = () => (
@@ -106,6 +107,7 @@ const PortfolioContent: React.FC = () => {
                             {activeSection === 'home' && <Home />}
                             {activeSection === 'about' && <About />}
                             {activeSection === 'projects' && <Projects />}
+                            {activeSection === 'news' && <News />}
                             {activeSection === 'contact' && <Contact />}
                             {activeSection === 'dashboard' && <Dashboard />}
                         </React.Suspense>
