@@ -593,9 +593,9 @@
 }
 
 .filter-pill-btn.active {
-    background: var(--primary);
-    border-color: var(--primary);
-    color: #000000;
+    background: rgba(56, 189, 248, 0.12);
+    border-color: transparent;
+    color: var(--primary);
 }
 
 /* Grid Layout */

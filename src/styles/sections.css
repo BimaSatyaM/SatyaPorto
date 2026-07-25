@@ -154,10 +154,10 @@
 /* Buttons */
 .btn-primary {
     padding: 14px 40px;
-    background: var(--primary);
-    color: #000;
+    background: rgba(56, 189, 248, 0.12);
+    color: var(--primary);
     border: none;
-    border-radius: 5px;
+    border-radius: 8px;
     font-weight: 700;
     font-size: 15px;
     cursor: pointer;
@@ -167,9 +167,14 @@
     transition: var(--ease);
 }
 
-.btn-primary:hover {
-    background: var(--primary-hover);
-    transform: scale(1.05);
+.btn-primary:hover:not(:disabled) {
+    background: rgba(56, 189, 248, 0.2);
+    transform: scale(1.02);
+}
+
+.btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 
 .btn-secondary {
