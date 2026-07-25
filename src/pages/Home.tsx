@@ -174,8 +174,6 @@ export const Home: React.FC = () => {
                     )}
                 </div>
 
-                <div className="about-divider"></div>
-
                 {/* Animated Warning Banner */}
                 <div className="skills-warning-banner">
                     <div className="warning-banner-icon">
