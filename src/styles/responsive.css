@@ -36,15 +36,15 @@
         justify-content: center;
         width: 36px;
         height: 36px;
-        border-radius: var(--radius-btn);
-        background: var(--primary);
-        color: #000;
-        border: none;
+        border-radius: 8px;
+        background: rgba(56, 189, 248, 0.12);
+        color: var(--primary);
+        border: 1.5px solid var(--primary);
         cursor: pointer;
         transition: var(--ease);
     }
     .menu-toggle:hover {
-        background: var(--primary-hover);
+        background: rgba(56, 189, 248, 0.24);
         transform: scale(1.05);
     }
 
