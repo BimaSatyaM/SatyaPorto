@@ -14,6 +14,7 @@ interface PostData {
     type?: 'web' | 'mobile';
     category?: 'personal' | 'internship' | 'freelance' | 'lomba';
     imageUrl?: string;
+    imageUrls?: string[];
     featured?: boolean;
 }
 
@@ -36,11 +37,13 @@ export const PostForm: React.FC<PostFormProps> = ({ editData, onCancelEdit }) =>
     const [projectLink, setProjectLink] = useState('');
     const [type, setType] = useState<'web' | 'mobile'>('web');
     const [category, setCategory] = useState<'personal' | 'internship' | 'freelance' | 'lomba'>('personal');
-    const [imageUrl, setImageUrl] = useState('');
+    const [imageUrls, setImageUrls] = useState<string[]>([]);
+    const [urlInput, setUrlInput] = useState('');
     const [featured, setFeatured] = useState(false);
     
     // Upload image states
     const [uploadingImage, setUploadingImage] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number } | null>(null);
 
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -54,7 +57,12 @@ export const PostForm: React.FC<PostFormProps> = ({ editData, onCancelEdit }) =>
             setProjectLink(editData.projectLink || '');
             setType(editData.type || 'web');
             setCategory(editData.category || 'personal');
-            setImageUrl(editData.imageUrl || '');
+            
+            const initialImages = (editData.imageUrls && editData.imageUrls.length > 0)
+                ? editData.imageUrls
+                : (editData.imageUrl ? [editData.imageUrl] : []);
+            setImageUrls(initialImages);
+            
             setFeatured(editData.featured || false);
         } else {
             setTitle('');
@@ -63,7 +71,8 @@ export const PostForm: React.FC<PostFormProps> = ({ editData, onCancelEdit }) =>
             setProjectLink('');
             setType('web');
             setCategory('personal');
-            setImageUrl('');
+            setImageUrls([]);
+            setUrlInput('');
             setFeatured(false);
         }
     }, [editData]);
@@ -87,7 +96,7 @@ export const PostForm: React.FC<PostFormProps> = ({ editData, onCancelEdit }) =>
                 const img = new Image();
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 800;
+                    const MAX_WIDTH = 1000;
                     let width = img.width;
                     let height = img.height;
 
@@ -102,7 +111,7 @@ export const PostForm: React.FC<PostFormProps> = ({ editData, onCancelEdit }) =>
                     const ctx = canvas.getContext('2d');
                     if (ctx) {
                         ctx.drawImage(img, 0, 0, width, height);
-                        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7); // 70% quality JPEG
+                        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.75); // 75% quality JPEG
                         resolve(compressedBase64);
                     } else {
                         resolve(event.target?.result as string);
@@ -115,38 +124,128 @@ export const PostForm: React.FC<PostFormProps> = ({ editData, onCancelEdit }) =>
         });
     };
 
-    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
+    const handleFilesChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = Array.from(e.target.files || []);
+        if (files.length === 0) return;
 
         setUploadingImage(true);
         setError(null);
+        setUploadProgress({ current: 0, total: files.length });
 
-        try {
-            // Race the Firebase Storage upload against a 3-second timeout
-            const uploadPromise = (async () => {
-                const storageRef = ref(storage, `project-images/${Date.now()}_${file.name}`);
-                const snapshot = await uploadBytes(storageRef, file);
-                return await getDownloadURL(snapshot.ref);
-            })();
+        const newUrls: string[] = [];
 
-            const timeoutPromise = new Promise<string>((_, reject) => 
-                setTimeout(() => reject(new Error('Firebase upload timed out')), 3000)
-            );
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            setUploadProgress({ current: i + 1, total: files.length });
 
-            const downloadUrl = await Promise.race([uploadPromise, timeoutPromise]);
-            setImageUrl(downloadUrl);
-        } catch (err: any) {
-            console.warn('Firebase Storage upload failed, falling back to compressed local Base64:', err);
             try {
-                const base64 = await compressAndConvertToBase64(file);
-                setImageUrl(base64);
-            } catch (fallbackErr: any) {
-                setError('Failed to process image: ' + fallbackErr.message);
+                // Race the Firebase Storage upload against a 3.5-second timeout
+                const uploadPromise = (async () => {
+                    const storageRef = ref(storage, `project-images/${Date.now()}_${i}_${file.name}`);
+                    const snapshot = await uploadBytes(storageRef, file);
+                    return await getDownloadURL(snapshot.ref);
+                })();
+
+                const timeoutPromise = new Promise<string>((_, reject) => 
+                    setTimeout(() => reject(new Error('Firebase upload timed out')), 3500)
+                );
+
+                const downloadUrl = await Promise.race([uploadPromise, timeoutPromise]);
+                newUrls.push(downloadUrl);
+            } catch (err) {
+                console.warn('Firebase Storage upload failed, falling back to compressed local Base64:', err);
+                try {
+                    const base64 = await compressAndConvertToBase64(file);
+                    newUrls.push(base64);
+                } catch (fallbackErr: any) {
+                    setError('Failed to process image: ' + fallbackErr.message);
+                }
             }
-        } finally {
-            setUploadingImage(false);
         }
+
+        setImageUrls(prev => [...prev, ...newUrls]);
+        setUploadingImage(false);
+        setUploadProgress(null);
+        e.target.value = ''; // Reset input so re-selecting same files works
+    };
+
+    const handlePaste = async (e: React.ClipboardEvent) => {
+        const items = e.clipboardData?.items;
+        if (!items) return;
+
+        const pastedFiles: File[] = [];
+        for (let i = 0; i < items.length; i++) {
+            if (items[i].type.indexOf('image') !== -1) {
+                const file = items[i].getAsFile();
+                if (file) {
+                    pastedFiles.push(file);
+                }
+            }
+        }
+
+        if (pastedFiles.length === 0) return;
+
+        e.preventDefault();
+        setUploadingImage(true);
+        setError(null);
+        setUploadProgress({ current: 0, total: pastedFiles.length });
+
+        const newUrls: string[] = [];
+        for (let i = 0; i < pastedFiles.length; i++) {
+            const file = pastedFiles[i];
+            setUploadProgress({ current: i + 1, total: pastedFiles.length });
+
+            try {
+                const uploadPromise = (async () => {
+                    const storageRef = ref(storage, `project-images/${Date.now()}_pasted_${i}_${file.name}`);
+                    const snapshot = await uploadBytes(storageRef, file);
+                    return await getDownloadURL(snapshot.ref);
+                })();
+
+                const timeoutPromise = new Promise<string>((_, reject) => 
+                    setTimeout(() => reject(new Error('Firebase upload timed out')), 3500)
+                );
+
+                const downloadUrl = await Promise.race([uploadPromise, timeoutPromise]);
+                newUrls.push(downloadUrl);
+            } catch (err) {
+                try {
+                    const base64 = await compressAndConvertToBase64(file);
+                    newUrls.push(base64);
+                } catch (fallbackErr: any) {
+                    setError('Failed to process pasted image: ' + fallbackErr.message);
+                }
+            }
+        }
+
+        setImageUrls(prev => [...prev, ...newUrls]);
+        setUploadingImage(false);
+        setUploadProgress(null);
+    };
+
+    const handleAddUrl = () => {
+        const trimmed = urlInput.trim();
+        if (trimmed) {
+            setImageUrls(prev => [...prev, trimmed]);
+            setUrlInput('');
+        }
+    };
+
+    const handleRemoveImage = (indexToRemove: number) => {
+        setImageUrls(prev => prev.filter((_, idx) => idx !== indexToRemove));
+    };
+
+    const handleMoveImage = (fromIndex: number, direction: 'left' | 'right') => {
+        const toIndex = direction === 'left' ? fromIndex - 1 : fromIndex + 1;
+        if (toIndex < 0 || toIndex >= imageUrls.length) return;
+
+        setImageUrls(prev => {
+            const updated = [...prev];
+            const item = updated[fromIndex];
+            updated.splice(fromIndex, 1);
+            updated.splice(toIndex, 0, item);
+            return updated;
+        });
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -164,6 +263,8 @@ export const PostForm: React.FC<PostFormProps> = ({ editData, onCancelEdit }) =>
         setSubmitting(true);
         setError(null);
 
+        const primaryImage = imageUrls.length > 0 ? imageUrls[0].trim() : null;
+
         try {
             if (editData) {
                 // Update existing post
@@ -175,7 +276,8 @@ export const PostForm: React.FC<PostFormProps> = ({ editData, onCancelEdit }) =>
                     projectLink: projectLink.trim() || null,
                     type,
                     category,
-                    imageUrl: imageUrl.trim() || null,
+                    imageUrl: primaryImage,
+                    imageUrls: imageUrls,
                     featured,
                     updatedAt: serverTimestamp()
                 });
@@ -190,7 +292,8 @@ export const PostForm: React.FC<PostFormProps> = ({ editData, onCancelEdit }) =>
                     projectLink: projectLink.trim() || null,
                     type,
                     category,
-                    imageUrl: imageUrl.trim() || null,
+                    imageUrl: primaryImage,
+                    imageUrls: imageUrls,
                     featured,
                     userId: user.uid,
                     userDisplayName: user.displayName || 'Anonymous User',
@@ -204,7 +307,8 @@ export const PostForm: React.FC<PostFormProps> = ({ editData, onCancelEdit }) =>
                 setProjectLink('');
                 setType('web');
                 setCategory('personal');
-                setImageUrl('');
+                setImageUrls([]);
+                setUrlInput('');
                 setFeatured(false);
             }
         } catch (err: any) {
@@ -234,18 +338,25 @@ export const PostForm: React.FC<PostFormProps> = ({ editData, onCancelEdit }) =>
         }
     };
 
-    // Filter matching options in autocomplete list
+    const handleSelectTechFromDropdown = (techName: string) => {
+        if (!selectedTechs.includes(techName)) {
+            setSelectedTechs((prev) => [...prev, techName]);
+        }
+        setTechInput('');
+        setIsDropdownOpen(false);
+    };
+
     const filteredTechs = AVAILABLE_TECH.filter(
-        (tech) =>
+        tech =>
             tech.name.toLowerCase().includes(techInput.toLowerCase()) &&
             !selectedTechs.includes(tech.name)
     );
 
     return (
-        <div className="post-form-container">
+        <div className="post-form-container" onPaste={handlePaste}>
             <h3 className="post-form-title">
-                <i className={editData ? "fas fa-edit" : "fas fa-plus-circle"}></i>
-                {editData ? 'Edit Project' : 'Share a New Project'}
+                <i className={`fas fa-${editData ? 'edit' : 'plus-circle'}`}></i>
+                {editData ? 'Edit Project Post' : 'Share New Project Post'}
             </h3>
 
             {error && (
@@ -255,68 +366,39 @@ export const PostForm: React.FC<PostFormProps> = ({ editData, onCancelEdit }) =>
             )}
 
             <form onSubmit={handleSubmit} className="post-form">
-                <div className="post-form-row">
-                    <div className="post-form-group flex-grow">
-                        <label htmlFor="title">Project Title</label>
-                        <input
-                            id="title"
-                            type="text"
-                            placeholder="e.g., E-Commerce Platform"
-                            value={title}
-                            onChange={(e) => setTitle(e.target.value)}
-                            className="post-input"
-                            required
-                        />
-                    </div>
-                </div>
-
-                <div className="post-form-row" style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
-                    <div className="post-form-group" style={{ flex: 1, minWidth: '150px' }}>
-                        <label htmlFor="type">Project Type</label>
-                        <select
-                            id="type"
-                            value={type}
-                            onChange={(e) => setType(e.target.value as 'web' | 'mobile')}
-                            className="post-select"
-                        >
-                            <option value="web">Web</option>
-                            <option value="mobile">Mobile</option>
-                        </select>
-                    </div>
-
-                    <div className="post-form-group" style={{ flex: 1, minWidth: '150px' }}>
-                        <label htmlFor="category">Category</label>
-                        <select
-                            id="category"
-                            value={category}
-                            onChange={(e) => setCategory(e.target.value as any)}
-                            className="post-select"
-                        >
-                            <option value="personal">Personal Project</option>
-                        </select>
-                    </div>
-                </div>
-
                 <div className="post-form-group">
-                    <label htmlFor="description">Description</label>
-                    <textarea
-                        id="description"
-                        placeholder="Tell the community about your project..."
-                        value={description}
-                        onChange={(e) => setDescription(e.target.value)}
-                        className="post-textarea"
+                    <label htmlFor="title">Project Title *</label>
+                    <input
+                        id="title"
+                        type="text"
+                        placeholder="e.g., Adaptive Confluence Trading Bot"
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
                         required
+                        className="post-input"
                     />
                 </div>
 
-                {/* SEARCHABLE AUTOCOMPLETE DROPDOWN TAG SELECTOR */}
-                <div className="post-form-group" ref={dropdownRef}>
-                    <label htmlFor="techSearch">Tech Stack</label>
+                <div className="post-form-group">
+                    <label htmlFor="description">Description *</label>
+                    <textarea
+                        id="description"
+                        placeholder="Describe your project, features, challenges, and solutions..."
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                        required
+                        rows={4}
+                        className="post-textarea"
+                    />
+                </div>
+
+                {/* TECH STACK AUTOCOMPLETE SELECTOR */}
+                <div className="post-form-group" ref={dropdownRef} style={{ position: 'relative' }}>
+                    <label>Tech Stack & Tools</label>
                     <div className="searchable-dropdown-container">
                         <input
-                            id="techSearch"
                             type="text"
-                            placeholder="Type CSS, React, Python... (Press Enter to add custom)"
+                            placeholder="Type to search tech stack (e.g. React, Flutter, Python, Go)..."
                             value={techInput}
                             onChange={(e) => {
                                 setTechInput(e.target.value);
@@ -328,17 +410,14 @@ export const PostForm: React.FC<PostFormProps> = ({ editData, onCancelEdit }) =>
                             autoComplete="off"
                         />
 
+                        {/* Autocomplete Dropdown List */}
                         {isDropdownOpen && (
                             <div className="searchable-dropdown-menu">
                                 <div className="dropdown-options-list">
                                     {filteredTechs.map((tech) => (
                                         <div
                                             key={tech.name}
-                                            onClick={() => {
-                                                handleToggleTech(tech.name);
-                                                setTechInput('');
-                                                setIsDropdownOpen(false);
-                                            }}
+                                            onClick={() => handleSelectTechFromDropdown(tech.name)}
                                             className="dropdown-option-item"
                                         >
                                             <span className="tech-option-pill">
@@ -351,34 +430,33 @@ export const PostForm: React.FC<PostFormProps> = ({ editData, onCancelEdit }) =>
                                     ))}
                                     {filteredTechs.length === 0 && (
                                         <div className="dropdown-no-results">
-                                            No matches. Press enter to add "{techInput}"
+                                            No predefined tech found. Press <kbd>Enter</kbd> to add custom "{techInput}"
                                         </div>
                                     )}
-                                </div>
-                                <div className="dropdown-footer">
-                                    <i className="fas fa-pencil-alt" title="Autocomplete search"></i>
                                 </div>
                             </div>
                         )}
                     </div>
 
-                    {/* Selected Tech Tags Capsule list */}
+                    {/* Selected Tech Tags Preview Pills */}
                     {selectedTechs.length > 0 && (
-                        <div className="selected-tech-tags-list">
+                        <div className="selected-tech-tags-wrapper">
                             {selectedTechs.map((tech) => {
-                                const info = AVAILABLE_TECH.find((t) => t.name === tech);
+                                const found = AVAILABLE_TECH.find(t => t.name.toLowerCase() === tech.toLowerCase());
+                                const color = found ? found.color : '#38bdf8';
                                 return (
-                                    <span key={tech} className="selected-tag-capsule">
-                                        {info && (
-                                            <span className="tag-capsule-icon" style={{ color: info.color }}>
-                                                {info.icon}
-                                            </span>
-                                        )}
+                                    <span 
+                                        key={tech} 
+                                        className="selected-tech-tag"
+                                        style={{ borderColor: `color-mix(in srgb, ${color} 40%, transparent)` }}
+                                    >
+                                        {found && <span style={{ color, marginRight: '6px' }}>{found.icon}</span>}
                                         {tech}
                                         <button
                                             type="button"
                                             onClick={() => handleToggleTech(tech)}
                                             className="remove-tag-btn"
+                                            title="Remove tag"
                                         >
                                             &times;
                                         </button>
@@ -389,56 +467,133 @@ export const PostForm: React.FC<PostFormProps> = ({ editData, onCancelEdit }) =>
                     )}
                 </div>
 
-                {/* DUAL IMAGE UPLOAD & URL SELECTOR ROW */}
-                <div className="post-form-row" style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'flex-start' }}>
-                    <div className="post-form-group" style={{ flex: 2, minWidth: '200px' }}>
-                        <label>Thumbnail Image</label>
-                        <div className="image-upload-wrapper" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                            {imageUrl ? (
-                                <div className="uploaded-image-preview-container" style={{ position: 'relative', width: '120px', height: '80px', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--border)' }}>
-                                    <img src={imageUrl} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                    <button 
-                                        type="button" 
-                                        onClick={() => setImageUrl('')} 
-                                        className="remove-preview-img-btn"
-                                        style={{ position: 'absolute', top: '4px', right: '4px', background: 'rgba(0,0,0,0.6)', border: 'none', color: '#fff', borderRadius: '50%', width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-                                    >
-                                        &times;
-                                    </button>
-                                </div>
-                            ) : (
-                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-                                    <label className="file-upload-label" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: '#1c1c1e', border: '1px solid var(--border)', borderRadius: '8px', padding: '10px 16px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-secondary)' }}>
-                                        <i className="fas fa-cloud-upload-alt"></i> Upload from Local
-                                        <input 
-                                            type="file" 
-                                            accept="image/*" 
-                                            onChange={handleFileChange} 
-                                            style={{ display: 'none' }} 
-                                        />
-                                    </label>
-                                    <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>or</span>
-                                    <input
-                                        id="imageUrl"
-                                        type="url"
-                                        placeholder="Paste image URL here..."
-                                        value={imageUrl}
-                                        onChange={(e) => setImageUrl(e.target.value)}
-                                        className="post-input"
-                                        style={{ flex: 1, margin: 0 }}
-                                    />
-                                </div>
-                            )}
-
-                            {uploadingImage && (
-                                <div style={{ fontSize: '12px', color: 'var(--primary)' }}>
-                                    <i className="fas fa-spinner post-spinner"></i> Uploading / compressing image...
-                                </div>
-                            )}
-                        </div>
+                {/* MULTI-PHOTO UPLOAD & PILE PREVIEW SECTION */}
+                <div className="post-form-group">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                        <label style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <i className="fas fa-images" style={{ color: 'var(--primary)' }}></i>
+                            Post Photos ({imageUrls.length})
+                        </label>
+                        {imageUrls.length > 0 && (
+                            <button
+                                type="button"
+                                onClick={() => setImageUrls([])}
+                                style={{ background: 'transparent', border: 'none', color: '#ef4444', fontSize: '12px', cursor: 'pointer' }}
+                            >
+                                Clear all photos
+                            </button>
+                        )}
                     </div>
 
-                    <div className="post-form-group" style={{ flex: 1, minWidth: '150px', display: 'flex', alignItems: 'center', marginTop: '30px' }}>
+                    <div className="image-upload-wrapper" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        {/* File upload + URL input controls row */}
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                            <label className="file-upload-label" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: '#1c1c1e', border: '1px solid var(--border)', borderRadius: '8px', padding: '10px 16px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-secondary)' }}>
+                                <i className="fas fa-cloud-upload-alt" style={{ color: 'var(--primary)' }}></i>
+                                Upload Photos (Multiple)
+                                <input 
+                                    type="file" 
+                                    accept="image/*" 
+                                    multiple
+                                    onChange={handleFilesChange} 
+                                    style={{ display: 'none' }} 
+                                />
+                            </label>
+                            <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>or</span>
+                            <div style={{ display: 'flex', flex: 1, minWidth: '220px', gap: '6px' }}>
+                                <input
+                                    type="url"
+                                    placeholder="Paste image URL..."
+                                    value={urlInput}
+                                    onChange={(e) => setUrlInput(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                            e.preventDefault();
+                                            handleAddUrl();
+                                        }
+                                    }}
+                                    className="post-input"
+                                    style={{ flex: 1, margin: 0 }}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={handleAddUrl}
+                                    className="post-submit-btn"
+                                    style={{ padding: '0 16px', height: '42px', fontSize: '13px', whiteSpace: 'nowrap' }}
+                                >
+                                    + Add URL
+                                </button>
+                            </div>
+                        </div>
+
+                        {uploadingImage && uploadProgress && (
+                            <div style={{ fontSize: '12px', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <i className="fas fa-spinner post-spinner"></i>
+                                Uploading / compressing photos ({uploadProgress.current} / {uploadProgress.total})...
+                            </div>
+                        )}
+
+                        {/* Multi-Photo Piled Thumbnails Strip Preview */}
+                        {imageUrls.length > 0 && (
+                            <div className="form-photos-preview-strip">
+                                {imageUrls.map((img, idx) => (
+                                    <div key={idx} className="form-photo-thumbnail-card">
+                                        <img src={img} alt={`Preview ${idx + 1}`} />
+                                        <span className="photo-thumbnail-order-badge">
+                                            {idx === 0 ? 'Cover' : `#${idx + 1}`}
+                                        </span>
+
+                                        <div className="form-photo-actions-overlay">
+                                            {idx > 0 && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleMoveImage(idx, 'left')}
+                                                    className="photo-action-btn"
+                                                    title="Move left"
+                                                >
+                                                    <i className="fas fa-chevron-left"></i>
+                                                </button>
+                                            )}
+                                            <button
+                                                type="button"
+                                                onClick={() => handleRemoveImage(idx)}
+                                                className="photo-action-btn delete"
+                                                title="Remove photo"
+                                            >
+                                                &times;
+                                            </button>
+                                            {idx < imageUrls.length - 1 && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleMoveImage(idx, 'right')}
+                                                    className="photo-action-btn"
+                                                    title="Move right"
+                                                >
+                                                    <i className="fas fa-chevron-right"></i>
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                <div className="post-form-row" style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'center' }}>
+                    <div className="post-form-group" style={{ flex: 2, minWidth: '220px' }}>
+                        <label htmlFor="projectLink">Project Link (optional)</label>
+                        <input
+                            id="projectLink"
+                            type="url"
+                            placeholder="e.g., https://github.com/..."
+                            value={projectLink}
+                            onChange={(e) => setProjectLink(e.target.value)}
+                            className="post-input"
+                        />
+                    </div>
+
+                    <div className="post-form-group" style={{ flex: 1, minWidth: '150px', display: 'flex', alignItems: 'center', marginTop: '10px' }}>
                         <label className="checkbox-label" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px', color: '#fff' }}>
                             <input
                                 type="checkbox"
@@ -450,18 +605,6 @@ export const PostForm: React.FC<PostFormProps> = ({ editData, onCancelEdit }) =>
                             Featured Project
                         </label>
                     </div>
-                </div>
-
-                <div className="post-form-group">
-                    <label htmlFor="projectLink">Project Link (optional)</label>
-                    <input
-                        id="projectLink"
-                        type="url"
-                        placeholder="e.g., https://github.com/..."
-                        value={projectLink}
-                        onChange={(e) => setProjectLink(e.target.value)}
-                        className="post-input"
-                    />
                 </div>
 
                 <div className="post-submit-btn-row">
@@ -478,7 +621,7 @@ export const PostForm: React.FC<PostFormProps> = ({ editData, onCancelEdit }) =>
                     <button
                         type="submit"
                         className="post-submit-btn"
-                        disabled={submitting}
+                        disabled={submitting || uploadingImage}
                     >
                         {submitting ? (
                             <>

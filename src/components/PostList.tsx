@@ -4,6 +4,7 @@ import { db } from '../firebase/config';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { getTechIcon } from '../constants/techStack';
+import { ImageModal } from './ImageModal';
 
 interface Comment {
     id: string;
@@ -11,6 +12,7 @@ interface Comment {
     userDisplayName: string;
     userPhotoURL?: string;
     text: string;
+    imageUrl?: string;
     createdAt: number;
 }
 
@@ -30,6 +32,7 @@ interface Post {
     type?: 'web' | 'mobile';
     category?: 'personal' | 'internship' | 'freelance' | 'lomba';
     imageUrl?: string;
+    imageUrls?: string[];
     featured?: boolean;
 }
 
@@ -94,10 +97,17 @@ export const PostList: React.FC<PostListProps> = ({
     const [selectedType, setSelectedType] = useState<string>('all');
     const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
+    // Multi-photo slider and modal state
+    const [activeImageIndices, setActiveImageIndices] = useState<Record<string, number>>({});
+    const [previewModal, setPreviewModal] = useState<{ images: string[]; initialIndex: number } | null>(null);
+
     // Track expanded comments section per post
     const [expandedComments, setExpandedComments] = useState<Record<string, boolean>>({});
     // Track comment input values per post
     const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
+    // Track comment attached image per post
+    const [commentImages, setCommentImages] = useState<Record<string, string>>({});
+    const [commentUploading, setCommentUploading] = useState<Record<string, boolean>>({});
 
     // Track which post has the emoji picker dropdown open
     const [activePickerPostId, setActivePickerPostId] = useState<string | null>(null);
@@ -220,6 +230,82 @@ export const PostList: React.FC<PostListProps> = ({
         }
     };
 
+    const compressCommentImage = (file: File): Promise<string> => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = (event) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 800;
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > MAX_WIDTH) {
+                        height = Math.round((height * MAX_WIDTH) / width);
+                        width = MAX_WIDTH;
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+
+                    const ctx = canvas.getContext('2d');
+                    if (ctx) {
+                        ctx.drawImage(img, 0, 0, width, height);
+                        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.75);
+                        resolve(compressedBase64);
+                    } else {
+                        resolve(event.target?.result as string);
+                    }
+                };
+                img.onerror = (err) => reject(err);
+                img.src = event.target?.result as string;
+            };
+            reader.onerror = (err) => reject(err);
+        });
+    };
+
+    const handleCommentPaste = async (e: React.ClipboardEvent, postId: string) => {
+        const items = e.clipboardData?.items;
+        if (!items) return;
+
+        for (let i = 0; i < items.length; i++) {
+            if (items[i].type.indexOf('image') !== -1) {
+                const file = items[i].getAsFile();
+                if (file) {
+                    e.preventDefault();
+                    setCommentUploading(prev => ({ ...prev, [postId]: true }));
+                    try {
+                        const base64 = await compressCommentImage(file);
+                        setCommentImages(prev => ({ ...prev, [postId]: base64 }));
+                    } catch (err) {
+                        console.error('Failed to process pasted image:', err);
+                    } finally {
+                        setCommentUploading(prev => ({ ...prev, [postId]: false }));
+                    }
+                    break;
+                }
+            }
+        }
+    };
+
+    const handleCommentFileSelect = async (e: React.ChangeEvent<HTMLInputElement>, postId: string) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setCommentUploading(prev => ({ ...prev, [postId]: true }));
+        try {
+            const base64 = await compressCommentImage(file);
+            setCommentImages(prev => ({ ...prev, [postId]: base64 }));
+        } catch (err) {
+            console.error('Failed to process selected image:', err);
+        } finally {
+            setCommentUploading(prev => ({ ...prev, [postId]: false }));
+        }
+        e.target.value = '';
+    };
+
     const handleAddComment = async (e: React.FormEvent, postId: string) => {
         e.preventDefault();
         if (!user) {
@@ -228,7 +314,8 @@ export const PostList: React.FC<PostListProps> = ({
         }
 
         const commentText = commentInputs[postId] || '';
-        if (!commentText.trim()) return;
+        const attachedImage = commentImages[postId] || undefined;
+        if (!commentText.trim() && !attachedImage) return;
 
         const postRef = doc(db, 'posts', postId);
         const newComment: Comment = {
@@ -237,6 +324,7 @@ export const PostList: React.FC<PostListProps> = ({
             userDisplayName: user.displayName || 'Anonymous User',
             userPhotoURL: user.photoURL || undefined,
             text: commentText.trim(),
+            imageUrl: attachedImage,
             createdAt: Date.now()
         };
 
@@ -244,8 +332,12 @@ export const PostList: React.FC<PostListProps> = ({
             await updateDoc(postRef, {
                 comments: arrayUnion(newComment)
             });
-            // Reset input
+            // Reset input and attached image
             setCommentInputs((prev) => ({
+                ...prev,
+                [postId]: ''
+            }));
+            setCommentImages((prev) => ({
                 ...prev,
                 [postId]: ''
             }));
@@ -431,15 +523,56 @@ export const PostList: React.FC<PostListProps> = ({
                         const postComments = post.comments || [];
                         const isCommentsOpen = expandedComments[post.id] || false;
 
+                        const postImages: string[] = (post.imageUrls && post.imageUrls.length > 0)
+                            ? post.imageUrls
+                            : (post.imageUrl ? [post.imageUrl] : []);
+                        const activeIdx = activeImageIndices[post.id] || 0;
+                        const safeIdx = Math.min(activeIdx, Math.max(0, postImages.length - 1));
+                        const currentImg = postImages[safeIdx];
+                        const isMultiple = postImages.length > 1;
+
+                        const handlePrevImage = (e: React.MouseEvent) => {
+                            e.stopPropagation();
+                            setActiveImageIndices(prev => ({
+                                ...prev,
+                                [post.id]: (safeIdx > 0 ? safeIdx - 1 : postImages.length - 1)
+                            }));
+                        };
+
+                        const handleNextImage = (e: React.MouseEvent) => {
+                            e.stopPropagation();
+                            setActiveImageIndices(prev => ({
+                                ...prev,
+                                [post.id]: (safeIdx < postImages.length - 1 ? safeIdx + 1 : 0)
+                            }));
+                        };
+
                         return (
                             <div key={post.id} className="project-grid-card">
                                 {/* Thumbnail Image Section */}
-                                <div className="project-card-image-wrapper">
-                                    {post.imageUrl ? (
+                                <div 
+                                    className={`project-card-image-wrapper ${isMultiple ? 'photo-pile-container' : ''}`}
+                                    onClick={() => {
+                                        if (postImages.length > 0) {
+                                            setPreviewModal({ images: postImages, initialIndex: safeIdx });
+                                        }
+                                    }}
+                                    style={{ cursor: postImages.length > 0 ? 'pointer' : 'default' }}
+                                >
+                                    {/* Visual stacked layers behind for realistic photo pile effect */}
+                                    {isMultiple && (
+                                        <>
+                                            <div className="photo-pile-layer layer-2" />
+                                            <div className="photo-pile-layer layer-1" />
+                                        </>
+                                    )}
+
+                                    {postImages.length > 0 ? (
                                         <img 
-                                            src={post.imageUrl} 
-                                            alt={post.title} 
-                                            className="project-card-image" 
+                                            key={`${post.id}-${safeIdx}`}
+                                            src={currentImg} 
+                                            alt={`${post.title} - ${safeIdx + 1}`} 
+                                            className="project-card-image photo-fade-in" 
                                         />
                                     ) : (
                                         <div className="project-card-placeholder">
@@ -457,6 +590,51 @@ export const PostList: React.FC<PostListProps> = ({
                                         <span className="featured-ribbon-badge">
                                             <i className="fas fa-thumbtack"></i> Featured
                                         </span>
+                                    )}
+
+                                    {/* Multi-Photo Pile Count Badge */}
+                                    {isMultiple && (
+                                        <span className="photo-pile-badge" title={`${postImages.length} photos in this post`}>
+                                            <i className="fas fa-images"></i> {safeIdx + 1}/{postImages.length}
+                                        </span>
+                                    )}
+
+                                    {/* Prev / Next Navigation Buttons */}
+                                    {isMultiple && (
+                                        <>
+                                            <button 
+                                                type="button"
+                                                className="photo-pile-nav-btn prev"
+                                                onClick={handlePrevImage}
+                                                aria-label="Previous photo"
+                                                title="Previous photo"
+                                            >
+                                                <i className="fas fa-chevron-left"></i>
+                                            </button>
+                                            <button 
+                                                type="button"
+                                                className="photo-pile-nav-btn next"
+                                                onClick={handleNextImage}
+                                                aria-label="Next photo"
+                                                title="Next photo"
+                                            >
+                                                <i className="fas fa-chevron-right"></i>
+                                            </button>
+
+                                            {/* Bottom mini indicator dots */}
+                                            <div className="photo-pile-dots-container">
+                                                {postImages.map((_, dotIdx) => (
+                                                    <span 
+                                                        key={dotIdx} 
+                                                        className={`photo-pile-dot ${dotIdx === safeIdx ? 'active' : ''}`}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setActiveImageIndices(prev => ({ ...prev, [post.id]: dotIdx }));
+                                                        }}
+                                                    />
+                                                ))}
+                                            </div>
+                                        </>
                                     )}
                                 </div>
 
@@ -653,7 +831,16 @@ export const PostList: React.FC<PostListProps> = ({
                                                                         </button>
                                                                     )}
                                                                 </div>
-                                                                <p className="comment-text">{comment.text}</p>
+                                                                {comment.text && <p className="comment-text">{comment.text}</p>}
+                                                                {comment.imageUrl && (
+                                                                    <div 
+                                                                        className="comment-attached-img-container"
+                                                                        onClick={() => setPreviewModal({ images: [comment.imageUrl!], initialIndex: 0 })}
+                                                                        title="Click to view full photo"
+                                                                    >
+                                                                        <img src={comment.imageUrl} alt="Attached photo" />
+                                                                    </div>
+                                                                )}
                                                             </div>
                                                         </div>
                                                     ))}
@@ -662,18 +849,55 @@ export const PostList: React.FC<PostListProps> = ({
 
                                             {user ? (
                                                 <form onSubmit={(e) => handleAddComment(e, post.id)} className="comment-form">
-                                                    <input 
-                                                        type="text" 
-                                                        placeholder={t('projects.writeComment')} 
-                                                        value={commentInputs[post.id] || ''} 
-                                                        onChange={(e) => handleCommentInputChange(post.id, e.target.value)}
-                                                        className="comment-input"
-                                                        maxLength={300}
-                                                        required
-                                                    />
-                                                    <button type="submit" className="comment-send-btn">
-                                                        <i className="fas fa-paper-plane"></i>
-                                                    </button>
+                                                    {/* Attached Image Thumbnail Preview */}
+                                                    {commentImages[post.id] && (
+                                                        <div className="comment-preview-attached-box">
+                                                            <img src={commentImages[post.id]} alt="Attachment Preview" />
+                                                            <button 
+                                                                type="button" 
+                                                                onClick={() => setCommentImages(prev => ({ ...prev, [post.id]: '' }))}
+                                                                className="comment-preview-remove-btn"
+                                                                title="Remove attached photo"
+                                                            >
+                                                                &times;
+                                                            </button>
+                                                        </div>
+                                                    )}
+
+                                                    <div className="comment-input-row" style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
+                                                        <label 
+                                                            className="comment-attach-btn" 
+                                                            title="Attach or Paste (Ctrl+V) a photo"
+                                                        >
+                                                            <i className="fas fa-camera"></i>
+                                                            <input 
+                                                                type="file" 
+                                                                accept="image/*" 
+                                                                onChange={(e) => handleCommentFileSelect(e, post.id)} 
+                                                                style={{ display: 'none' }} 
+                                                            />
+                                                        </label>
+                                                        <input 
+                                                            type="text" 
+                                                            placeholder={t('projects.writeComment')} 
+                                                            value={commentInputs[post.id] || ''} 
+                                                            onChange={(e) => handleCommentInputChange(post.id, e.target.value)}
+                                                            onPaste={(e) => handleCommentPaste(e, post.id)}
+                                                            className="comment-input"
+                                                            maxLength={300}
+                                                        />
+                                                        <button 
+                                                            type="submit" 
+                                                            className="comment-send-btn"
+                                                            disabled={commentUploading[post.id]}
+                                                        >
+                                                            {commentUploading[post.id] ? (
+                                                                <i className="fas fa-spinner post-spinner"></i>
+                                                            ) : (
+                                                                <i className="fas fa-paper-plane"></i>
+                                                            )}
+                                                        </button>
+                                                    </div>
                                                 </form>
                                             ) : (
                                                 <p style={{ fontSize: '11px', color: 'var(--text-secondary)', textAlign: 'center', marginTop: '4px' }}>
@@ -711,6 +935,16 @@ export const PostList: React.FC<PostListProps> = ({
                         }}
                     />
                 </div>
+            )}
+
+            {/* FULLSCREEN MULTI-IMAGE VIEWER MODAL */}
+            {previewModal && (
+                <ImageModal
+                    isOpen={true}
+                    images={previewModal.images}
+                    initialIndex={previewModal.initialIndex}
+                    onClose={() => setPreviewModal(null)}
+                />
             )}
         </div>
     );
