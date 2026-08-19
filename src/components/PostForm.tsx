@@ -47,6 +47,7 @@ export const PostForm: React.FC<PostFormProps> = ({ editData, onCancelEdit }) =>
 
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const lastPasteTimestampRef = useRef<number>(0);
 
     // Populate form fields if editing
     useEffect(() => {
@@ -170,14 +171,25 @@ export const PostForm: React.FC<PostFormProps> = ({ editData, onCancelEdit }) =>
     };
 
     const handlePaste = async (e: React.ClipboardEvent) => {
+        // Prevent duplicate trigger within 250ms
+        const now = Date.now();
+        if (now - lastPasteTimestampRef.current < 250) {
+            return;
+        }
+        lastPasteTimestampRef.current = now;
+
         const items = e.clipboardData?.items;
         if (!items) return;
 
         const pastedFiles: File[] = [];
+        const seenSizes = new Set<number>();
+
         for (let i = 0; i < items.length; i++) {
-            if (items[i].type.indexOf('image') !== -1) {
-                const file = items[i].getAsFile();
-                if (file) {
+            const item = items[i];
+            if (item.type && item.type.startsWith('image/')) {
+                const file = item.getAsFile();
+                if (file && file.size > 0 && !seenSizes.has(file.size)) {
+                    seenSizes.add(file.size);
                     pastedFiles.push(file);
                 }
             }

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { db } from '../firebase/config';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
+import { ImageModal } from '../components/ImageModal';
 import { 
     collection, 
     addDoc, 
@@ -22,6 +23,7 @@ interface NewsMessage {
     userPhotoURL?: string;
     userId?: string;
     fileUrl?: string;
+    fileUrls?: string[];
     fileName?: string;
     fileType?: 'image' | 'file';
     reactions?: Record<string, string[]>;
@@ -34,15 +36,22 @@ export const News: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [inputText, setInputText] = useState('');
     const [sending, setSending] = useState(false);
-    const [selectedFile, setSelectedFile] = useState<File | null>(null);
-    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-    const [previewMessage, setPreviewMessage] = useState<NewsMessage | null>(null);
+    
+    // Multi-photo state for attachments
+    const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+    const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+    
+    // Multi-photo carousel & fullscreen modal state
+    const [activePhotoIndices, setActivePhotoIndices] = useState<Record<string, number>>({});
+    const [previewModal, setPreviewModal] = useState<{ images: string[]; initialIndex: number } | null>(null);
+
     const [activePickerMsgId, setActivePickerMsgId] = useState<string | null>(null);
     const [tooltipState, setTooltipState] = useState<{ msgId: string; key: string } | null>(null);
 
     const chatEndRef = useRef<HTMLDivElement | null>(null);
     const fileInputRef = useRef<HTMLInputElement | null>(null);
     const pickerRef = useRef<HTMLDivElement>(null);
+    const lastPasteTimestampRef = useRef<number>(0);
 
     const COMMON_EMOJIS = [
         '👍', '❤️', '🔥', '🚀', '💡', '🎉', '🤪', '🍉', '🌐', 
@@ -108,88 +117,29 @@ export const News: React.FC = () => {
         }
     }, [messages]);
 
-    // Clean up preview object URL to prevent memory leaks
+    // Clean up preview object URLs when component unmounts
     useEffect(() => {
         return () => {
-            if (previewUrl) URL.revokeObjectURL(previewUrl);
+            previewUrls.forEach(url => URL.revokeObjectURL(url));
         };
-    }, [previewUrl]);
+    }, [previewUrls]);
 
-    // Handle sending message/announcement
-    const handleSend = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!user || !isAdmin) return;
-
-        // Require either message text or an attached file
-        if (!inputText.trim() && !selectedFile) return;
-
-        setSending(true);
-        try {
-            let downloadUrl = '';
-            let fileName = '';
-            let fileType: 'image' | 'file' | undefined = undefined;
-
-            if (selectedFile) {
-                const isImageFile = (f: File): boolean => {
-                    if (f.type && f.type.startsWith('image/')) return true;
-                    const ext = f.name.split('.').pop()?.toLowerCase();
-                    const imageExtensions = ['png', 'jpg', 'jpeg', 'webp', 'gif', 'svg', 'heic', 'heif', 'bmp'];
-                    return !!ext && imageExtensions.includes(ext);
-                };
-                if (!isImageFile(selectedFile)) {
-                    alert('Only image files are allowed.');
-                    setSending(false);
-                    return;
-                }
-                fileName = selectedFile.name;
-                fileType = 'image';
-
-                console.log('Bypassing Firebase Storage, compressing image to Base64 locally...');
-                downloadUrl = await compressAndConvertToBase64(selectedFile);
-                console.log('Base64 image compression completed successfully');
-            }
-
-            console.log('Adding document to news Firestore collection...');
-            const newsCollection = collection(db, 'news');
-            await addDoc(newsCollection, {
-                text: inputText.trim(),
-                fileUrl: downloadUrl || null,
-                fileName: fileName || null,
-                fileType: fileType || null,
-                createdAt: serverTimestamp(),
-                userId: user.uid,
-                userDisplayName: user.displayName || 'Bima Satya Mahendra',
-                userPhotoURL: user.photoURL || '/assets/foto.jpg'
-            });
-            console.log('Firestore news document added successfully!');
-
-            // Clear inputs
-            setInputText('');
-            setSelectedFile(null);
-            if (previewUrl) {
-                URL.revokeObjectURL(previewUrl);
-                setPreviewUrl(null);
-            }
-        } catch (err: any) {
-            console.error('Error sending announcement:', err);
-            alert('Failed to send announcement: ' + (err.message || err));
-        } finally {
-            setSending(false);
-        }
+    const isImageFile = (f: File): boolean => {
+        if (f.type && f.type.startsWith('image/')) return true;
+        const ext = f.name.split('.').pop()?.toLowerCase();
+        const imageExtensions = ['png', 'jpg', 'jpeg', 'webp', 'gif', 'svg', 'heic', 'heif', 'bmp'];
+        return !!ext && imageExtensions.includes(ext);
     };
 
     const compressAndConvertToBase64 = (file: File): Promise<string> => {
-        console.log('compressAndConvertToBase64 started for file:', file.name);
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.readAsDataURL(file);
             reader.onload = (event) => {
-                console.log('FileReader finished reading file as data URL');
                 const img = new Image();
                 img.onload = () => {
-                    console.log('Image object loaded successfully. Dimensions:', img.width, 'x', img.height);
                     const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 800;
+                    const MAX_WIDTH = 900;
                     let width = img.width;
                     let height = img.height;
 
@@ -204,56 +154,134 @@ export const News: React.FC = () => {
                     const ctx = canvas.getContext('2d');
                     if (ctx) {
                         ctx.drawImage(img, 0, 0, width, height);
-                        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7); // 70% quality JPEG
-                        console.log('Image compressed successfully. Base64 length:', compressedBase64.length);
+                        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.75);
                         resolve(compressedBase64);
                     } else {
-                        console.warn('Canvas 2D context not available. Resolving with raw base64');
                         resolve(event.target?.result as string);
                     }
                 };
-                img.onerror = (err) => {
-                    console.error('Image object loading failed:', err);
-                    reject(err);
-                };
-                console.log('Setting image src URL...');
+                img.onerror = (err) => reject(err);
                 img.src = event.target?.result as string;
             };
-            reader.onerror = (err) => {
-                console.error('FileReader failed:', err);
-                reject(err);
-            };
+            reader.onerror = (err) => reject(err);
         });
     };
 
-    // Handle file selection (attachment)
+    // Handle file selection (multi-file)
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file || !user || !isAdmin) {
-            console.log('File selection cancelled or not admin/logged in');
+        const files = Array.from(e.target.files || []);
+        if (files.length === 0 || !user || !isAdmin) return;
+
+        const validImageFiles = files.filter(isImageFile);
+        if (validImageFiles.length === 0) {
+            alert('Only image files are allowed.');
             return;
         }
 
-        console.log('handleFileChange selected file:', file.name, 'size:', file.size, 'type:', file.type);
-        setSelectedFile(file);
+        const newPreviews = validImageFiles.map(f => URL.createObjectURL(f));
+        setSelectedFiles(prev => [...prev, ...validImageFiles]);
+        setPreviewUrls(prev => [...prev, ...newPreviews]);
+        e.target.value = '';
+    };
 
-        const isImageFile = (f: File): boolean => {
-            if (f.type && f.type.startsWith('image/')) return true;
-            const ext = f.name.split('.').pop()?.toLowerCase();
-            const imageExtensions = ['png', 'jpg', 'jpeg', 'webp', 'gif', 'svg', 'heic', 'heif', 'bmp'];
-            return !!ext && imageExtensions.includes(ext);
+    // Handle pasting image from clipboard (Ctrl+V)
+    const handlePaste = (e: React.ClipboardEvent | ClipboardEvent) => {
+        if (!user || !isAdmin) return;
+
+        // Prevent duplicate firing within 250ms
+        const now = Date.now();
+        if (now - lastPasteTimestampRef.current < 250) {
+            return;
+        }
+        lastPasteTimestampRef.current = now;
+
+        const items = e.clipboardData?.items;
+        if (!items) return;
+
+        const newPastedFiles: File[] = [];
+        const seenSizes = new Set<number>();
+
+        for (let i = 0; i < items.length; i++) {
+            const item = items[i];
+            if (item.type && item.type.startsWith('image/')) {
+                const file = item.getAsFile();
+                if (file && file.size > 0 && !seenSizes.has(file.size)) {
+                    seenSizes.add(file.size);
+                    newPastedFiles.push(file);
+                }
+            }
+        }
+
+        if (newPastedFiles.length > 0) {
+            e.preventDefault();
+            const newPreviews = newPastedFiles.map(f => URL.createObjectURL(f));
+            setSelectedFiles(prev => [...prev, ...newPastedFiles]);
+            setPreviewUrls(prev => [...prev, ...newPreviews]);
+        }
+    };
+
+    // Listen for global Ctrl+V pasting anywhere on the Announcement Channel
+    useEffect(() => {
+        const onGlobalPaste = (e: ClipboardEvent) => {
+            if (!user || !isAdmin) return;
+            handlePaste(e);
         };
+        window.addEventListener('paste', onGlobalPaste);
+        return () => window.removeEventListener('paste', onGlobalPaste);
+    }, [user, isAdmin]);
 
-        if (!isImageFile(file)) {
-            alert('Only image files are allowed. Please select an image.');
-            if (e.target) e.target.value = '';
-            setSelectedFile(null);
-            setPreviewUrl(null);
-            return;
+    // Remove single attached file
+    const handleRemoveFile = (indexToRemove: number) => {
+        setSelectedFiles(prev => prev.filter((_, idx) => idx !== indexToRemove));
+        setPreviewUrls(prev => {
+            if (prev[indexToRemove]) URL.revokeObjectURL(prev[indexToRemove]);
+            return prev.filter((_, idx) => idx !== indexToRemove);
+        });
+    };
+
+    // Handle sending message/announcement with multi-photos
+    const handleSend = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!user || !isAdmin) return;
+
+        // Require either message text or at least one attached photo
+        if (!inputText.trim() && selectedFiles.length === 0) return;
+
+        setSending(true);
+        try {
+            const uploadedUrls: string[] = [];
+
+            if (selectedFiles.length > 0) {
+                for (const file of selectedFiles) {
+                    const base64 = await compressAndConvertToBase64(file);
+                    uploadedUrls.push(base64);
+                }
+            }
+
+            const newsCollection = collection(db, 'news');
+            await addDoc(newsCollection, {
+                text: inputText.trim(),
+                fileUrl: uploadedUrls[0] || null,
+                fileUrls: uploadedUrls,
+                fileName: selectedFiles.length > 0 ? selectedFiles[0].name : null,
+                fileType: uploadedUrls.length > 0 ? 'image' : null,
+                createdAt: serverTimestamp(),
+                userId: user.uid,
+                userDisplayName: user.displayName || 'Bima Satya Mahendra',
+                userPhotoURL: user.photoURL || '/assets/foto.jpg'
+            });
+
+            // Clear inputs
+            setInputText('');
+            previewUrls.forEach(url => URL.revokeObjectURL(url));
+            setSelectedFiles([]);
+            setPreviewUrls([]);
+        } catch (err: any) {
+            console.error('Error sending announcement:', err);
+            alert('Failed to send announcement: ' + (err.message || err));
+        } finally {
+            setSending(false);
         }
-
-        const objectUrl = URL.createObjectURL(file);
-        setPreviewUrl(objectUrl);
     };
 
     // Handle deleting announcement
@@ -268,6 +296,7 @@ export const News: React.FC = () => {
             alert('Failed to delete announcement: ' + (err.message || err));
         }
     };
+
     // Handle toggling reaction
     const handleReact = async (msgId: string, emoji: string, currentReactions: Record<string, string[]> | undefined) => {
         if (!user) {
@@ -298,6 +327,7 @@ export const News: React.FC = () => {
             console.error('Error toggling news reaction:', err);
         }
     };
+
     const formatMessageTime = (createdAt: any) => {
         if (!createdAt) return '';
         const date = createdAt.seconds ? new Date(createdAt.seconds * 1000) : new Date(createdAt);
@@ -335,195 +365,271 @@ export const News: React.FC = () => {
                             <p>{t('news.noMessages')}</p>
                         </div>
                     ) : (
-                        messages.map((msg) => (
-                            <div key={msg.id} className="chat-message-item admin-message">
-                                <img 
-                                    src={msg.userPhotoURL || '/assets/foto.jpg'} 
-                                    alt={msg.userDisplayName || 'Bima Satya Mahendra'} 
-                                    className="chat-avatar"
-                                />
-                                <div className="chat-message-content">
-                                    <div className="chat-message-header">
-                                        <span className="chat-sender-name">
-                                            {msg.userDisplayName || 'Bima Satya Mahendra'}
-                                        </span>
-                                        <span className="chat-sender-badge">Admin</span>
-                                        <span className="chat-timestamp">
-                                            {formatMessageTime(msg.createdAt)}
-                                        </span>
-                                    </div>
-                                    <div className="chat-bubble-container">
-                                        <div className="chat-bubble">
-                                            {msg.fileUrl && (
-                                                msg.fileType === 'image' ? (
-                                                    <img 
-                                                        src={msg.fileUrl} 
-                                                        alt="Attachment" 
-                                                        className="chat-bubble-image" 
-                                                        onClick={() => setPreviewMessage(msg)}
-                                                        style={{ cursor: 'pointer' }}
-                                                    />
-                                                ) : (
-                                                    <a href={msg.fileUrl} target="_blank" rel="noopener noreferrer" className="chat-file-attachment">
-                                                        <i className="fas fa-file-alt chat-file-icon"></i>
-                                                        <span className="chat-file-name" title={msg.fileName || 'Attachment'}>
-                                                            {msg.fileName || 'Attachment'}
-                                                        </span>
-                                                        <i className="fas fa-download chat-file-download"></i>
-                                                    </a>
-                                                )
-                                            )}
-                                            {msg.text && <p style={{ margin: 0 }}>{msg.text}</p>}
-                                            
-                                            {/* Render active reactions inside bubble */}
-                                            {msg.reactions && Object.entries(msg.reactions).filter(([_, uids]) => uids && uids.length > 0).length > 0 && (
-                                                <div className="chat-reactions-row" style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '8px', alignItems: 'center' }}>
-                                                    {Object.entries(msg.reactions)
-                                                        .filter(([_, uids]) => uids && uids.length > 0)
-                                                        .sort((a, b) => b[1].length - a[1].length)
-                                                        .map(([emoji, uids]) => {
-                                                            const hasReacted = user && uids.includes(user.uid);
-                                                            const showTooltip = tooltipState && tooltipState.msgId === msg.id && tooltipState.key === emoji;
+                        messages.map((msg) => {
+                            const allImages = (msg.fileUrls && msg.fileUrls.length > 0)
+                                ? msg.fileUrls
+                                : (msg.fileUrl ? [msg.fileUrl] : []);
+                            const activeImgIndex = activePhotoIndices[msg.id] || 0;
+                            const isMultiPhoto = allImages.length > 1;
 
-                                                            return (
-                                                                <div key={emoji} style={{ position: 'relative', display: 'inline-block' }}>
-                                                                    {showTooltip && (
-                                                                        <div className="reaction-login-tooltip" style={{ bottom: '100%', left: '50%', transform: 'translateX(-50%)', marginBottom: '8px' }}>
-                                                                            {t('projects.loginReact')}
-                                                                        </div>
-                                                                    )}
+                            return (
+                                <div key={msg.id} className="chat-message-item admin-message">
+                                    <img 
+                                        src={msg.userPhotoURL || '/assets/foto.jpg'} 
+                                        alt={msg.userDisplayName || 'Bima Satya Mahendra'} 
+                                        className="chat-avatar"
+                                    />
+                                    <div className="chat-message-content">
+                                        <div className="chat-message-header">
+                                            <span className="chat-sender-name">
+                                                {msg.userDisplayName || 'Bima Satya Mahendra'}
+                                            </span>
+                                            <span className="chat-sender-badge">Admin</span>
+                                            <span className="chat-timestamp">
+                                                {formatMessageTime(msg.createdAt)}
+                                            </span>
+                                        </div>
+                                        <div className="chat-bubble-container">
+                                            <div className="chat-bubble" style={{ maxWidth: '440px', padding: allImages.length > 0 ? '8px 10px' : '10px 16px' }}>
+                                                {/* Piled-Up Multi-Photo Stack Gallery */}
+                                                {allImages.length > 0 && (
+                                                    <div 
+                                                        className="photo-pile-container" 
+                                                        style={{ 
+                                                            marginBottom: msg.text ? '8px' : '0', 
+                                                            position: 'relative',
+                                                            padding: isMultiPhoto ? '4px' : '0'
+                                                        }}
+                                                    >
+                                                        {isMultiPhoto && <div className="photo-pile-layer layer-1"></div>}
+                                                        {allImages.length > 2 && <div className="photo-pile-layer layer-2"></div>}
+
+                                                        <div 
+                                                            className="photo-pile-img-wrapper"
+                                                            style={{
+                                                                borderRadius: '8px',
+                                                                overflow: 'hidden',
+                                                                position: 'relative',
+                                                                zIndex: 1,
+                                                                background: '#09090b',
+                                                                border: '1px solid rgba(255, 255, 255, 0.1)'
+                                                            }}
+                                                        >
+                                                            {isMultiPhoto && (
+                                                                <div className="photo-pile-badge">
+                                                                    <i className="fas fa-images"></i>
+                                                                    <span>{activeImgIndex + 1}/{allImages.length}</span>
+                                                                </div>
+                                                            )}
+
+                                                            <img 
+                                                                key={activeImgIndex}
+                                                                src={allImages[activeImgIndex]} 
+                                                                alt="Attachment" 
+                                                                className="chat-bubble-image photo-fade-in" 
+                                                                onClick={() => setPreviewModal({ images: allImages, initialIndex: activeImgIndex })}
+                                                                style={{ 
+                                                                    cursor: 'pointer', 
+                                                                    width: '100%', 
+                                                                    maxHeight: '340px', 
+                                                                    objectFit: 'contain',
+                                                                    display: 'block'
+                                                                }}
+                                                            />
+
+                                                            {/* In-Card Slider Navigation Arrows */}
+                                                            {isMultiPhoto && (
+                                                                <>
                                                                     <button 
+                                                                        type="button" 
+                                                                        className="photo-pile-nav-btn prev"
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            setActivePhotoIndices(prev => ({
+                                                                                ...prev,
+                                                                                [msg.id]: ((prev[msg.id] || 0) - 1 + allImages.length) % allImages.length
+                                                                            }));
+                                                                        }}
+                                                                        title="Previous photo"
+                                                                    >
+                                                                        <i className="fas fa-chevron-left"></i>
+                                                                    </button>
+                                                                    <button 
+                                                                        type="button" 
+                                                                        className="photo-pile-nav-btn next"
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            setActivePhotoIndices(prev => ({
+                                                                                ...prev,
+                                                                                [msg.id]: ((prev[msg.id] || 0) + 1) % allImages.length
+                                                                            }));
+                                                                        }}
+                                                                        title="Next photo"
+                                                                    >
+                                                                        <i className="fas fa-chevron-right"></i>
+                                                                    </button>
+
+                                                                    {/* Indicator Dots */}
+                                                                    <div className="photo-pile-dots-container">
+                                                                        {allImages.map((_, dotIdx) => (
+                                                                            <span 
+                                                                                key={dotIdx} 
+                                                                                className={`photo-pile-dot ${activeImgIndex === dotIdx ? 'active' : ''}`}
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation();
+                                                                                    setActivePhotoIndices(prev => ({ ...prev, [msg.id]: dotIdx }));
+                                                                                }}
+                                                                            />
+                                                                        ))}
+                                                                    </div>
+                                                                </>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {msg.text && <p style={{ margin: 0 }}>{msg.text}</p>}
+                                                
+                                                {/* Render active reactions inside bubble */}
+                                                {msg.reactions && Object.entries(msg.reactions).filter(([_, uids]) => uids && uids.length > 0).length > 0 && (
+                                                    <div className="chat-reactions-row" style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '8px', alignItems: 'center' }}>
+                                                        {Object.entries(msg.reactions)
+                                                            .filter(([_, uids]) => uids && uids.length > 0)
+                                                            .sort((a, b) => b[1].length - a[1].length)
+                                                            .map(([emoji, uids]) => {
+                                                                const hasReacted = user && uids.includes(user.uid);
+                                                                const showTooltip = tooltipState && tooltipState.msgId === msg.id && tooltipState.key === emoji;
+
+                                                                return (
+                                                                    <div key={emoji} style={{ position: 'relative', display: 'inline-block' }}>
+                                                                        {showTooltip && (
+                                                                            <div className="reaction-login-tooltip" style={{ bottom: '100%', left: '50%', transform: 'translateX(-50%)', marginBottom: '8px' }}>
+                                                                                {t('projects.loginReact')}
+                                                                            </div>
+                                                                        )}
+                                                                        <button 
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                handleReact(msg.id, emoji, msg.reactions);
+                                                                            }} 
+                                                                            className={`reaction-pill-btn ${hasReacted ? 'active' : ''}`}
+                                                                            style={{ padding: '3px 8px', height: '24px', borderRadius: '12px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border)', color: '#fff', cursor: 'pointer' }}
+                                                                        >
+                                                                            <span>{emoji}</span> 
+                                                                            <span>{uids.length}</span>
+                                                                        </button>
+                                                                    </div>
+                                                                );
+                                                            })}
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Smiley reaction button next to bubble, visible on hover */}
+                                            <div className="chat-reaction-action-container">
+                                                {tooltipState && tooltipState.msgId === msg.id && tooltipState.key === 'add-btn' && (
+                                                    <div className="reaction-login-tooltip" style={{ bottom: '100%', left: '50%', transform: 'translateX(-50%)', marginBottom: '8px' }}>
+                                                        {t('projects.loginReact')}
+                                                    </div>
+                                                )}
+                                                <button 
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        if (!user) {
+                                                            triggerLoginTooltip(msg.id, 'add-btn');
+                                                            return;
+                                                        }
+                                                        setActivePickerMsgId(activePickerMsgId === msg.id ? null : msg.id);
+                                                    }} 
+                                                    className={`chat-reaction-trigger-btn ${activePickerMsgId === msg.id ? 'active' : ''}`}
+                                                    title="Add reaction"
+                                                >
+                                                    <i className="far fa-smile"></i>
+                                                </button>
+
+                                                {/* Floating Emoji Picker Popover */}
+                                                {activePickerMsgId === msg.id && (
+                                                    <div className="chat-floating-emoji-picker" ref={pickerRef}>
+                                                        <div className="picker-inline-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                                                            <span style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 700 }}>{t('projects.selectReaction')}</span>
+                                                            <button 
+                                                                className="picker-inline-close-btn"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setActivePickerMsgId(null);
+                                                                }}
+                                                                style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}
+                                                            >
+                                                                <i className="fas fa-times"></i>
+                                                            </button>
+                                                        </div>
+                                                        <div className="picker-inline-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '6px', maxHeight: '150px', overflowY: 'auto', paddingRight: '4px' }}>
+                                                            {COMMON_EMOJIS.map((emoji) => {
+                                                                const uids = (msg.reactions && msg.reactions[emoji]) || [];
+                                                                const hasReacted = user && uids.includes(user.uid);
+                                                                return (
+                                                                    <button
+                                                                        key={emoji}
                                                                         onClick={(e) => {
                                                                             e.stopPropagation();
                                                                             handleReact(msg.id, emoji, msg.reactions);
-                                                                        }} 
-                                                                        className={`reaction-pill-btn ${hasReacted ? 'active' : ''}`}
-                                                                        style={{ padding: '3px 8px', height: '24px', borderRadius: '12px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border)', color: '#fff', cursor: 'pointer' }}
+                                                                            setActivePickerMsgId(null);
+                                                                        }}
+                                                                        className={`picker-inline-emoji-btn ${hasReacted ? 'active' : ''}`}
+                                                                        style={{ background: hasReacted ? 'rgba(56, 189, 248, 0.15)' : 'transparent', border: 'none', fontSize: '16px', padding: '4px', cursor: 'pointer', borderRadius: '4px', transition: 'all 0.1s' }}
                                                                     >
-                                                                        <span>{emoji}</span> 
-                                                                        <span>{uids.length}</span>
+                                                                        {emoji}
                                                                     </button>
-                                                                </div>
-                                                            );
-                                                        })}
-                                                </div>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Deletion controls */}
+                                            {user && isAdmin && (
+                                                <button
+                                                    onClick={() => handleDeleteMessage(msg.id)}
+                                                    className="chat-action-delete"
+                                                    title="Delete Message"
+                                                    style={{ marginLeft: '4px' }}
+                                                >
+                                                    <i className="fas fa-trash-alt"></i>
+                                                </button>
                                             )}
                                         </div>
-
-                                        {/* Smiley reaction button next to bubble, visible on hover */}
-                                        <div className="chat-reaction-action-container">
-                                            {tooltipState && tooltipState.msgId === msg.id && tooltipState.key === 'add-btn' && (
-                                                <div className="reaction-login-tooltip" style={{ bottom: '100%', left: '50%', transform: 'translateX(-50%)', marginBottom: '8px' }}>
-                                                    {t('projects.loginReact')}
-                                                </div>
-                                            )}
-                                            <button 
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    if (!user) {
-                                                        triggerLoginTooltip(msg.id, 'add-btn');
-                                                        return;
-                                                    }
-                                                    setActivePickerMsgId(activePickerMsgId === msg.id ? null : msg.id);
-                                                }}
-                                                className={`chat-reaction-trigger-btn ${activePickerMsgId === msg.id ? 'active' : ''}`}
-                                                title="Add reaction"
-                                            >
-                                                <i className="far fa-smile"></i>
-                                            </button>
-
-                                            {/* Floating Emoji Picker Popover */}
-                                            {activePickerMsgId === msg.id && (
-                                                <div className="chat-floating-emoji-picker" ref={pickerRef}>
-                                                    <div className="picker-inline-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                                                        <span style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 700 }}>{t('projects.selectReaction')}</span>
-                                                        <button 
-                                                            className="picker-inline-close-btn"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                setActivePickerMsgId(null);
-                                                            }}
-                                                            style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}
-                                                        >
-                                                            <i className="fas fa-times"></i>
-                                                        </button>
-                                                    </div>
-                                                    <div className="picker-inline-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '6px', maxHeight: '150px', overflowY: 'auto', paddingRight: '4px' }}>
-                                                        {COMMON_EMOJIS.map((emoji) => {
-                                                            const uids = (msg.reactions && msg.reactions[emoji]) || [];
-                                                            const hasReacted = user && uids.includes(user.uid);
-                                                            return (
-                                                                <button
-                                                                    key={emoji}
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        handleReact(msg.id, emoji, msg.reactions);
-                                                                        setActivePickerMsgId(null);
-                                                                    }}
-                                                                    className={`picker-inline-emoji-btn ${hasReacted ? 'active' : ''}`}
-                                                                    style={{ background: hasReacted ? 'rgba(56, 189, 248, 0.15)' : 'transparent', border: 'none', fontSize: '16px', padding: '4px', cursor: 'pointer', borderRadius: '4px', transition: 'all 0.1s' }}
-                                                                >
-                                                                    {emoji}
-                                                                </button>
-                                                            );
-                                                        })}
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        {/* Deletion controls */}
-                                        {user && isAdmin && (
-                                            <button
-                                                onClick={() => handleDeleteMessage(msg.id)}
-                                                className="chat-action-delete"
-                                                title="Delete Message"
-                                                style={{ marginLeft: '4px' }}
-                                            >
-                                                <i className="fas fa-trash-alt"></i>
-                                            </button>
-                                        )}
                                     </div>
                                 </div>
-                            </div>
-                        ))
+                            );
+                        })
                     )}
                     <div ref={chatEndRef} />
                 </div>
 
-                {/* Attachment Preview Bar */}
-                {user && isAdmin && selectedFile && (
+                {/* Multi-Photo Attachment Preview Bar */}
+                {user && isAdmin && previewUrls.length > 0 && (
                     <div className="chat-attachment-preview-bar">
-                        {previewUrl ? (
-                            <div className="chat-preview-thumbnail-wrapper">
-                                <img src={previewUrl} alt="Preview" className="chat-preview-thumbnail" />
+                        {previewUrls.map((url, idx) => (
+                            <div key={idx} className="chat-preview-thumbnail-wrapper">
+                                <img src={url} alt={`Preview ${idx + 1}`} className="chat-preview-thumbnail" />
+                                <span className="photo-thumbnail-order-badge" style={{ bottom: '2px', left: '2px', fontSize: '8px', padding: '1px 4px' }}>
+                                    #{idx + 1}
+                                </span>
                                 <button 
                                     type="button" 
-                                    onClick={() => { setSelectedFile(null); setPreviewUrl(null); }} 
+                                    onClick={() => handleRemoveFile(idx)} 
                                     className="chat-preview-close-btn"
-                                    title="Remove attachment"
+                                    title="Remove photo"
                                 >
                                     <i className="fas fa-times"></i>
                                 </button>
                             </div>
-                        ) : (
-                            <div className="chat-preview-file-card">
-                                <i className="fas fa-file-alt chat-file-icon" style={{ fontSize: '16px' }}></i>
-                                <span className="chat-preview-info">{selectedFile.name}</span>
-                                <button 
-                                    type="button" 
-                                    onClick={() => setSelectedFile(null)} 
-                                    className="chat-preview-close-btn"
-                                    title="Remove attachment"
-                                >
-                                    <i className="fas fa-times"></i>
-                                </button>
-                            </div>
-                        )}
+                        ))}
                     </div>
                 )}
 
-                {/* Input Area / Read-Only Panel */}
+                {/* Input Area */}
                 <div className="chat-input-area">
                     {user && isAdmin ? (
                         <form onSubmit={handleSend} className="chat-input-form">
@@ -532,6 +638,7 @@ export const News: React.FC = () => {
                                 ref={fileInputRef}
                                 onChange={handleFileChange}
                                 accept="image/*"
+                                multiple
                                 style={{ display: 'none' }}
                                 disabled={sending}
                             />
@@ -540,7 +647,7 @@ export const News: React.FC = () => {
                                 className="chat-attach-btn"
                                 onClick={() => fileInputRef.current?.click()}
                                 disabled={sending}
-                                title="Attach Photo"
+                                title="Attach Photos (Multi-select supported)"
                             >
                                 <i className="far fa-image"></i>
                             </button>
@@ -555,7 +662,8 @@ export const News: React.FC = () => {
                             <button
                                 type="submit"
                                 className="chat-send-btn"
-                                disabled={sending || (!inputText.trim() && !selectedFile)}
+                                disabled={sending || (!inputText.trim() && selectedFiles.length === 0)}
+                                title="Send Announcement"
                             >
                                 {sending ? <i className="fas fa-spinner post-spinner"></i> : <i className="fas fa-paper-plane"></i>}
                             </button>
@@ -569,49 +677,14 @@ export const News: React.FC = () => {
                 </div>
             </div>
 
-            {/* Custom Full Image Preview Lightbox */}
-            {previewMessage && (
-                <div className="chat-lightbox" onClick={(e) => {
-                    if (e.target === e.currentTarget) setPreviewMessage(null);
-                }}>
-                    {/* Header */}
-                    <div className="chat-lightbox-header">
-                        <button 
-                            type="button" 
-                            onClick={() => setPreviewMessage(null)} 
-                            className="chat-lightbox-back-btn"
-                            title="Back to chat"
-                        >
-                            <i className="fas fa-arrow-left"></i>
-                        </button>
-                        <div className="chat-lightbox-sender">
-                            <img 
-                                src={previewMessage.userPhotoURL || '/assets/foto.jpg'} 
-                                alt={previewMessage.userDisplayName || 'Bima Satya Mahendra'} 
-                                className="chat-lightbox-avatar"
-                            />
-                            <div className="chat-lightbox-info">
-                                <span className="chat-lightbox-name">
-                                    {previewMessage.userDisplayName || 'Bima Satya Mahendra'}
-                                </span>
-                                <span className="chat-lightbox-time">
-                                    {formatMessageTime(previewMessage.createdAt)}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    {/* Image Area */}
-                    <div className="chat-lightbox-content" onClick={() => setPreviewMessage(null)}>
-                        <img 
-                            src={previewMessage.fileUrl} 
-                            alt="Attachment Full View" 
-                            className="chat-lightbox-image" 
-                            onClick={(e) => e.stopPropagation()} 
-                        />
-                    </div>
-                </div>
-            )}
+            {/* Fullscreen Multi-Photo Image Modal */}
+            <ImageModal 
+                isOpen={!!previewModal}
+                images={previewModal?.images}
+                imageSrc={previewModal ? previewModal.images[previewModal.initialIndex] : ''}
+                initialIndex={previewModal?.initialIndex || 0}
+                onClose={() => setPreviewModal(null)}
+            />
         </section>
     );
 };

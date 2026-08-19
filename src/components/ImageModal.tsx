@@ -1,5 +1,6 @@
 // ===== src/components/ImageModal.tsx =====
 import React, { useEffect, useState, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 
 interface ImageModalProps {
     isOpen: boolean;
@@ -16,7 +17,6 @@ export const ImageModal: React.FC<ImageModalProps> = ({
     initialIndex = 0, 
     onClose 
 }) => {
-    const [renderState, setRenderState] = useState<'closed' | 'opening' | 'open' | 'closing'>('closed');
     const [currentIndex, setCurrentIndex] = useState(initialIndex);
 
     // Normalize images list
@@ -25,15 +25,6 @@ export const ImageModal: React.FC<ImageModalProps> = ({
     useEffect(() => {
         if (isOpen) {
             setCurrentIndex(initialIndex);
-            setRenderState('opening');
-            const timer = setTimeout(() => setRenderState('open'), 10);
-            return () => clearTimeout(timer);
-        } else {
-            if (renderState === 'open' || renderState === 'opening') {
-                setRenderState('closing');
-                const timer = setTimeout(() => setRenderState('closed'), 250);
-                return () => clearTimeout(timer);
-            }
         }
     }, [isOpen, initialIndex]);
 
@@ -65,15 +56,15 @@ export const ImageModal: React.FC<ImageModalProps> = ({
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [isOpen, allImages.length, handlePrev, handleNext, onClose]);
 
-    if (renderState === 'closed' || allImages.length === 0) return null;
+    // Do NOT render into DOM if closed or no images
+    if (!isOpen || allImages.length === 0) return null;
 
     const currentImg = allImages[currentIndex] || allImages[0];
 
-    return (
+    return createPortal(
         <div 
             id="imageModal" 
-            className={`image-modal ${renderState === 'open' ? 'show' : ''}`}
-            style={{ display: 'flex' }}
+            className="image-modal show"
             onClick={(e) => {
                 if (e.target === e.currentTarget) {
                     onClose();
@@ -93,7 +84,7 @@ export const ImageModal: React.FC<ImageModalProps> = ({
             {/* Left navigation arrow */}
             {allImages.length > 1 && (
                 <button 
-                    type="button"
+                    type="button" 
                     className="image-modal-nav-btn prev"
                     onClick={handlePrev}
                     aria-label="Previous Image"
@@ -116,7 +107,7 @@ export const ImageModal: React.FC<ImageModalProps> = ({
             {/* Right navigation arrow */}
             {allImages.length > 1 && (
                 <button 
-                    type="button"
+                    type="button" 
                     className="image-modal-nav-btn next"
                     onClick={handleNext}
                     aria-label="Next Image"
@@ -143,6 +134,7 @@ export const ImageModal: React.FC<ImageModalProps> = ({
                     ))}
                 </div>
             )}
-        </div>
+        </div>,
+        document.body
     );
 };
