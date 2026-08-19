@@ -64,6 +64,11 @@
     .content-wrapper { 
         padding: 16px 8px; 
     }
+
+    .content-wrapper:has(#news) {
+        padding: 56px 12px 12px 12px;
+        height: 100vh;
+    }
     
     .hero { 
         padding: 60px 16px 32px; 
