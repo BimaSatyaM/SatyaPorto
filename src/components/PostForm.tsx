@@ -16,6 +16,8 @@ interface PostData {
     imageUrl?: string;
     imageUrls?: string[];
     featured?: boolean;
+    timeline?: string;
+    projectStatus?: 'ongoing' | 'completed';
 }
 
 interface PostFormProps {
@@ -40,6 +42,97 @@ export const PostForm: React.FC<PostFormProps> = ({ editData, onCancelEdit }) =>
     const [imageUrls, setImageUrls] = useState<string[]>([]);
     const [urlInput, setUrlInput] = useState('');
     const [featured, setFeatured] = useState(false);
+    const [timeline, setTimeline] = useState('');
+    const [projectStatus, setProjectStatus] = useState<'ongoing' | 'completed'>('ongoing');
+
+    // Calendar date picker states
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
+    const [isOngoing, setIsOngoing] = useState(true);
+
+    const formatDateToDisplay = (dateStr: string): string => {
+        if (!dateStr) return '';
+        const [year, month, day] = dateStr.split('-');
+        if (!year || !month || !day) return dateStr;
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec'];
+        const monthName = months[parseInt(month, 10) - 1] || month;
+        const dayNum = parseInt(day, 10);
+        return `${dayNum} ${monthName} ${year}`;
+    };
+
+    const computeTimeline = (start: string, end: string, ongoing: boolean): string => {
+        if (!start) return '';
+        const formattedStart = formatDateToDisplay(start);
+        if (ongoing) {
+            return `${formattedStart} - Present`;
+        }
+        if (end) {
+            const formattedEnd = formatDateToDisplay(end);
+            return `${formattedStart} - ${formattedEnd}`;
+        }
+        return formattedStart;
+    };
+
+    const parseTimelineToDates = (timelineStr: string) => {
+        if (!timelineStr) return { start: '', end: '', isPresent: true };
+        const isPresent = timelineStr.toLowerCase().includes('present');
+        const parts = timelineStr.split(/\s*-\s*/);
+        const startPart = parts[0]?.trim() || '';
+        const endPart = parts[1]?.replace(/\(Done\)/i, '').replace(/\(Completed\)/i, '').trim() || '';
+
+        const parsePartToYMD = (str: string): string => {
+            if (!str) return '';
+            if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+            const match = str.match(/(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})/);
+            if (match) {
+                const day = match[1].padStart(2, '0');
+                const monthStr = match[2].toLowerCase();
+                const year = match[3];
+                const monthMap: Record<string, string> = {
+                    jan: '01', feb: '02', mar: '03', apr: '04', may: '05', jun: '06',
+                    jul: '07', juli: '07', aug: '08', agt: '08', sep: '09', sept: '09',
+                    oct: '10', okt: '10', nov: '11', dec: '12', des: '12'
+                };
+                const prefix = monthStr.substring(0, 3);
+                const m = monthMap[monthStr] || monthMap[prefix] || '01';
+                return `${year}-${m}-${day}`;
+            }
+            return '';
+        };
+
+        return {
+            start: parsePartToYMD(startPart),
+            end: isPresent ? '' : parsePartToYMD(endPart),
+            isPresent
+        };
+    };
+
+    const handleStartDateChange = (val: string) => {
+        setStartDate(val);
+        const computed = computeTimeline(val, endDate, isOngoing);
+        setTimeline(computed);
+    };
+
+    const handleEndDateChange = (val: string) => {
+        setEndDate(val);
+        const computed = computeTimeline(startDate, val, false);
+        setTimeline(computed);
+    };
+
+    const handleToggleOngoing = (checked: boolean) => {
+        setIsOngoing(checked);
+        setProjectStatus(checked ? 'ongoing' : 'completed');
+        const computed = computeTimeline(startDate, endDate, checked);
+        setTimeline(computed);
+    };
+
+    const handleClearTimeline = () => {
+        setStartDate('');
+        setEndDate('');
+        setIsOngoing(true);
+        setTimeline('');
+        setProjectStatus('ongoing');
+    };
     
     // Upload image states
     const [uploadingImage, setUploadingImage] = useState(false);
@@ -65,6 +158,19 @@ export const PostForm: React.FC<PostFormProps> = ({ editData, onCancelEdit }) =>
             setImageUrls(initialImages);
             
             setFeatured(editData.featured || false);
+            setTimeline(editData.timeline || '');
+            setProjectStatus(editData.projectStatus || (editData.timeline && !editData.timeline.toLowerCase().includes('present') ? 'completed' : 'ongoing'));
+
+            if (editData.timeline) {
+                const parsed = parseTimelineToDates(editData.timeline);
+                setStartDate(parsed.start);
+                setEndDate(parsed.end);
+                setIsOngoing(parsed.isPresent);
+            } else {
+                setStartDate('');
+                setEndDate('');
+                setIsOngoing(true);
+            }
         } else {
             setTitle('');
             setDescription('');
@@ -75,6 +181,11 @@ export const PostForm: React.FC<PostFormProps> = ({ editData, onCancelEdit }) =>
             setImageUrls([]);
             setUrlInput('');
             setFeatured(false);
+            setTimeline('');
+            setProjectStatus('ongoing');
+            setStartDate('');
+            setEndDate('');
+            setIsOngoing(true);
         }
     }, [editData]);
 
@@ -294,6 +405,8 @@ export const PostForm: React.FC<PostFormProps> = ({ editData, onCancelEdit }) =>
                     imageUrl: primaryImage,
                     imageUrls: imageUrls,
                     featured,
+                    timeline: timeline.trim() || null,
+                    projectStatus: timeline.trim() ? projectStatus : null,
                     updatedAt: serverTimestamp()
                 });
                 if (onCancelEdit) onCancelEdit();
@@ -310,6 +423,8 @@ export const PostForm: React.FC<PostFormProps> = ({ editData, onCancelEdit }) =>
                     imageUrl: primaryImage,
                     imageUrls: imageUrls,
                     featured,
+                    timeline: timeline.trim() || null,
+                    projectStatus: timeline.trim() ? projectStatus : null,
                     userId: user.uid,
                     userDisplayName: user.displayName || 'Anonymous User',
                     userPhotoURL: user.photoURL || null,
@@ -325,6 +440,8 @@ export const PostForm: React.FC<PostFormProps> = ({ editData, onCancelEdit }) =>
                 setImageUrls([]);
                 setUrlInput('');
                 setFeatured(false);
+                setTimeline('');
+                setProjectStatus('ongoing');
             }
         } catch (err: any) {
             setError(err.message || 'Failed to submit post.');
@@ -643,6 +760,106 @@ export const PostForm: React.FC<PostFormProps> = ({ editData, onCancelEdit }) =>
                             </div>
                         )}
                     </div>
+                </div>
+
+                {/* PROJECT CALENDAR TIMELINE & STATUS SECTION */}
+                <div className="post-form-group timeline-section-card">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                        <label style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <i className="far fa-calendar-alt" style={{ color: 'var(--primary)' }}></i>
+                            Project Timeline / Calendar Date
+                        </label>
+                        {timeline && (
+                            <button
+                                type="button"
+                                onClick={handleClearTimeline}
+                                style={{ background: 'transparent', border: 'none', color: '#ef4444', fontSize: '12px', cursor: 'pointer' }}
+                            >
+                                Clear Date
+                            </button>
+                        )}
+                    </div>
+
+                    <div className="timeline-picker-container">
+                        {/* Start Date Picker */}
+                        <div className="timeline-picker-field">
+                            <span className="picker-sublabel">Start Date</span>
+                            <input
+                                type="date"
+                                value={startDate}
+                                onChange={(e) => handleStartDateChange(e.target.value)}
+                                className="post-input timeline-date-input"
+                            />
+                        </div>
+
+                        <div className="timeline-arrow-separator">➔</div>
+
+                        {/* End Date Picker or Present display */}
+                        <div className="timeline-picker-field">
+                            <span className="picker-sublabel">End Date</span>
+
+                            {isOngoing ? (
+                                <div 
+                                    className="timeline-present-pill-active" 
+                                    onClick={() => handleToggleOngoing(false)}
+                                    title="Project is Ongoing. Click here or select 'Completed' in Status to pick an End Date."
+                                    role="button"
+                                    tabIndex={0}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' || e.key === ' ') {
+                                            e.preventDefault();
+                                            handleToggleOngoing(false);
+                                        }
+                                    }}
+                                >
+                                    <span className="timeline-dot"></span>
+                                    <span>Present</span>
+                                </div>
+                            ) : (
+                                <input
+                                    type="date"
+                                    value={endDate}
+                                    onChange={(e) => handleEndDateChange(e.target.value)}
+                                    className="post-input timeline-date-input"
+                                />
+                            )}
+                        </div>
+
+                        {/* Status dropdown */}
+                        <div className="timeline-picker-field status-field">
+                            <span className="picker-sublabel">Status</span>
+                            <select
+                                id="projectStatus"
+                                value={projectStatus}
+                                onChange={(e) => {
+                                    const nextStatus = e.target.value as 'ongoing' | 'completed';
+                                    setProjectStatus(nextStatus);
+                                    setIsOngoing(nextStatus === 'ongoing');
+                                    const computed = computeTimeline(startDate, endDate, nextStatus === 'ongoing');
+                                    setTimeline(computed);
+                                }}
+                                className="post-input post-select timeline-date-input"
+                                style={{ height: '42px', cursor: 'pointer' }}
+                            >
+                                <option value="ongoing">Ongoing</option>
+                                <option value="completed">Completed</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    {/* Live Badge Preview */}
+                    {timeline && (
+                        <div className="timeline-live-preview">
+                            <span className="preview-label">Card Top-Right Preview:</span>
+                            <div className={`project-timeline-badge ${isOngoing ? 'ongoing' : 'completed'}`}>
+                                <span className="timeline-date-text">{timeline}</span>
+                                <span className="timeline-status-subtext">
+                                    <span className="timeline-dot"></span>
+                                    <span>{isOngoing ? 'Ongoing' : 'Completed'}</span>
+                                </span>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 <div className="post-form-row" style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'center' }}>

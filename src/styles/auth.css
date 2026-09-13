@@ -698,10 +698,20 @@
     }
 }
 
-.featured-ribbon-badge {
+/* Card Top-Right Badges Container */
+.card-top-right-badges {
     position: absolute;
     top: 12px;
     right: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    z-index: 6;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.featured-ribbon-badge {
     background: #eab308;
     color: #000000;
     font-size: 11px;
@@ -711,7 +721,230 @@
     display: flex;
     align-items: center;
     gap: 4px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+    letter-spacing: 0.02em;
+    white-space: nowrap;
 }
+
+/* Standalone fallback if outside card-top-right-badges */
+.project-card-image-wrapper > .featured-ribbon-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+}
+
+/* Project Timeline / Status Badge */
+.project-timeline-badge {
+    background: rgba(0, 0, 0, 0.42);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(148, 163, 184, 0.3);
+    color: #e2e8f0;
+    padding: 6px 12px;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 3px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+    white-space: nowrap;
+}
+
+.timeline-date-text {
+    font-size: 11px;
+    font-weight: 600;
+    color: #ffffff;
+    letter-spacing: 0.02em;
+    line-height: 1.2;
+}
+
+.timeline-status-subtext {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    line-height: 1;
+}
+
+.project-timeline-badge.ongoing {
+    background: rgba(4, 18, 10, 0.45);
+}
+
+.project-timeline-badge.ongoing .timeline-status-subtext {
+    color: #4ade80;
+}
+
+.project-timeline-badge.ongoing .timeline-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #22c55e;
+    box-shadow: 0 0 8px #22c55e;
+    display: inline-block;
+    animation: timeline-pulse 2s infinite;
+}
+
+@keyframes timeline-pulse {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.3);
+        opacity: 0.55;
+    }
+}
+
+.project-timeline-badge.completed {
+    background: rgba(12, 18, 28, 0.45);
+}
+
+.project-timeline-badge.completed .timeline-status-subtext {
+    color: #cbd5e1;
+}
+
+.project-timeline-badge.completed .timeline-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #94a3b8;
+    display: inline-block;
+}
+
+/* Calendar Timeline Picker UI in PostForm */
+.timeline-section-card {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+}
+
+.timeline-picker-container {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+}
+
+.timeline-picker-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+    min-width: 140px;
+}
+
+.timeline-picker-field.status-field {
+    flex: 0 1 150px;
+    min-width: 120px;
+}
+
+.picker-sublabel {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    display: flex;
+    align-items: center;
+    height: 20px;
+    margin: 0;
+}
+
+.timeline-arrow-separator {
+    color: var(--text-secondary);
+    font-size: 14px;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.6;
+    user-select: none;
+    margin-top: 26px; /* align with the 42px inputs */
+}
+
+.timeline-date-input {
+    height: 42px;
+    color-scheme: dark;
+    margin: 0 !important;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.timeline-present-pill-active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 42px;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0 16px;
+    background: rgba(34, 197, 94, 0.12);
+    border: 1px solid rgba(34, 197, 94, 0.35);
+    border-radius: 8px;
+    color: #86efac;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    user-select: none;
+}
+
+.timeline-present-pill-active:hover {
+    background: rgba(34, 197, 94, 0.2);
+    border-color: rgba(34, 197, 94, 0.55);
+}
+
+.timeline-present-pill-active .timeline-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #22c55e;
+    box-shadow: 0 0 8px #22c55e;
+    animation: timeline-pulse 2s infinite;
+}
+
+.timeline-live-preview {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    margin-top: 14px;
+}
+
+.timeline-live-preview .preview-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+/* Preset helper pills in PostForm */
+.timeline-preset-pill {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+    padding: 3px 10px;
+    font-size: 11px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 150ms ease;
+}
+
+.timeline-preset-pill:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+    border-color: var(--primary);
+}
+
+
 
 .project-card-details {
     padding: 20px;

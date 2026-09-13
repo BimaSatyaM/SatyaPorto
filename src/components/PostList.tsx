@@ -34,6 +34,8 @@ interface Post {
     imageUrl?: string;
     imageUrls?: string[];
     featured?: boolean;
+    timeline?: string;
+    projectStatus?: 'ongoing' | 'completed';
 }
 
 interface PostListProps {
@@ -558,7 +560,8 @@ export const PostList: React.FC<PostListProps> = ({
                                                 ? (post.category === 'personal' ? 'Personal Project' : post.category.charAt(0).toUpperCase() + post.category.slice(1)) 
                                                 : '';
                                             const typeLabel = post.type ? post.type.toUpperCase() : '';
-                                            const sub = [typeLabel, categoryLabel].filter(Boolean).join(' • ');
+                                            const cleanTimeline = post.timeline ? post.timeline.replace(/\s*\((?:Done|Completed)\)/gi, '').trim() : '';
+                                            const sub = [typeLabel, categoryLabel, cleanTimeline].filter(Boolean).join(' • ');
 
                                             setPreviewModal({ 
                                                 images: postImages, 
@@ -596,12 +599,37 @@ export const PostList: React.FC<PostListProps> = ({
                                         </div>
                                     )}
 
-                                    {/* Featured Ribbon Badge */}
-                                    {post.featured && (
-                                        <span className="featured-ribbon-badge">
-                                            <i className="fas fa-thumbtack"></i> Featured
-                                        </span>
-                                    )}
+                                    {/* Top Right Badges Container: Timeline & Featured */}
+                                    <div className="card-top-right-badges">
+                                        {post.timeline && (() => {
+                                            const cleanDates = post.timeline.replace(/\s*\((?:Done|Completed)\)/gi, '').trim();
+                                            const isCompleted = post.projectStatus === 'completed' || 
+                                                post.timeline.toLowerCase().includes('done') || 
+                                                post.timeline.toLowerCase().includes('completed') || 
+                                                !post.timeline.toLowerCase().includes('present');
+                                            const statusLabel = isCompleted ? 'Completed' : 'Ongoing';
+
+                                            return (
+                                                <div 
+                                                    className={`project-timeline-badge ${isCompleted ? 'completed' : 'ongoing'}`}
+                                                    title={`Project Timeline: ${cleanDates} (${statusLabel})`}
+                                                >
+                                                    <span className="timeline-date-text">{cleanDates}</span>
+                                                    <span className="timeline-status-subtext">
+                                                        <span className="timeline-dot"></span>
+                                                        <span>{statusLabel}</span>
+                                                    </span>
+                                                </div>
+                                            );
+                                        })()}
+
+                                        {/* Featured Ribbon Badge */}
+                                        {post.featured && (
+                                            <span className="featured-ribbon-badge">
+                                                <i className="fas fa-thumbtack"></i> Featured
+                                            </span>
+                                        )}
+                                    </div>
 
                                     {/* Multi-Photo Pile Count Badge */}
                                     {isMultiple && (
