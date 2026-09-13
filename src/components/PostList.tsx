@@ -99,7 +99,7 @@ export const PostList: React.FC<PostListProps> = ({
 
     // Multi-photo slider and modal state
     const [activeImageIndices, setActiveImageIndices] = useState<Record<string, number>>({});
-    const [previewModal, setPreviewModal] = useState<{ images: string[]; initialIndex: number } | null>(null);
+    const [previewModal, setPreviewModal] = useState<{ images: string[]; initialIndex: number; title?: string; subtitle?: string } | null>(null);
 
     // Track expanded comments section per post
     const [expandedComments, setExpandedComments] = useState<Record<string, boolean>>({});
@@ -554,7 +554,18 @@ export const PostList: React.FC<PostListProps> = ({
                                     className={`project-card-image-wrapper ${isMultiple ? 'photo-pile-container' : ''}`}
                                     onClick={() => {
                                         if (postImages.length > 0) {
-                                            setPreviewModal({ images: postImages, initialIndex: safeIdx });
+                                            const categoryLabel = post.category 
+                                                ? (post.category === 'personal' ? 'Personal Project' : post.category.charAt(0).toUpperCase() + post.category.slice(1)) 
+                                                : '';
+                                            const typeLabel = post.type ? post.type.toUpperCase() : '';
+                                            const sub = [typeLabel, categoryLabel].filter(Boolean).join(' • ');
+
+                                            setPreviewModal({ 
+                                                images: postImages, 
+                                                initialIndex: safeIdx,
+                                                title: post.title,
+                                                subtitle: sub
+                                            });
                                         }
                                     }}
                                     style={{ cursor: postImages.length > 0 ? 'pointer' : 'default' }}
@@ -943,6 +954,8 @@ export const PostList: React.FC<PostListProps> = ({
                     isOpen={true}
                     images={previewModal.images}
                     initialIndex={previewModal.initialIndex}
+                    title={previewModal.title}
+                    subtitle={previewModal.subtitle}
                     onClose={() => setPreviewModal(null)}
                 />
             )}

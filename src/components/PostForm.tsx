@@ -125,8 +125,9 @@ export const PostForm: React.FC<PostFormProps> = ({ editData, onCancelEdit }) =>
         });
     };
 
-    const handleFilesChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const files = Array.from(e.target.files || []);
+    const [isDragging, setIsDragging] = useState(false);
+
+    const processFiles = async (files: File[]) => {
         if (files.length === 0) return;
 
         setUploadingImage(true);
@@ -167,7 +168,34 @@ export const PostForm: React.FC<PostFormProps> = ({ editData, onCancelEdit }) =>
         setImageUrls(prev => [...prev, ...newUrls]);
         setUploadingImage(false);
         setUploadProgress(null);
+    };
+
+    const handleFilesChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = Array.from(e.target.files || []);
+        await processFiles(files);
         e.target.value = ''; // Reset input so re-selecting same files works
+    };
+
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(true);
+    };
+
+    const handleDragLeave = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+    };
+
+    const handleDrop = async (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+        const files = Array.from(e.dataTransfer.files || []).filter(f => f.type.startsWith('image/'));
+        if (files.length > 0) {
+            await processFiles(files);
+        }
     };
 
     const handlePaste = async (e: React.ClipboardEvent) => {
@@ -198,41 +226,7 @@ export const PostForm: React.FC<PostFormProps> = ({ editData, onCancelEdit }) =>
         if (pastedFiles.length === 0) return;
 
         e.preventDefault();
-        setUploadingImage(true);
-        setError(null);
-        setUploadProgress({ current: 0, total: pastedFiles.length });
-
-        const newUrls: string[] = [];
-        for (let i = 0; i < pastedFiles.length; i++) {
-            const file = pastedFiles[i];
-            setUploadProgress({ current: i + 1, total: pastedFiles.length });
-
-            try {
-                const uploadPromise = (async () => {
-                    const storageRef = ref(storage, `project-images/${Date.now()}_pasted_${i}_${file.name}`);
-                    const snapshot = await uploadBytes(storageRef, file);
-                    return await getDownloadURL(snapshot.ref);
-                })();
-
-                const timeoutPromise = new Promise<string>((_, reject) => 
-                    setTimeout(() => reject(new Error('Firebase upload timed out')), 3500)
-                );
-
-                const downloadUrl = await Promise.race([uploadPromise, timeoutPromise]);
-                newUrls.push(downloadUrl);
-            } catch (err) {
-                try {
-                    const base64 = await compressAndConvertToBase64(file);
-                    newUrls.push(base64);
-                } catch (fallbackErr: any) {
-                    setError('Failed to process pasted image: ' + fallbackErr.message);
-                }
-            }
-        }
-
-        setImageUrls(prev => [...prev, ...newUrls]);
-        setUploadingImage(false);
-        setUploadProgress(null);
+        await processFiles(pastedFiles);
     };
 
     const handleAddUrl = () => {
@@ -245,6 +239,15 @@ export const PostForm: React.FC<PostFormProps> = ({ editData, onCancelEdit }) =>
 
     const handleRemoveImage = (indexToRemove: number) => {
         setImageUrls(prev => prev.filter((_, idx) => idx !== indexToRemove));
+    };
+
+    const handleSetCover = (index: number) => {
+        if (index === 0) return;
+        setImageUrls(prev => {
+            const updated = [...prev];
+            const [selected] = updated.splice(index, 1);
+            return [selected, ...updated];
+        });
     };
 
     const handleMoveImage = (fromIndex: number, direction: 'left' | 'right') => {
@@ -484,7 +487,7 @@ export const PostForm: React.FC<PostFormProps> = ({ editData, onCancelEdit }) =>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                         <label style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <i className="fas fa-images" style={{ color: 'var(--primary)' }}></i>
-                            Post Photos ({imageUrls.length})
+                            Project Showcase Photos ({imageUrls.length})
                         </label>
                         {imageUrls.length > 0 && (
                             <button
@@ -498,95 +501,145 @@ export const PostForm: React.FC<PostFormProps> = ({ editData, onCancelEdit }) =>
                     </div>
 
                     <div className="image-upload-wrapper" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                        {/* File upload + URL input controls row */}
-                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-                            <label className="file-upload-label" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: '#1c1c1e', border: '1px solid var(--border)', borderRadius: '8px', padding: '10px 16px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-secondary)' }}>
-                                <i className="fas fa-cloud-upload-alt" style={{ color: 'var(--primary)' }}></i>
-                                Upload Photos (Multiple)
-                                <input 
-                                    type="file" 
-                                    accept="image/*" 
-                                    multiple
-                                    onChange={handleFilesChange} 
-                                    style={{ display: 'none' }} 
-                                />
-                            </label>
-                            <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>or</span>
-                            <div style={{ display: 'flex', flex: 1, minWidth: '220px', gap: '6px' }}>
-                                <input
-                                    type="url"
-                                    placeholder="Paste image URL..."
-                                    value={urlInput}
-                                    onChange={(e) => setUrlInput(e.target.value)}
-                                    onKeyDown={(e) => {
-                                        if (e.key === 'Enter') {
-                                            e.preventDefault();
-                                            handleAddUrl();
-                                        }
-                                    }}
-                                    className="post-input"
-                                    style={{ flex: 1, margin: 0 }}
-                                />
-                                <button
-                                    type="button"
-                                    onClick={handleAddUrl}
-                                    className="post-submit-btn"
-                                    style={{ padding: '0 16px', height: '42px', fontSize: '13px', whiteSpace: 'nowrap' }}
-                                >
-                                    + Add URL
-                                </button>
+                        {/* Drag & Drop Zone */}
+                        <div 
+                            className={`photo-dropzone ${isDragging ? 'dragging' : ''}`}
+                            onDragOver={handleDragOver}
+                            onDragLeave={handleDragLeave}
+                            onDrop={handleDrop}
+                        >
+                            <i className="fas fa-cloud-upload-alt dropzone-icon"></i>
+                            <div className="dropzone-text-group">
+                                <span className="dropzone-title">
+                                    Drag & drop multiple screenshots or demo photos here
+                                </span>
+                                <span className="dropzone-subtitle">
+                                    Supports JPG, PNG, WebP • You can also paste from clipboard (Ctrl+V)
+                                </span>
+                            </div>
+
+                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'center', marginTop: '6px' }}>
+                                <label className="file-upload-label" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'var(--primary)', color: '#000', fontWeight: 600, borderRadius: '8px', padding: '8px 18px', fontSize: '13px', cursor: 'pointer' }}>
+                                    <i className="fas fa-plus"></i>
+                                    Browse Photos (Multiple)
+                                    <input 
+                                        type="file" 
+                                        accept="image/*" 
+                                        multiple
+                                        onChange={handleFilesChange} 
+                                        style={{ display: 'none' }} 
+                                    />
+                                </label>
+                                <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>or paste URL</span>
+                                <div style={{ display: 'flex', gap: '6px', maxWidth: '320px', width: '100%' }}>
+                                    <input
+                                        type="url"
+                                        placeholder="https://..."
+                                        value={urlInput}
+                                        onChange={(e) => setUrlInput(e.target.value)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                e.preventDefault();
+                                                handleAddUrl();
+                                            }
+                                        }}
+                                        className="post-input"
+                                        style={{ flex: 1, margin: 0, height: '36px', fontSize: '12px' }}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={handleAddUrl}
+                                        className="post-submit-btn"
+                                        style={{ padding: '0 12px', height: '36px', fontSize: '12px', whiteSpace: 'nowrap' }}
+                                    >
+                                        Add
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
                         {uploadingImage && uploadProgress && (
-                            <div style={{ fontSize: '12px', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <div style={{ fontSize: '12px', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(56, 189, 248, 0.1)', padding: '8px 12px', borderRadius: '6px' }}>
                                 <i className="fas fa-spinner post-spinner"></i>
                                 Uploading / compressing photos ({uploadProgress.current} / {uploadProgress.total})...
                             </div>
                         )}
 
-                        {/* Multi-Photo Piled Thumbnails Strip Preview */}
+                        {/* Multi-Photo Thumbnails Strip Preview */}
                         {imageUrls.length > 0 && (
-                            <div className="form-photos-preview-strip">
-                                {imageUrls.map((img, idx) => (
-                                    <div key={idx} className="form-photo-thumbnail-card">
-                                        <img src={img} alt={`Preview ${idx + 1}`} />
-                                        <span className="photo-thumbnail-order-badge">
-                                            {idx === 0 ? 'Cover' : `#${idx + 1}`}
-                                        </span>
+                            <div>
+                                <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '8px' }}>
+                                    First photo is the <strong>Cover Photo</strong> displayed in the showcase card. Click "Set as Cover" or use arrows to change the order:
+                                </p>
+                                <div className="form-photos-preview-strip">
+                                    {imageUrls.map((img, idx) => (
+                                        <div key={idx} className={`form-photo-thumbnail-card ${idx === 0 ? 'is-cover' : ''}`}>
+                                            <img src={img} alt={`Preview ${idx + 1}`} />
+                                            
+                                            <span className={`photo-thumbnail-order-badge ${idx === 0 ? 'cover-badge' : ''}`}>
+                                                {idx === 0 ? '⭐ Cover' : `#${idx + 1}`}
+                                            </span>
 
-                                        <div className="form-photo-actions-overlay">
                                             {idx > 0 && (
                                                 <button
                                                     type="button"
-                                                    onClick={() => handleMoveImage(idx, 'left')}
-                                                    className="photo-action-btn"
-                                                    title="Move left"
+                                                    onClick={() => handleSetCover(idx)}
+                                                    className="photo-make-cover-btn"
+                                                    title="Set as Cover photo"
                                                 >
-                                                    <i className="fas fa-chevron-left"></i>
+                                                    Set Cover
                                                 </button>
                                             )}
-                                            <button
-                                                type="button"
-                                                onClick={() => handleRemoveImage(idx)}
-                                                className="photo-action-btn delete"
-                                                title="Remove photo"
-                                            >
-                                                &times;
-                                            </button>
-                                            {idx < imageUrls.length - 1 && (
+
+                                            <div className="form-photo-actions-overlay">
+                                                {idx > 0 && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleMoveImage(idx, 'left')}
+                                                        className="photo-action-btn"
+                                                        title="Move left"
+                                                        aria-label="Move left"
+                                                    >
+                                                        <i className="fas fa-chevron-left"></i>
+                                                    </button>
+                                                )}
                                                 <button
                                                     type="button"
-                                                    onClick={() => handleMoveImage(idx, 'right')}
-                                                    className="photo-action-btn"
-                                                    title="Move right"
+                                                    onClick={() => handleRemoveImage(idx)}
+                                                    className="photo-action-btn delete"
+                                                    title="Remove photo"
+                                                    aria-label="Remove photo"
                                                 >
-                                                    <i className="fas fa-chevron-right"></i>
+                                                    &times;
                                                 </button>
-                                            )}
+                                                {idx < imageUrls.length - 1 && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleMoveImage(idx, 'right')}
+                                                        className="photo-action-btn"
+                                                        title="Move right"
+                                                        aria-label="Move right"
+                                                    >
+                                                        <i className="fas fa-chevron-right"></i>
+                                                    </button>
+                                                )}
+                                            </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    ))}
+
+                                    {/* Quick Add More Card */}
+                                    <label className="form-photo-add-more-card" title="Add more photos">
+                                        <i className="fas fa-plus"></i>
+                                        <span>Add More</span>
+                                        <input 
+                                            type="file" 
+                                            accept="image/*" 
+                                            multiple
+                                            onChange={handleFilesChange} 
+                                            style={{ display: 'none' }} 
+                                        />
+                                    </label>
+                                </div>
                             </div>
                         )}
                     </div>

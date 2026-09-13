@@ -1,5 +1,5 @@
 // ===== src/components/ImageModal.tsx =====
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 
 interface ImageModalProps {
@@ -7,6 +7,8 @@ interface ImageModalProps {
     imageSrc?: string;
     images?: string[];
     initialIndex?: number;
+    title?: string;
+    subtitle?: string;
     onClose: () => void;
 }
 
@@ -15,9 +17,14 @@ export const ImageModal: React.FC<ImageModalProps> = ({
     imageSrc, 
     images, 
     initialIndex = 0, 
+    title,
+    subtitle,
     onClose 
 }) => {
     const [currentIndex, setCurrentIndex] = useState(initialIndex);
+    const touchStartX = useRef<number | null>(null);
+    const touchEndX = useRef<number | null>(null);
+    const thumbnailsRef = useRef<HTMLDivElement>(null);
 
     // Normalize images list
     const allImages = images && images.length > 0 ? images : (imageSrc ? [imageSrc] : []);
@@ -27,6 +34,17 @@ export const ImageModal: React.FC<ImageModalProps> = ({
             setCurrentIndex(initialIndex);
         }
     }, [isOpen, initialIndex]);
+
+    // Scroll active thumbnail into view smoothly
+    useEffect(() => {
+        if (!isOpen || allImages.length <= 1) return;
+        if (thumbnailsRef.current) {
+            const activeThumb = thumbnailsRef.current.children[currentIndex] as HTMLElement;
+            if (activeThumb) {
+                activeThumb.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            }
+        }
+    }, [currentIndex, isOpen, allImages.length]);
 
     const handlePrev = useCallback((e?: React.MouseEvent) => {
         if (e) e.stopPropagation();
@@ -56,6 +74,30 @@ export const ImageModal: React.FC<ImageModalProps> = ({
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [isOpen, allImages.length, handlePrev, handleNext, onClose]);
 
+    // Touch swipe handlers
+    const handleTouchStart = (e: React.TouchEvent) => {
+        touchStartX.current = e.touches[0].clientX;
+        touchEndX.current = null;
+    };
+
+    const handleTouchMove = (e: React.TouchEvent) => {
+        touchEndX.current = e.touches[0].clientX;
+    };
+
+    const handleTouchEnd = () => {
+        if (touchStartX.current !== null && touchEndX.current !== null && allImages.length > 1) {
+            const deltaX = touchStartX.current - touchEndX.current;
+            const SWIPE_THRESHOLD = 50;
+            if (deltaX > SWIPE_THRESHOLD) {
+                handleNext();
+            } else if (deltaX < -SWIPE_THRESHOLD) {
+                handlePrev();
+            }
+        }
+        touchStartX.current = null;
+        touchEndX.current = null;
+    };
+
     // Do NOT render into DOM if closed or no images
     if (!isOpen || allImages.length === 0) return null;
 
@@ -70,16 +112,35 @@ export const ImageModal: React.FC<ImageModalProps> = ({
                     onClose();
                 }
             }}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
         >
-            <span className="image-modal-close" id="modalClose" onClick={onClose} title="Close (Esc)">
-                &times;
-            </span>
-
-            {allImages.length > 1 && (
-                <div className="image-modal-counter">
-                    <i className="fas fa-images"></i> {currentIndex + 1} / {allImages.length}
+            {/* Top Bar with Title, Counter, and Close Button */}
+            <div className="image-modal-top-bar" onClick={(e) => e.stopPropagation()}>
+                <div className="image-modal-header-info">
+                    {title && <h3 className="image-modal-title">{title}</h3>}
+                    {subtitle && <p className="image-modal-subtitle">{subtitle}</p>}
                 </div>
-            )}
+
+                <div className="image-modal-top-actions">
+                    {allImages.length > 1 && (
+                        <div className="image-modal-counter">
+                            <i className="fas fa-images"></i> {currentIndex + 1} / {allImages.length}
+                        </div>
+                    )}
+                    <button 
+                        type="button"
+                        className="image-modal-close" 
+                        id="modalClose" 
+                        onClick={onClose} 
+                        title="Close (Esc)"
+                        aria-label="Close modal"
+                    >
+                        &times;
+                    </button>
+                </div>
+            </div>
 
             {/* Left navigation arrow */}
             {allImages.length > 1 && (
@@ -94,13 +155,14 @@ export const ImageModal: React.FC<ImageModalProps> = ({
                 </button>
             )}
 
+            {/* Center Image Container */}
             <div className="image-modal-img-container" onClick={(e) => e.stopPropagation()}>
                 <img 
                     key={currentImg}
                     className="image-modal-content" 
                     id="fullImage" 
                     src={currentImg} 
-                    alt={`Preview ${currentIndex + 1}`} 
+                    alt={title ? `${title} - Screenshot ${currentIndex + 1}` : `Preview ${currentIndex + 1}`} 
                 />
             </div>
 
@@ -117,24 +179,31 @@ export const ImageModal: React.FC<ImageModalProps> = ({
                 </button>
             )}
 
-            {/* Bottom mini indicator dots */}
+            {/* Bottom Interactive Thumbnail Strip Gallery */}
             {allImages.length > 1 && (
-                <div className="image-modal-dots">
-                    {allImages.map((_, idx) => (
-                        <button
-                            key={idx}
-                            type="button"
-                            className={`image-modal-dot ${idx === currentIndex ? 'active' : ''}`}
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                setCurrentIndex(idx);
-                            }}
-                            aria-label={`Jump to image ${idx + 1}`}
-                        />
-                    ))}
+                <div className="image-modal-bottom-gallery" onClick={(e) => e.stopPropagation()}>
+                    <div className="image-modal-thumbs-strip" ref={thumbnailsRef}>
+                        {allImages.map((thumbUrl, idx) => (
+                            <button
+                                key={idx}
+                                type="button"
+                                className={`image-modal-thumb-item ${idx === currentIndex ? 'active' : ''}`}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setCurrentIndex(idx);
+                                }}
+                                title={`View photo ${idx + 1}`}
+                                aria-label={`View photo ${idx + 1}`}
+                            >
+                                <img src={thumbUrl} alt={`Thumbnail ${idx + 1}`} />
+                                <span className="image-modal-thumb-index">{idx + 1}</span>
+                            </button>
+                        ))}
+                    </div>
                 </div>
             )}
         </div>,
         document.body
     );
 };
+

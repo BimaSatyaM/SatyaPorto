@@ -97,6 +97,13 @@ export const Home: React.FC = () => {
             return s.categories && s.categories.includes(selectedCategory);
         });
 
+    const handleEditShowcasePost = (post: any) => {
+        sessionStorage.setItem('edit_project_data', JSON.stringify(post));
+        if (window.goTo) {
+            window.goTo('projects');
+        }
+    };
+
     return (
         <section id="home" className="section hero-page">
             <div className="hero-page-container">
@@ -193,7 +200,7 @@ export const Home: React.FC = () => {
                         <i className="fas fa-project-diagram"></i> {t('home.projectShowcaseTitle')}
                     </h3>
                     <p className="education-section-subtitle">{t('home.projectShowcaseSubtitle')}</p>
-                    <PostList limitCount={8} showFilters={false} layout="slider" />
+                    <PostList limitCount={8} showFilters={false} layout="slider" onEditPost={handleEditShowcasePost} />
                 </div>
             </div>
         </section>

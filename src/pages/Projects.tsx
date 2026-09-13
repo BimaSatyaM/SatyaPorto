@@ -9,6 +9,25 @@ export const Projects: React.FC = () => {
     const { user, isAdmin } = useAuth();
     const [editingPost, setEditingPost] = useState<any | null>(null);
 
+    React.useEffect(() => {
+        const stored = sessionStorage.getItem('edit_project_data');
+        if (stored) {
+            try {
+                const parsed = JSON.parse(stored);
+                setEditingPost(parsed);
+                sessionStorage.removeItem('edit_project_data');
+                setTimeout(() => {
+                    const mainContent = document.querySelector('.main-content');
+                    if (mainContent) {
+                        mainContent.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
+                }, 100);
+            } catch (e) {
+                console.error('Failed to parse edit_project_data:', e);
+            }
+        }
+    }, []);
+
     const handleEditPost = (post: any) => {
         setEditingPost(post);
         // Scroll back to top where form is
