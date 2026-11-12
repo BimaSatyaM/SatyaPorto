@@ -46,7 +46,7 @@ export function resolveThemeColor(color: string | undefined | null, textPrimaryF
 function createCanvas(
     width: number,
     height: number,
-    scale = 2
+    scale = 4
 ): [HTMLCanvasElement, CanvasRenderingContext2D] {
     const canvas = document.createElement('canvas');
     canvas.width = width * scale;
@@ -56,6 +56,8 @@ function createCanvas(
         throw new Error('Failed to acquire 2D canvas context');
     }
     ctx.scale(scale, scale);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
     return [canvas, ctx];
 }
 
@@ -65,7 +67,7 @@ function configureTexture(canvas: HTMLCanvasElement): THREE.CanvasTexture {
     texture.generateMipmaps = true;
     texture.minFilter = THREE.LinearMipmapLinearFilter;
     texture.magFilter = THREE.LinearFilter;
-    texture.anisotropy = 4;
+    texture.anisotropy = 8;
     texture.needsUpdate = true;
     return texture;
 }
@@ -125,7 +127,7 @@ function prepareSvgMarkup(rawSvg: string, resolvedColor: string): string {
         svg = svg.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"');
     }
     svg = svg.replace(/\s(width|height)="[^"]*"/gi, '');
-    svg = svg.replace('<svg', '<svg width="256" height="256"');
+    svg = svg.replace('<svg', '<svg width="512" height="512"');
     svg = svg.replace(/currentColor/gi, resolvedColor);
     return svg;
 }

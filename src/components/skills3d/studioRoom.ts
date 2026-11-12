@@ -198,7 +198,7 @@ function getProceduralEarthTexture(isLight: boolean): THREE.CanvasTexture {
     tex.generateMipmaps = true;
     tex.minFilter = THREE.LinearMipmapLinearFilter;
     tex.magFilter = THREE.LinearFilter;
-    tex.anisotropy = 4;
+    tex.anisotropy = 8;
     tex.needsUpdate = true;
     earthTextureCache.set(isLight, tex);
     return tex;
@@ -223,7 +223,7 @@ export function createStudioEnvironment(
         map: getProceduralEarthTexture(initialTheme.isLight),
     });
     const earthMesh = new THREE.Mesh(
-        new THREE.SphereGeometry(EARTH_RADIUS, 48, 32),
+        new THREE.SphereGeometry(EARTH_RADIUS, 64, 48),
         earthMat
     );
     earthGroup.add(earthMesh);
@@ -236,7 +236,7 @@ export function createStudioEnvironment(
         depthWrite: false,
     });
     const atmoMesh = new THREE.Mesh(
-        new THREE.SphereGeometry(EARTH_RADIUS * 1.055, 40, 28),
+        new THREE.SphereGeometry(EARTH_RADIUS * 1.055, 48, 36),
         atmoMat
     );
     earthGroup.add(atmoMesh);
@@ -249,7 +249,7 @@ export function createStudioEnvironment(
         depthWrite: false,
     });
     const orbitRing = new THREE.Mesh(
-        new THREE.RingGeometry(EARTH_RADIUS * 1.42, EARTH_RADIUS * 1.44, 72),
+        new THREE.RingGeometry(EARTH_RADIUS * 1.42, EARTH_RADIUS * 1.44, 96),
         orbitRingMat
     );
     orbitRing.rotation.x = Math.PI * 0.42;

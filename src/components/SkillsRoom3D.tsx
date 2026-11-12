@@ -202,7 +202,7 @@ export const SkillsRoom3D: React.FC<SkillsRoom3DProps> = ({
             const isMobile =
                 typeof window !== 'undefined' &&
                 window.matchMedia('(max-width: 768px), (pointer: coarse)').matches;
-            const getTargetPixelRatio = () => Math.min(window.devicePixelRatio || 1, isMobile ? 1.75 : 2);
+            const getTargetPixelRatio = () => Math.min(window.devicePixelRatio || 1, isMobile ? 2.25 : 2.5);
 
             let renderer: THREE.WebGLRenderer;
             try {
