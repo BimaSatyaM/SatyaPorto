@@ -531,10 +531,9 @@ export const SkillsRoom3D: React.FC<SkillsRoom3DProps> = ({
                     const isSelected = liveSelected === id;
                     const isHovered = liveHovered === id;
                     const stationSnap = isSelected ? ws.getMusicState() : null;
-                    const matchesLiveAudio =
-                        Boolean(isSelected && livePlaying && stationSnap?.isListening) &&
-                        liveTrackIdx === stationSnap?.songIndex &&
-                        liveAudioDuration > 0;
+                    const syncSelectedInspect = Boolean(
+                        isSelected && inspectAudioActiveRef.current && livePlaying && stationSnap?.isListening
+                    );
 
                     ws.update(dt, elapsed, {
                         isSelected,
@@ -542,9 +541,12 @@ export const SkillsRoom3D: React.FC<SkillsRoom3DProps> = ({
                         isVisible,
                         isJakartaNight: liveJakartaNight,
                         musicEpoch,
-                        liveAudioEnergy: matchesLiveAudio ? liveEnergy : 0,
-                        syncedAudioTime: matchesLiveAudio ? liveAudioTime : undefined,
-                        syncedAudioDuration: matchesLiveAudio ? liveAudioDuration : undefined,
+                        liveAudioEnergy: syncSelectedInspect ? liveEnergy : 0,
+                        syncedAudioSongIndex: syncSelectedInspect ? liveTrackIdx : undefined,
+                        syncedAudioTime:
+                            syncSelectedInspect && liveAudioDuration > 0 ? liveAudioTime : undefined,
+                        syncedAudioDuration:
+                            syncSelectedInspect && liveAudioDuration > 0 ? liveAudioDuration : undefined,
                         cameraPos: localCamPos,
                         cameraQuat: localCamQuat,
                         neighbors: activeNeighbors,

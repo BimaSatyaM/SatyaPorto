@@ -42,6 +42,7 @@ export interface SkillWorkstation {
             isJakartaNight: boolean;
             musicEpoch: number;
             liveAudioEnergy: number;
+            syncedAudioSongIndex?: number;
             syncedAudioTime?: number;
             syncedAudioDuration?: number;
             cameraPos: THREE.Vector3;
@@ -465,9 +466,17 @@ export function createSkillWorkstation(
     let daytimeListener = false;
     let daytimeMusicStyle: MascotActivity = 'listen';
     const safePlaylistLen = Math.max(1, playlistLength);
-    let songIndex = (initialIndex * 7 + 3) % safePlaylistLen;
+    const pickRandomSongIndex = (exclude?: number): number => {
+        if (safePlaylistLen <= 1) return 0;
+        let next = Math.floor(Math.random() * safePlaylistLen);
+        if (next === exclude) {
+            next = (next + 1 + Math.floor(Math.random() * (safePlaylistLen - 1))) % safePlaylistLen;
+        }
+        return next;
+    };
+    let songIndex = pickRandomSongIndex();
     let songDurationSec = 185 + (songIndex % 6) * 14;
-    let songProgressSec = (initialIndex * 43 + 19) % songDurationSec;
+    let songProgressSec = Math.floor(Math.random() * Math.max(1, songDurationSec - 25));
     let isListeningState = false;
     let isSleepState = false;
     let hasSpawnPos = false;
@@ -572,13 +581,13 @@ export function createSkillWorkstation(
                 (((initialIndex + 1) * 2654435761) ^ ((opts.musicEpoch + 3) * 2246822519)) >>> 0;
             daytimeListener = roll % 100 < 52 || initialIndex % 3 === opts.musicEpoch % 3;
             daytimeMusicStyle = roll % 4 === 0 ? 'guitar' : roll % 4 === 1 ? 'sing' : 'listen';
-            // Keep selected mascot steady while inspected; otherwise rotate song when starting a daytime listen
+            // Keep selected mascot steady while inspected; otherwise shuffle song when starting a daytime listen
             if (opts.isSelected && wasDaytimeListener) {
                 daytimeListener = true;
             } else if (!wasDaytimeListener && daytimeListener) {
-                songIndex = (roll + initialIndex * 5) % safePlaylistLen;
+                songIndex = pickRandomSongIndex(songIndex);
                 songDurationSec = 185 + (songIndex % 6) * 14;
-                songProgressSec = roll % Math.max(60, songDurationSec - 30);
+                songProgressSec = Math.floor(Math.random() * Math.max(1, songDurationSec - 25));
             }
         }
 
@@ -588,19 +597,23 @@ export function createSkillWorkstation(
         isSleepState = isNightMode;
 
         if (isListeningNow) {
-            if (
-                opts.isSelected &&
-                opts.syncedAudioDuration !== undefined &&
-                opts.syncedAudioDuration > 0 &&
-                opts.syncedAudioTime !== undefined
-            ) {
-                songDurationSec = opts.syncedAudioDuration;
-                songProgressSec = opts.syncedAudioTime;
+            if (opts.isSelected && opts.syncedAudioSongIndex !== undefined) {
+                songIndex = opts.syncedAudioSongIndex;
+                if (
+                    opts.syncedAudioDuration !== undefined &&
+                    opts.syncedAudioDuration > 0 &&
+                    opts.syncedAudioTime !== undefined
+                ) {
+                    songDurationSec = opts.syncedAudioDuration;
+                    songProgressSec = opts.syncedAudioTime;
+                } else {
+                    songDurationSec = 185 + (songIndex % 6) * 14;
+                }
             } else {
                 songProgressSec += safeDt;
                 if (songProgressSec >= songDurationSec) {
                     songProgressSec = 0;
-                    songIndex = (songIndex + 3 + (initialIndex % 5)) % safePlaylistLen;
+                    songIndex = pickRandomSongIndex(songIndex);
                     songDurationSec = 185 + (songIndex % 6) * 14;
                 }
             }

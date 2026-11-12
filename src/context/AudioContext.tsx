@@ -111,6 +111,7 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         audio.volume = volume;
         audio.preload = 'none';
         audioRef.current = audio;
+        setDuration(0);
 
         const handleTimeUpdate = () => {
             setCurrentTime(audio.currentTime);
