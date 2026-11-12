@@ -4,6 +4,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { db } from '../firebase/config';
 import { collection, addDoc, onSnapshot, doc, deleteDoc, writeBatch, serverTimestamp } from 'firebase/firestore';
 import { AVAILABLE_TECH, getTechIcon } from '../constants/techStack';
+import { CodingStatus } from '../components/CodingStatus';
 import { GitHubContributions } from '../components/GitHubContributions';
 
 // Automated Tech Skill Classifier Helper
@@ -244,6 +245,7 @@ export const Dashboard: React.FC = () => {
             <div className="about-divider"></div>
 
             <div className="dashboard-grid-layout">
+                <CodingStatus />
                 <GitHubContributions username="BimaSatyaM" />
 
                 {isWhitelistedAdmin && (

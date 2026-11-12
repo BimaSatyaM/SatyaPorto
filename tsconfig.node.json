@@ -19,5 +19,5 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["vite.config.ts", "api/github-contributions.ts"]
+  "include": ["vite.config.ts", "api/github-contributions.ts", "api/coding-status.ts"]
 }

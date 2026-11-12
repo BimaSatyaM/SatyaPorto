@@ -2018,6 +2018,282 @@ body.light-theme .skills-3d-music-mode {
     margin: 0 auto;
 }
 
+/* ===== WAKATIME STATS DASHBOARD ===== */
+.wakatime-section {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    background: transparent;
+    border: none;
+    padding: 0;
+    box-shadow: none;
+}
+
+.wakatime-section.loading {
+    min-height: 100px;
+    align-items: center;
+    justify-content: center;
+    flex-direction: row;
+    gap: 10px;
+    font-size: 13.5px;
+    color: var(--text-secondary);
+}
+
+.wakatime-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    padding-bottom: 2px;
+}
+
+.wakatime-header-left {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.wakatime-title {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 18.5px;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.02em;
+}
+
+.wakatime-logo-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+    font-size: 18px;
+}
+
+.wakatime-subtitle {
+    margin: 0;
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
+.wakatime-header-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.wakatime-last-update {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+}
+
+/* 2-Column Stat Grid merged directly with page background */
+.wakatime-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+}
+
+.wakatime-stat-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 6px;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    box-shadow: var(--shadow-card);
+    transition: border-color 180ms ease, transform 180ms ease, box-shadow 180ms ease;
+}
+
+.wakatime-stat-box:hover {
+    border-color: rgba(99, 102, 241, 0.35);
+    transform: translateY(-1px);
+}
+
+.wakatime-stat-box.full-width {
+    grid-column: 1 / -1;
+}
+
+.wakatime-stat-label {
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    letter-spacing: -0.01em;
+}
+
+.wakatime-stat-value {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.01em;
+    font-variant-numeric: tabular-nums;
+}
+
+.wakatime-stat-value.accent {
+    color: var(--primary);
+}
+
+.wakatime-stat-value.placeholder {
+    color: var(--text-secondary);
+    font-weight: 500;
+    font-size: 14px;
+}
+
+.wakatime-stat-value-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.wakatime-status-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.wakatime-status-dot.active {
+    background: #22c55e;
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.6);
+    animation: wakaPulseRing 2s infinite cubic-bezier(0.4, 0, 0.6, 1);
+}
+
+.wakatime-status-dot.idle {
+    background: #94a3b8;
+}
+
+@keyframes wakaPulseRing {
+    0% {
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.6);
+    }
+    70% {
+        box-shadow: 0 0 0 6px rgba(34, 197, 94, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+    }
+}
+
+.wakatime-project-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.wakatime-ai-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: rgba(99, 102, 241, 0.12);
+    border: 1px solid rgba(99, 102, 241, 0.28);
+    color: #818cf8;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+body.light-theme .wakatime-ai-badge {
+    background: rgba(79, 70, 229, 0.08);
+    border-color: rgba(79, 70, 229, 0.22);
+    color: #4f46e5;
+}
+
+/* Languages List & Progress Bars */
+.wakatime-languages-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 4px;
+}
+
+.wakatime-lang-row {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.wakatime-lang-info {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 12.5px;
+    font-weight: 600;
+}
+
+.wakatime-lang-name {
+    color: var(--text-primary);
+}
+
+.wakatime-lang-time {
+    color: var(--text-secondary);
+    font-size: 11.5px;
+}
+
+.wakatime-lang-bar-bg {
+    width: 100%;
+    height: 6px;
+    background: var(--bg-elevated);
+    border-radius: 999px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+}
+
+.wakatime-lang-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), #818cf8);
+    border-radius: 999px;
+    transition: width 400ms ease;
+}
+
+@media (max-width: 680px) {
+    .wakatime-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .wakatime-title {
+        font-size: 17px;
+    }
+
+    .wakatime-stat-box {
+        padding: 14px 16px;
+    }
+
+    .wakatime-stat-value {
+        font-size: 15px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .wakatime-status-dot.active {
+        animation: none;
+    }
+}
+
 .github-contrib-section {
     display: flex;
     flex-direction: column;
@@ -2062,17 +2338,25 @@ body.light-theme .skills-3d-music-mode {
 }
 
 .github-contrib-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 18px 20px 14px;
-    box-shadow: var(--shadow-card);
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    box-shadow: none;
 }
 
 .github-contrib-scroll {
     overflow-x: auto;
     padding-bottom: 4px;
-    scrollbar-width: thin;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and legacy Edge */
+    -webkit-overflow-scrolling: touch;
+}
+
+.github-contrib-scroll::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
 }
 
 .github-contrib-matrix {
@@ -2087,8 +2371,8 @@ body.light-theme .skills-3d-music-mode {
     grid-column: 2;
     display: grid;
     grid-auto-flow: column;
-    grid-auto-columns: 11px;
-    column-gap: 3px;
+    grid-auto-columns: 11.5px;
+    column-gap: 3.5px;
     height: 15px;
     align-items: end;
 }
@@ -2105,11 +2389,11 @@ body.light-theme .skills-3d-music-mode {
     grid-column: 1;
     grid-row: 2;
     display: grid;
-    grid-template-rows: repeat(7, 11px);
-    row-gap: 3px;
+    grid-template-rows: repeat(7, 11.5px);
+    row-gap: 3.5px;
     font-size: 10.5px;
     color: var(--text-secondary);
-    line-height: 11px;
+    line-height: 11.5px;
 }
 
 .github-contrib-weekdays span:nth-child(1) {
@@ -2128,21 +2412,21 @@ body.light-theme .skills-3d-music-mode {
     grid-column: 2;
     grid-row: 2;
     display: flex;
-    gap: 3px;
+    gap: 3.5px;
 }
 
 .github-contrib-week {
     display: grid;
-    grid-template-rows: repeat(7, 11px);
-    row-gap: 3px;
+    grid-template-rows: repeat(7, 11.5px);
+    row-gap: 3.5px;
 }
 
 .github-contrib-cell {
-    width: 11px;
-    height: 11px;
-    border-radius: 2px;
-    background: #101520;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    width: 11.5px;
+    height: 11.5px;
+    border-radius: 3.5px;
+    background: #21262d;
+    border: 1px solid rgba(255, 255, 255, 0.04);
     transition: transform 120ms ease, outline-color 120ms ease;
 }
 
@@ -2152,7 +2436,7 @@ body.light-theme .skills-3d-music-mode {
 
 .github-contrib-weeks .github-contrib-cell:not(.empty-pad):hover,
 .github-contrib-weeks .github-contrib-cell.active {
-    transform: scale(1.18);
+    transform: scale(1.22);
     outline: 1.5px solid var(--text-primary);
     outline-offset: 1px;
 }
@@ -2184,8 +2468,8 @@ body.light-theme .skills-3d-music-mode {
 }
 
 body.light-theme .github-contrib-cell {
-    background: #ebe3cf;
-    border-color: rgba(15, 23, 42, 0.08);
+    background: rgba(0, 0, 0, 0.075);
+    border-color: rgba(0, 0, 0, 0.04);
 }
 
 body.light-theme .github-contrib-cell[data-level='1'] {
@@ -2210,8 +2494,8 @@ body.light-theme .github-contrib-cell[data-level='4'] {
 
 .github-contrib-footer {
     margin-top: 12px;
-    padding-top: 10px;
-    border-top: 1px solid var(--border);
+    padding-top: 6px;
+    border-top: none;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -2295,7 +2579,7 @@ body.light-theme .github-contrib-cell[data-level='4'] {
     display: flex;
     flex-direction: column;
     gap: 18px;
-    padding: 18px 20px;
+    padding: 0;
 }
 
 .github-activity-month {
@@ -2334,21 +2618,23 @@ body.light-theme .github-contrib-cell[data-level='4'] {
     padding-left: 14px;
 }
 
-.github-activity-timeline::before {
-    content: '';
-    position: absolute;
-    left: 27px;
-    top: 8px;
-    bottom: 8px;
-    width: 1.5px;
-    background: var(--border);
-}
-
 .github-activity-item {
     position: relative;
     display: flex;
     align-items: flex-start;
     gap: 14px;
+}
+
+/* Discontinuous timeline connector line: breaks around each badge */
+.github-activity-item:not(:last-child)::before {
+    content: '';
+    position: absolute;
+    left: 13px;
+    top: 33px;
+    bottom: -13px;
+    width: 2px;
+    background: var(--border);
+    border-radius: 999px;
 }
 
 .github-activity-badge {
@@ -2357,14 +2643,21 @@ body.light-theme .github-contrib-cell[data-level='4'] {
     width: 28px;
     height: 28px;
     flex-shrink: 0;
-    border-radius: 50%;
-    border: 1px solid var(--border);
-    background: var(--bg-elevated);
+    border: none;
+    background: transparent;
+    border-radius: 0;
+    box-shadow: none;
     color: var(--text-secondary);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 12px;
+    font-size: 15px;
+    transition: color 150ms ease, transform 150ms ease;
+}
+
+.github-activity-item:hover .github-activity-badge {
+    color: var(--primary);
+    transform: scale(1.1);
 }
 
 .github-activity-body {
@@ -2492,30 +2785,30 @@ body.light-theme .github-activity-progress {
 }
 
 .github-activity-more-btn {
-    width: 100%;
-    min-height: 40px;
-    padding: 8px 14px;
-    border-radius: 10px;
-    border: 1px solid var(--border);
-    background: var(--bg-elevated);
-    color: var(--primary);
+    width: auto;
+    align-self: center;
+    padding: 6px 16px;
+    border-radius: 999px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    transition: border-color 180ms ease, background-color 180ms ease;
+    gap: 6px;
+    transition: color 180ms ease, background-color 180ms ease;
 }
 
 .github-activity-more-btn:hover:not(:disabled) {
-    border-color: var(--primary);
-    background: var(--bg-card-hover);
+    color: var(--primary);
+    background: var(--bg-card);
 }
 
 .github-activity-more-btn:disabled {
-    opacity: 0.7;
+    opacity: 0.6;
     cursor: wait;
 }
 
@@ -2534,9 +2827,5 @@ body.light-theme .github-activity-progress {
 
     .github-activity-progress {
         width: 72px;
-    }
-
-    .github-activity-more-btn {
-        min-height: 44px;
     }
 }

@@ -491,9 +491,10 @@ export const GitHubContributions: React.FC<GitHubContributionsProps> = ({ userna
                                         <span>{lang === 'ID' ? 'Memuat...' : 'Loading...'}</span>
                                     </>
                                 ) : (
-                                    <span>
-                                        {lang === 'ID' ? 'Tampilkan aktivitas lainnya' : 'Show more activity'}
-                                    </span>
+                                    <>
+                                        <span>{lang === 'ID' ? 'Tampilkan aktivitas lainnya' : 'Show more activity'}</span>
+                                        <i className="fas fa-chevron-down" style={{ fontSize: '10.5px', opacity: 0.7 }} aria-hidden="true" />
+                                    </>
                                 )}
                             </button>
                         )}
