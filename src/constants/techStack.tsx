@@ -42,7 +42,7 @@ export const AVAILABLE_TECH: TechItem[] = [
     { name: 'Angular', icon: <SiAngular />, color: '#DD0031' },
     { name: 'Svelte', icon: <SiSvelte />, color: '#FF3E00' },
     { name: 'SolidJS', icon: <SiSolid />, color: '#76B3E4' },
-    { name: 'Next.js', icon: <SiNextdotjs />, color: '#FFFFFF' },
+    { name: 'Next.js', icon: <SiNextdotjs />, color: 'var(--text-primary)' },
     { name: 'Nuxt.js', icon: <SiNuxt />, color: '#00DC82' },
     { name: 'Remix', icon: <SiRemix />, color: '#E35C5C' },
     { name: 'Astro', icon: <SiAstro />, color: '#FF5D01' },
@@ -54,14 +54,14 @@ export const AVAILABLE_TECH: TechItem[] = [
     // Backend & Runtimes
     { name: 'Node.js', icon: <SiNodedotjs />, color: '#339933' },
     { name: 'Bun', icon: <SiBun />, color: '#F9F1E7' },
-    { name: 'Deno', icon: <SiDeno />, color: '#FFFFFF' },
+    { name: 'Deno', icon: <SiDeno />, color: 'var(--text-primary)' },
     { name: 'Express.js', icon: <SiExpress />, color: '#828282' },
     { name: 'NestJS', icon: <SiNestjs />, color: '#E0234E' },
     { name: 'Django', icon: <SiDjango />, color: '#092E20' },
     { name: 'FastAPI', icon: <SiFastapi />, color: '#009688' },
-    { name: 'Flask', icon: <SiFlask />, color: '#FFFFFF' },
+    { name: 'Flask', icon: <SiFlask />, color: 'var(--text-primary)' },
     { name: 'Laravel', icon: <SiLaravel />, color: '#FF2D20' },
-    { name: 'Symfony', icon: <SiSymfony />, color: '#FFFFFF' },
+    { name: 'Symfony', icon: <SiSymfony />, color: 'var(--text-primary)' },
     { name: 'Spring Boot', icon: <SiSpringboot />, color: '#6DB33F' },
     { name: 'ASP.NET Core', icon: <SiDotnet />, color: '#512BD4' },
     { name: 'Ruby on Rails', icon: <SiRubyonrails />, color: '#CC0000' },
@@ -87,7 +87,7 @@ export const AVAILABLE_TECH: TechItem[] = [
     { name: 'CouchDB', icon: <SiApachecouchdb />, color: '#EFEFEF' },
     { name: 'InfluxDB', icon: <SiInfluxdb />, color: '#22ADF6' },
     { name: 'ClickHouse', icon: <SiClickhouse />, color: '#F38020' },
-    { name: 'PlanetScale', icon: <SiPlanetscale />, color: '#FFFFFF' },
+    { name: 'PlanetScale', icon: <SiPlanetscale />, color: 'var(--text-primary)' },
     { name: 'Prisma', icon: <SiPrisma />, color: '#2D3748' },
     { name: 'SurrealDB', icon: <SiSurrealdb />, color: '#FF00A0' },
     { name: 'FaunaDB', icon: <SiFauna />, color: '#3A1AB6' },
@@ -98,9 +98,9 @@ export const AVAILABLE_TECH: TechItem[] = [
     { name: 'AWS', icon: <FaAws />, color: '#FF9900' },
     { name: 'Google Cloud Platform', icon: <SiGooglecloud />, color: '#4285F4' },
     { name: 'Microsoft Azure', icon: <FaMicrosoft />, color: '#0089D6' },
-    { name: 'Vercel', icon: <SiVercel />, color: '#FFFFFF' },
+    { name: 'Vercel', icon: <SiVercel />, color: 'var(--text-primary)' },
     { name: 'Netlify', icon: <SiNetlify />, color: '#00C7B7' },
-    { name: 'Railway', icon: <SiRailway />, color: '#FFFFFF' },
+    { name: 'Railway', icon: <SiRailway />, color: 'var(--text-primary)' },
     { name: 'Render', icon: <SiRender />, color: '#46E3B7' },
 
     // DevOps
@@ -119,7 +119,7 @@ export const AVAILABLE_TECH: TechItem[] = [
     { name: 'Tauri', icon: <SiTauri />, color: '#FFC131' },
 
     // Extra
-    { name: 'GitHub', icon: <SiGithub />, color: '#FFFFFF' },
+    { name: 'GitHub', icon: <SiGithub />, color: 'var(--text-primary)' },
     { name: 'npm', icon: <SiNpm />, color: '#CB3837' }
 ];
 

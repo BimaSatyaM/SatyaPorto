@@ -151,12 +151,19 @@ export const Player: React.FC = () => {
     };
 
     return (
-        <div className="player">
+        <div className={`player ${isPlaying ? 'is-playing' : ''}`}>
             {/* TOP ROW: Track Metadata & Like */}
             <div className="player-top-row">
                 <div className="player-left">
                     <div className="player-cover">
-                        <img id="playerCover" src={currentTrack.cover} alt="Cover" />
+                        <img id="playerCover" src={currentTrack.cover} alt={`${currentTrack.title} cover`} width={44} height={44} />
+                        {isPlaying && (
+                            <div className="player-eq-bars" aria-hidden="true">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </div>
+                        )}
                     </div>
                     <div className="player-info">
                         <h4 id="songTitle">{currentTrack.title}</h4>
@@ -164,37 +171,52 @@ export const Player: React.FC = () => {
                     </div>
                 </div>
                 <button
+                    type="button"
                     className={`like-btn ${isLiked ? 'liked' : ''}`}
                     onClick={() => toggleLike(currentTrackIndex)}
+                    aria-label={isLiked ? 'Unlike track' : 'Like track'}
+                    aria-pressed={isLiked}
                 >
-                    <i className={isLiked ? 'fas fa-heart' : 'far fa-heart'}></i>
+                    <i className={isLiked ? 'fas fa-heart' : 'far fa-heart'} aria-hidden="true"></i>
                 </button>
             </div>
 
             {/* CONTROLS ROW */}
             <div className="player-controls-row">
                 <button
+                    type="button"
                     id="shuffleBtn"
                     onClick={toggleShuffle}
                     style={{ color: shuffle ? '#22c55e' : '' }}
+                    aria-label="Toggle shuffle"
+                    aria-pressed={shuffle}
                 >
-                    <i className="fas fa-random"></i>
+                    <i className="fas fa-random" aria-hidden="true"></i>
                 </button>
-                <button id="prevBtn" onClick={prevTrack}>
-                    <i className="fas fa-step-backward"></i>
-                </button>
-                <button className="play-pause" id="playPauseBtn" onClick={togglePlay}>
-                    <i className={`fas ${isPlaying ? 'fa-pause' : 'fa-play'}`}></i>
-                </button>
-                <button id="nextBtn" onClick={nextTrack}>
-                    <i className="fas fa-step-forward"></i>
+                <button type="button" id="prevBtn" onClick={prevTrack} aria-label="Previous track">
+                    <i className="fas fa-step-backward" aria-hidden="true"></i>
                 </button>
                 <button
+                    type="button"
+                    className="play-pause"
+                    id="playPauseBtn"
+                    onClick={togglePlay}
+                    aria-label={isPlaying ? 'Pause audio' : 'Play audio'}
+                >
+                    <i className={`fas ${isPlaying ? 'fa-pause' : 'fa-play'}`} aria-hidden="true"></i>
+                </button>
+                <button type="button" id="nextBtn" onClick={nextTrack} aria-label="Next track">
+                    <i className="fas fa-step-forward" aria-hidden="true"></i>
+                </button>
+                <button
+                    type="button"
                     id="repeatBtn"
                     onClick={toggleRepeat}
                     style={{ color: repeat ? '#22c55e' : '' }}
+                    aria-label="Toggle repeat"
+                    aria-pressed={repeat}
                 >
-                    <i className="fas fa-redo"></i>
+                    <i className="fas fa-redo" aria-hidden="true"></i>
                 </button>
             </div>
 
@@ -224,11 +246,13 @@ export const Player: React.FC = () => {
             {/* BOTTOM VOLUME ROW */}
             <div className="player-volume-row">
                 <button
+                    type="button"
                     id="volumeIcon"
                     title="Volume"
+                    aria-label={volume > 0 ? 'Mute audio' : 'Unmute audio'}
                     onClick={() => changeVolume(volume > 0 ? 0 : 0.5)}
                 >
-                    <i className={getVolumeIcon()}></i>
+                    <i className={getVolumeIcon()} aria-hidden="true"></i>
                 </button>
                 <div
                     className="volume-bar"

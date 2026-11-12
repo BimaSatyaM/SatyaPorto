@@ -876,7 +876,7 @@ export const PostForm: React.FC<PostFormProps> = ({ editData, onCancelEdit }) =>
                     </div>
 
                     <div className="post-form-group" style={{ flex: 1, minWidth: '150px', display: 'flex', alignItems: 'center', marginTop: '10px' }}>
-                        <label className="checkbox-label" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px', color: '#fff' }}>
+                        <label className="checkbox-label" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px', color: 'var(--text-primary)' }}>
                             <input
                                 type="checkbox"
                                 checked={featured}

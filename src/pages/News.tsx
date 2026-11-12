@@ -513,7 +513,7 @@ export const News: React.FC = () => {
                                                                                 handleReact(msg.id, emoji, msg.reactions);
                                                                             }} 
                                                                             className={`reaction-pill-btn ${hasReacted ? 'active' : ''}`}
-                                                                            style={{ padding: '3px 8px', height: '24px', borderRadius: '12px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border)', color: '#fff', cursor: 'pointer' }}
+                                                                            style={{ padding: '3px 8px', height: '24px', borderRadius: '12px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px', background: 'var(--bg-pill)', border: '1px solid var(--border)', color: 'var(--text-primary)', cursor: 'pointer' }}
                                                                         >
                                                                             <span>{emoji}</span> 
                                                                             <span>{uids.length}</span>

@@ -130,7 +130,7 @@ export const Contact: React.FC = () => {
                 <h2 className="contact-section-title">{t('contact.sendTitle')}</h2>
                 <form id="contactForm" className="contact-form" onSubmit={handleContactSubmit}>
                     <div className="form-group">
-                        <label>{t('contact.nameLabel')}</label>
+                        <label htmlFor="name">{t('contact.nameLabel')}</label>
                         <input
                             type="text"
                             id="name"
@@ -141,7 +141,7 @@ export const Contact: React.FC = () => {
                         />
                     </div>
                     <div className="form-group">
-                        <label>{t('contact.emailLabel')}</label>
+                        <label htmlFor="email">{t('contact.emailLabel')}</label>
                         <input
                             type="email"
                             id="email"
@@ -152,7 +152,7 @@ export const Contact: React.FC = () => {
                         />
                     </div>
                     <div className="form-group">
-                        <label>{t('contact.msgLabel')}</label>
+                        <label htmlFor="message">{t('contact.msgLabel')}</label>
                         <textarea
                             id="message"
                             required
@@ -165,20 +165,25 @@ export const Contact: React.FC = () => {
                     <button type="submit" className="btn-primary" disabled={formStatus !== 'idle'}>
                         {formStatus === 'idle' && (
                             <>
-                                <i className="fas fa-paper-plane"></i> {t('contact.sendBtn')}
+                                <i className="fas fa-paper-plane" aria-hidden="true"></i> {t('contact.sendBtn')}
                             </>
                         )}
                         {formStatus === 'sending' && (
                             <>
-                                <i className="fas fa-spinner fa-spin"></i> {t('contact.sendingBtn')}
+                                <i className="fas fa-spinner fa-spin" aria-hidden="true"></i> {t('contact.sendingBtn')}
                             </>
                         )}
                         {formStatus === 'sent' && (
                             <>
-                                <i className="fas fa-check"></i> {t('contact.sentBtn')}
+                                <i className="fas fa-check" aria-hidden="true"></i> {t('contact.sentBtn')}
                             </>
                         )}
                     </button>
+                    {formStatus === 'sent' && (
+                        <div className="contact-sent-status" role="status">
+                            <i className="fas fa-check-circle" aria-hidden="true"></i> {t('contact.sentNotice')}
+                        </div>
+                    )}
                 </form>
             </div>
         </section>

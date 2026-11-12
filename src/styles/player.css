@@ -6,21 +6,23 @@
     right: auto;
     height: auto;
     background: var(--bg-card);
-    /* #181818 */
     border: 1px solid var(--border);
-    /* #2a2a2a */
     border-radius: var(--radius);
-    /* 18px */
     display: flex;
     flex-direction: column;
-    padding: 16px;
-    gap: 12px;
+    padding: 14px;
+    gap: 11px;
     z-index: 5;
+    box-shadow: var(--shadow-card);
     transition: var(--ease);
 }
 
 .player:hover {
-    border-color: #3f3f3f;
+    border-color: var(--border-hover);
+}
+
+.player.is-playing {
+    border-color: color-mix(in srgb, var(--primary) 40%, var(--border));
 }
 
 /* Remove legacy text indicators */
@@ -45,9 +47,10 @@
 }
 
 .player-cover {
+    position: relative;
     width: 44px;
     height: 44px;
-    border-radius: 8px;
+    border-radius: 10px;
     border: 1px solid var(--border);
     overflow: hidden;
     flex-shrink: 0;
@@ -57,6 +60,44 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
+    display: block;
+    transition: transform 320ms var(--ease-spring);
+}
+
+.player:hover .player-cover img {
+    transform: scale(1.06);
+}
+
+/* Subtle 3-bar equalizer overlay visible only while playing */
+.player-eq-bars {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.42);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 3px;
+    padding-bottom: 8px;
+    pointer-events: none;
+}
+
+.player-eq-bars span {
+    width: 3px;
+    height: 14px;
+    border-radius: 999px;
+    background: #38bdf8;
+    transform-origin: bottom center;
+    animation: eqBarBounce 700ms ease-in-out infinite;
+}
+
+.player-eq-bars span:nth-child(2) {
+    animation-delay: 180ms;
+    height: 18px;
+}
+
+.player-eq-bars span:nth-child(3) {
+    animation-delay: 340ms;
+    height: 12px;
 }
 
 .player-info {
@@ -66,7 +107,7 @@
 
 .player-info h4 {
     font-size: 13px;
-    color: #fff;
+    color: var(--text-primary);
     font-weight: 600;
     margin-bottom: 2px;
     overflow: hidden;
@@ -89,13 +130,21 @@
     color: var(--text-secondary);
     cursor: pointer;
     font-size: 16px;
-    padding: 4px;
+    padding: 6px;
+    border-radius: 50%;
     transition: var(--ease);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .like-btn:hover {
-    color: #fff;
-    transform: scale(1.1);
+    color: var(--text-primary);
+    transform: scale(1.12);
+}
+
+.like-btn:active {
+    transform: scale(0.92);
 }
 
 .like-btn.liked {
@@ -107,8 +156,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 16px;
-    margin: 4px 0;
+    gap: 14px;
+    margin: 2px 0;
 }
 
 .player-controls-row button {
@@ -117,6 +166,9 @@
     color: var(--text-secondary);
     cursor: pointer;
     font-size: 14px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
     transition: var(--ease);
     display: flex;
     align-items: center;
@@ -124,22 +176,29 @@
 }
 
 .player-controls-row button:hover {
-    color: #fff;
+    color: var(--text-primary);
+    background: var(--bg-pill);
     transform: scale(1.08);
 }
 
+.player-controls-row button:active {
+    transform: scale(0.94);
+}
+
 .player-controls-row button.play-pause {
-    background: #fff !important;
-    color: #000 !important;
-    width: 32px;
-    height: 32px;
+    background: var(--text-primary) !important;
+    color: var(--bg-main) !important;
+    width: 34px;
+    height: 34px;
     border-radius: var(--radius-avatar);
     font-size: 12px !important;
+    box-shadow: var(--shadow-card);
 }
 
 .player-controls-row button.play-pause:hover {
-    transform: scale(1.06);
-    background: #f0f0f0 !important;
+    transform: scale(1.08);
+    background: var(--primary) !important;
+    color: var(--primary-ink) !important;
 }
 
 /* Progress Row */
@@ -153,33 +212,40 @@
 .player-progress-row span {
     font-size: 11px;
     color: var(--text-secondary);
-    font-family: 'Poppins', monospace;
-    min-width: 28px;
+    font-family: 'Inter', monospace;
+    font-variant-numeric: tabular-nums;
+    min-width: 30px;
     text-align: center;
 }
 
 .progress-bar {
     flex: 1;
     height: 4px;
-    background: #282828;
+    background: var(--border);
     cursor: pointer;
     position: relative;
-    border-radius: 2px;
+    border-radius: 999px;
     overflow: visible;
+    transition: height 150ms ease;
+}
+
+.progress-bar:hover {
+    height: 6px;
 }
 
 .progress-bar::after {
     content: '';
     position: absolute;
-    inset: -6px 0;
+    inset: -8px 0;
 }
 
 .progress-fill {
     height: 100%;
     width: 0%;
-    background: #fff;
-    border-radius: 2px;
-    transition: width 0.1s linear;
+    background: var(--text-primary);
+    border-radius: 999px;
+    transition: width 0.1s linear, background-color 180ms ease;
+    position: relative;
 }
 
 .progress-bar:hover .progress-fill {
@@ -193,7 +259,7 @@
     justify-content: flex-end;
     gap: 8px;
     width: 100%;
-    padding-top: 4px;
+    padding-top: 2px;
 }
 
 .player-volume-row button {
@@ -202,26 +268,35 @@
     color: var(--text-secondary);
     cursor: pointer;
     font-size: 12px;
+    padding: 4px;
+    border-radius: 6px;
     transition: var(--ease);
 }
 
 .player-volume-row button:hover {
-    color: #fff;
+    color: var(--text-primary);
 }
 
 .volume-bar {
-    width: 70px;
+    width: 72px;
     height: 4px;
-    background: #282828;
+    background: var(--border);
     cursor: pointer;
     position: relative;
-    border-radius: 2px;
+    border-radius: 999px;
+}
+
+.volume-bar::after {
+    content: '';
+    position: absolute;
+    inset: -8px 0;
 }
 
 .volume-fill {
     height: 100%;
-    background: #fff;
-    border-radius: 2px;
+    background: var(--text-primary);
+    border-radius: 999px;
+    transition: background-color 180ms ease;
 }
 
 .volume-bar:hover .volume-fill {
@@ -230,9 +305,5 @@
 
 /* Spinner anim when playing on mobile cover is disabled, let it spin only if wanted */
 #badgeCover.spinning {
-    animation: fa-spin 10s infinite linear;
-}
-
-badgeCover.spinning {
     animation: fa-spin 10s infinite linear;
 }

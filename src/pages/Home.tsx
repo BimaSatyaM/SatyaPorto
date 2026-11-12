@@ -1,24 +1,64 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { PostList } from '../components/PostList';
+import { SkillsRoom3D } from '../components/SkillsRoom3D';
 import { db } from '../firebase/config';
 import { useLanguage } from '../context/LanguageContext';
 import { collection, onSnapshot } from 'firebase/firestore';
 import { getTechIcon } from '../constants/techStack';
+
+const SKILLS_CACHE_KEY = 'satya_skills_cache_v1';
+
+function readCachedSkills(): SkillItem[] {
+    if (typeof window === 'undefined') return [];
+    try {
+        const raw = window.localStorage.getItem(SKILLS_CACHE_KEY);
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : [];
+    } catch {
+        return [];
+    }
+}
+
+class Skills3DErrorBoundary extends React.Component<
+    { onErrorFallback: () => void; children: React.ReactNode },
+    { hasError: boolean }
+> {
+    constructor(props: { onErrorFallback: () => void; children: React.ReactNode }) {
+        super(props);
+        this.state = { hasError: false };
+    }
+
+    static getDerivedStateFromError() {
+        return { hasError: true };
+    }
+
+    componentDidCatch() {
+        this.props.onErrorFallback();
+    }
+
+    render() {
+        if (this.state.hasError) return null;
+        return this.props.children;
+    }
+}
 
 interface SkillItem {
     id: string;
     name: string;
     categories: string[];
     color: string;
+    isLead?: boolean;
 }
 
 export const Home: React.FC = () => {
-    const { t } = useLanguage();
+    const { t, setActiveSection } = useLanguage();
     const [selectedCategory, setSelectedCategory] = useState<string>('all');
-    const [skills, setSkills] = useState<SkillItem[]>([]);
-    const [loadingSkills, setLoadingSkills] = useState(true);
+    const [webglFallback, setWebglFallback] = useState(false);
+    const [skills, setSkills] = useState<SkillItem[]>(() => readCachedSkills());
+    const [loadingSkills, setLoadingSkills] = useState(() => readCachedSkills().length === 0);
 
-    // Fetch skills from Firestore in real-time
+    // Fetch skills from Firestore in real-time and warm-cache for instant next paint
     useEffect(() => {
         const skillsCollection = collection(db, 'skills');
         const unsubscribe = onSnapshot(skillsCollection, (snapshot) => {
@@ -29,8 +69,14 @@ export const Home: React.FC = () => {
                     ...docSnap.data()
                 } as SkillItem);
             });
-            setSkills(fetched);
+            const nextSerialized = JSON.stringify(fetched);
+            setSkills((prev) => (JSON.stringify(prev) === nextSerialized ? prev : fetched));
             setLoadingSkills(false);
+            try {
+                window.localStorage.setItem(SKILLS_CACHE_KEY, nextSerialized);
+            } catch {
+                // Ignore storage quota errors cleanly
+            }
         }, (err) => {
             console.error('Error fetching skills list for Home:', err);
             setLoadingSkills(false);
@@ -97,6 +143,26 @@ export const Home: React.FC = () => {
             return s.categories && s.categories.includes(selectedCategory);
         });
 
+    const studioSkills = useMemo(
+        () =>
+            skills.map((s) => {
+                const info = getTechIcon(s.name || '');
+                return {
+                    id: s.id,
+                    name: s.name || 'Skill',
+                    categories: Array.isArray(s.categories) ? s.categories : [],
+                    color: info?.color || s.color || '#38bdf8',
+                    isLead: Boolean(s.isLead),
+                };
+            }),
+        [skills]
+    );
+
+    const visibleSkillIds = useMemo(
+        () => new Set(filteredSkills.map((s) => s.id)),
+        [filteredSkills]
+    );
+
     const handleEditShowcasePost = (post: any) => {
         sessionStorage.setItem('edit_project_data', JSON.stringify(post));
         if (window.goTo) {
@@ -116,10 +182,32 @@ export const Home: React.FC = () => {
                         <p>{t('home.bio1')}</p>
                         <p>{t('home.bio2')}</p>
                     </div>
+                    <div className="hero-cta-row">
+                        <button
+                            type="button"
+                            className="hero-cta-primary"
+                            onClick={() => setActiveSection('projects')}
+                        >
+                            {t('home.ctaProjects')}
+                        </button>
+                        <button
+                            type="button"
+                            className="hero-cta-secondary"
+                            onClick={() => setActiveSection('contact')}
+                        >
+                            {t('home.ctaContact')}
+                        </button>
+                    </div>
                 </div>
                 <div className="hero-page-right">
                     <div className="hero-photo-box">
-                        <img src="/assets/foto2.jpg" alt="Bima Satya Mahendra" />
+                        <img
+                            src="/assets/foto2.jpg"
+                            alt="Bima Satya Mahendra"
+                            width={280}
+                            height={280}
+                            fetchPriority="high"
+                        />
                     </div>
                 </div>
             </div>
@@ -138,8 +226,10 @@ export const Home: React.FC = () => {
                 <div className="skills-filters">
                     {categories.map(cat => (
                         <button
+                            type="button"
                             key={cat.id}
                             className={`filter-pill ${selectedCategory === cat.id ? 'active' : ''}`}
+                            aria-pressed={selectedCategory === cat.id}
                             onClick={() => setSelectedCategory(cat.id)}
                         >
                             {cat.label} <span className="pill-count">{cat.count}</span>
@@ -147,7 +237,19 @@ export const Home: React.FC = () => {
                     ))}
                 </div>
 
-                {/* Skills badges grid */}
+                {!webglFallback && (loadingSkills || studioSkills.length > 0) && (
+                    <Skills3DErrorBoundary onErrorFallback={() => setWebglFallback(true)}>
+                        <SkillsRoom3D
+                            skills={studioSkills}
+                            visibleSkillIds={visibleSkillIds}
+                            warningText={t('home.warning')}
+                            onWebGLUnavailable={() => setWebglFallback(true)}
+                        />
+                    </Skills3DErrorBoundary>
+                )}
+
+                {/* Fallback skills badges grid when WebGL is unavailable or skills are empty */}
+                {(webglFallback || (!loadingSkills && skills.length === 0)) && (
                 <div className="skills-grid" key={selectedCategory}>
                     {loadingSkills ? (
                         <div style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '20px', gridColumn: '1 / -1' }}>
@@ -166,9 +268,7 @@ export const Home: React.FC = () => {
                                     key={skill.name}
                                     className="skill-badge"
                                     style={{
-                                        '--skill-color': skillColor,
-                                        background: `color-mix(in srgb, ${skillColor} 8%, transparent)`,
-                                        border: `1px solid color-mix(in srgb, ${skillColor} 20%, transparent)`
+                                        '--skill-color': skillColor
                                     } as React.CSSProperties}
                                 >
                                     <span className="skill-icon" style={{ color: skillColor }}>
@@ -180,16 +280,7 @@ export const Home: React.FC = () => {
                         })
                     )}
                 </div>
-
-                {/* Animated Warning Banner */}
-                <div className="skills-warning-banner">
-                    <div className="warning-banner-icon">
-                        <i className="fas fa-exclamation-triangle"></i>
-                    </div>
-                    <div className="warning-banner-text">
-                        {t('home.warning')}
-                    </div>
-                </div>
+                )}
 
                 {/* Divider Line */}
                 <div className="about-divider"></div>

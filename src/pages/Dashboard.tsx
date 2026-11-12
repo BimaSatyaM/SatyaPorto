@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { db } from '../firebase/config';
-import { collection, addDoc, onSnapshot, doc, deleteDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, onSnapshot, doc, deleteDoc, writeBatch, serverTimestamp } from 'firebase/firestore';
 import { AVAILABLE_TECH, getTechIcon } from '../constants/techStack';
 
 // Automated Tech Skill Classifier Helper
@@ -67,6 +67,7 @@ interface SkillDoc {
     name: string;
     categories: string[];
     color: string;
+    isLead?: boolean;
 }
 
 export const Dashboard: React.FC = () => {
@@ -203,6 +204,20 @@ export const Dashboard: React.FC = () => {
         }
     };
 
+    const handleSetLeadSkill = async (skillId: string, currentlyLead: boolean) => {
+        try {
+            const batch = writeBatch(db);
+            skillsList.forEach((s) => {
+                batch.update(doc(db, 'skills', s.id), {
+                    isLead: currentlyLead ? false : s.id === skillId,
+                });
+            });
+            await batch.commit();
+        } catch (err: any) {
+            alert('Failed to update featured 3D skill: ' + err.message);
+        }
+    };
+
     // Filter autocomplete options list
     const filteredTechs = AVAILABLE_TECH.filter(
         tech =>
@@ -216,7 +231,7 @@ export const Dashboard: React.FC = () => {
             <section id="dashboard" className="section" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', textAlign: 'center', padding: '40px 20px' }}>
                 <div className="auth-notice-card" style={{ maxWidth: '480px', padding: '40px 30px' }}>
                     <i className="fas fa-tools auth-notice-icon" style={{ fontSize: '48px', color: 'var(--primary)', marginBottom: '20px' }}></i>
-                    <h2 style={{ fontSize: '24px', fontWeight: '500', color: '#fff', marginBottom: '10px' }}>{t('dashboard.title')}</h2>
+                    <h2 style={{ fontSize: '24px', fontWeight: '500', color: 'var(--text-primary)', marginBottom: '10px' }}>{t('dashboard.title')}</h2>
                     <p style={{ fontSize: '15px', color: 'var(--text-secondary)', lineHeight: '1.6' }}>
                         {t('dashboard.underConstruction')}
                     </p>
@@ -326,7 +341,7 @@ export const Dashboard: React.FC = () => {
                                             <span className="skill-icon" style={{ color: selectedColor }}>
                                                 {selectedIconInfo ? selectedIconInfo.icon : <i className="fas fa-code"></i>}
                                             </span>
-                                            <span className="skill-name" style={{ color: '#fff', fontWeight: 600 }}>{selectedTechName}</span>
+                                            <span className="skill-name" style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{selectedTechName}</span>
                                         </div>
                                         <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Live preview</span>
                                     </div>
@@ -335,7 +350,7 @@ export const Dashboard: React.FC = () => {
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                         <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Color:</span>
                                         <span style={{ width: '14px', height: '14px', borderRadius: '50%', background: selectedColor }} />
-                                        <span style={{ fontSize: '12px', color: '#fff', fontWeight: 600 }}>{selectedColor}</span>
+                                        <span style={{ fontSize: '12px', color: 'var(--text-primary)', fontWeight: 600 }}>{selectedColor}</span>
                                     </div>
                                 </div>
 
@@ -351,9 +366,9 @@ export const Dashboard: React.FC = () => {
                                                     onClick={() => handleCategoryToggle(cat)}
                                                     className={`filter-pill-btn ${isSelected ? 'active' : ''}`}
                                                     style={{
-                                                        background: isSelected ? 'var(--primary)' : 'rgba(255,255,255,0.04)',
+                                                        background: isSelected ? 'var(--primary)' : 'var(--bg-pill)',
                                                         borderColor: isSelected ? 'var(--primary)' : 'var(--border)',
-                                                        color: isSelected ? '#000000' : 'var(--text-secondary)',
+                                                        color: isSelected ? 'var(--primary-ink)' : 'var(--text-secondary)',
                                                         borderRadius: '20px',
                                                         padding: '6px 16px',
                                                         fontSize: '12px',
@@ -391,7 +406,7 @@ export const Dashboard: React.FC = () => {
                 <div className="about-content-box" style={{ margin: 0, padding: '24px 30px' }}>
                     <h3 
                         onClick={() => setIsSkillsListOpen(!isSkillsListOpen)}
-                        style={{ fontSize: '18px', fontWeight: '500', color: '#fff', marginBottom: isSkillsListOpen ? '16px' : '0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', cursor: 'pointer', userSelect: 'none' }}
+                        style={{ fontSize: '18px', fontWeight: '500', color: 'var(--text-primary)', marginBottom: isSkillsListOpen ? '16px' : '0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', cursor: 'pointer', userSelect: 'none' }}
                     >
                         <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                             <i className="fas fa-list-ul" style={{ color: 'var(--primary)' }}></i> Current Skills ({skillsList.length})
@@ -416,29 +431,51 @@ export const Dashboard: React.FC = () => {
                                     <div
                                         key={skill.id}
                                         className="dashboard-skill-row"
-                                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: '#121212', border: '1px solid var(--border)', borderRadius: '10px' }}
+                                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: '10px' }}
                                     >
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                             <span style={{ fontSize: '18px', color: skillColor, display: 'flex', alignItems: 'center' }}>
                                                 {info ? info.icon : <i className="fas fa-code"></i>}
                                             </span>
                                             <div>
-                                                <span style={{ fontSize: '14px', fontWeight: '600', color: '#fff', display: 'block' }}>{skillName}</span>
+                                                <span style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)', display: 'block' }}>{skillName}</span>
                                                 <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
                                                     {skillCategories.join(', ')}
                                                 </span>
                                             </div>
                                         </div>
 
-                                        <button
-                                            onClick={() => handleDeleteSkill(skill.id)}
-                                            style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: '14px', transition: 'color 0.2s ease' }}
-                                            onMouseEnter={(e) => e.currentTarget.style.color = '#ef4444'}
-                                            onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(255,255,255,0.4)'}
-                                            title="Delete Skill"
-                                        >
-                                            <i className="fas fa-trash-alt"></i>
-                                        </button>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleSetLeadSkill(skill.id, Boolean(skill.isLead))}
+                                                style={{
+                                                    background: 'transparent',
+                                                    border: 'none',
+                                                    color: skill.isLead ? '#f59e0b' : 'var(--text-secondary)',
+                                                    cursor: 'pointer',
+                                                    fontSize: '14px',
+                                                    transition: 'color 0.2s ease, transform 0.2s ease',
+                                                }}
+                                                title={skill.isLead ? 'Remove Featured 3D Spotlight' : 'Set as Featured 3D Worker'}
+                                                aria-label={skill.isLead ? `Unfeature ${skillName} in 3D room` : `Feature ${skillName} in 3D room`}
+                                                aria-pressed={Boolean(skill.isLead)}
+                                            >
+                                                <i className={skill.isLead ? 'fas fa-star' : 'far fa-star'}></i>
+                                            </button>
+
+                                            <button
+                                                type="button"
+                                                onClick={() => handleDeleteSkill(skill.id)}
+                                                style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '14px', transition: 'color 0.2s ease' }}
+                                                onMouseEnter={(e) => e.currentTarget.style.color = '#ef4444'}
+                                                onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}
+                                                title="Delete Skill"
+                                                aria-label={`Delete ${skillName}`}
+                                            >
+                                                <i className="fas fa-trash-alt"></i>
+                                            </button>
+                                        </div>
                                     </div>
                                 );
                             })}

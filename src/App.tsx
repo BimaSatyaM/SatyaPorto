@@ -5,9 +5,9 @@ import { ImageModal } from './components/ImageModal';
 import { AudioProvider } from './context/AudioContext';
 import { AuthProvider } from './context/AuthContext';
 import { LanguageProvider, useLanguage } from './context/LanguageContext';
+import { Home } from './pages/Home';
 
-// Import pages lazily for code-splitting (download on-demand)
-const Home = React.lazy(() => import('./pages/Home').then(m => ({ default: m.Home })));
+// Import secondary pages lazily for code-splitting (download on-demand)
 const About = React.lazy(() => import('./pages/About').then(m => ({ default: m.About })));
 const Projects = React.lazy(() => import('./pages/Projects').then(m => ({ default: m.Projects })));
 const Contact = React.lazy(() => import('./pages/Contact').then(m => ({ default: m.Contact })));
@@ -18,12 +18,12 @@ const News = React.lazy(() => import('./pages/News').then(m => ({ default: m.New
 const PageSkeleton: React.FC = () => (
     <div className="section" style={{ maxWidth: '760px', margin: '0 auto', width: '100%', padding: '40px 20px' }}>
         <div style={{ marginBottom: '24px' }}>
-            <div className="shimmer" style={{ width: '40%', height: '36px', background: '#242424', borderRadius: '4px', marginBottom: '8px' }}></div>
-            <div className="shimmer" style={{ width: '70%', height: '18px', background: '#1f1f1f', borderRadius: '4px' }}></div>
+            <div className="shimmer" style={{ width: '40%', height: '36px', background: 'var(--skeleton-2)', borderRadius: '4px', marginBottom: '8px' }}></div>
+            <div className="shimmer" style={{ width: '70%', height: '18px', background: 'var(--skeleton-1)', borderRadius: '4px' }}></div>
         </div>
         <div className="about-divider" style={{ margin: '20px 0' }}></div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px' }}>
-            <div className="project-card skeleton-card shimmer" style={{ padding: '20px', borderRadius: '12px', background: '#111111', height: '280px' }}>
+            <div className="project-card skeleton-card shimmer" style={{ padding: '20px', borderRadius: '12px', background: 'var(--bg-card)', height: '280px' }}>
                 <div className="skeleton-title shimmer"></div>
                 <div className="skeleton-text shimmer"></div>
                 <div className="skeleton-text shimmer"></div>
@@ -34,7 +34,7 @@ const PageSkeleton: React.FC = () => (
                     <div className="skeleton-tech-icon shimmer"></div>
                 </div>
             </div>
-            <div className="project-card skeleton-card shimmer" style={{ padding: '20px', borderRadius: '12px', background: '#111111', height: '280px' }}>
+            <div className="project-card skeleton-card shimmer" style={{ padding: '20px', borderRadius: '12px', background: 'var(--bg-card)', height: '280px' }}>
                 <div className="skeleton-title shimmer"></div>
                 <div className="skeleton-text shimmer"></div>
                 <div className="skeleton-text shimmer"></div>
@@ -77,6 +77,16 @@ const PortfolioContent: React.FC = () => {
         }
     }, [activeSection]);
 
+    // Close mobile sidebar on Escape key
+    useEffect(() => {
+        if (!sidebarActive) return;
+        const onKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') setSidebarActive(false);
+        };
+        window.addEventListener('keydown', onKeyDown);
+        return () => window.removeEventListener('keydown', onKeyDown);
+    }, [sidebarActive]);
+
     return (
         <div className="app">
             {/* SIDEBAR - NOW INTEGRATES THE AUDIO PLAYER & PROFILE */}
@@ -86,15 +96,25 @@ const PortfolioContent: React.FC = () => {
                 onAvatarClick={() => setIsAvatarModalOpen(true)}
             />
 
+            <button
+                type="button"
+                className={`sidebar-backdrop ${sidebarActive ? 'active' : ''}`}
+                aria-label="Close navigation menu"
+                tabIndex={sidebarActive ? 0 : -1}
+                onClick={() => setSidebarActive(false)}
+            />
+
             {/* Mobile Sidebar Hamburger Toggle Header */}
             <button 
                 type="button"
-                className="menu-toggle" 
+                className="menu-toggle"
+                aria-label={sidebarActive ? 'Close navigation menu' : 'Open navigation menu'}
+                aria-expanded={sidebarActive}
                 onClick={(e) => {
                     e.stopPropagation();
                     setSidebarActive(prev => !prev);
                 }}>
-                <i className="fas fa-bars"></i>
+                <i className={`fas ${sidebarActive ? 'fa-times' : 'fa-bars'}`} aria-hidden="true"></i>
             </button>
 
             {/* MAIN PANEL */}
@@ -104,12 +124,14 @@ const PortfolioContent: React.FC = () => {
                 }}>
                     <div id="mainView">
                         <React.Suspense fallback={<PageSkeleton />}>
-                            {activeSection === 'home' && <Home />}
-                            {activeSection === 'about' && <About />}
-                            {activeSection === 'projects' && <Projects />}
-                            {activeSection === 'news' && <News />}
-                            {activeSection === 'contact' && <Contact />}
-                            {activeSection === 'dashboard' && <Dashboard />}
+                            <div key={activeSection} className="page-transition-enter">
+                                {activeSection === 'home' && <Home />}
+                                {activeSection === 'about' && <About />}
+                                {activeSection === 'projects' && <Projects />}
+                                {activeSection === 'news' && <News />}
+                                {activeSection === 'contact' && <Contact />}
+                                {activeSection === 'dashboard' && <Dashboard />}
+                            </div>
                         </React.Suspense>
                     </div>
                 </div>

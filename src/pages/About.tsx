@@ -72,6 +72,8 @@ export const About: React.FC = () => {
                             <img 
                                 src="/assets/itera.png" 
                                 alt="ITERA Logo" 
+                                width={60}
+                                height={60}
                                 style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
                             />
                         </div>
@@ -92,6 +94,8 @@ export const About: React.FC = () => {
                             <img 
                                 src="/assets/sman3.png" 
                                 alt="SMAN 3 Logo" 
+                                width={60}
+                                height={60}
                                 style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
                             />
                         </div>

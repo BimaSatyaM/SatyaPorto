@@ -1,0 +1,736 @@
+import * as THREE from 'three';
+import {
+    createNameplateTexture,
+    createSkillLogoTexture,
+    getMusicNoteTexture,
+    resolveThemeColor,
+} from './textures';
+import { EARTH_RADIUS } from './studioRoom';
+import type { Skill3DNode, StudioThemeColors } from './types';
+
+export interface MascotNeighbor {
+    id: string;
+    x: number;
+    y: number;
+    z: number;
+}
+
+export interface SkillWorkstation {
+    group: THREE.Group;
+    skill: Skill3DNode;
+    setSkill: (skill: Skill3DNode, index: number) => void;
+    setTheme: (theme: StudioThemeColors) => void;
+    setInitialPosition: (x: number, y: number, z: number) => void;
+    getPositionNormal: () => { x: number; y: number; z: number };
+    update: (
+        dt: number,
+        elapsed: number,
+        opts: {
+            isSelected: boolean;
+            isHovered: boolean;
+            isVisible: boolean;
+            cameraPos: THREE.Vector3;
+            cameraQuat: THREE.Quaternion;
+            neighbors: MascotNeighbor[];
+        }
+    ) => void;
+    getHitTarget: () => THREE.Object3D;
+    getFocusTargetWorld: (out: THREE.Vector3) => THREE.Vector3;
+    dispose: () => void;
+}
+
+function damp(current: number, target: number, speed: number, dt: number): number {
+    return current + (target - current) * (1 - Math.exp(-speed * dt));
+}
+
+function resolveFallbackPrimary(theme: StudioThemeColors): string {
+    return theme.textPrimary || (theme.isLight ? '#0f172a' : '#f8fafc');
+}
+
+interface SharedMascotAssets {
+    hitBox: THREE.BoxGeometry;
+    shadowDisc: THREE.CircleGeometry;
+    floorRing: THREE.RingGeometry;
+    coinCore: THREE.CylinderGeometry;
+    outerTorus: THREE.TorusGeometry;
+    faceCircle: THREE.CircleGeometry;
+    leadCrown: THREE.TorusGeometry;
+    armCyl: THREE.CylinderGeometry;
+    handSphere: THREE.SphereGeometry;
+    legCyl: THREE.CylinderGeometry;
+    shoeBox: THREE.BoxGeometry;
+    nameplatePlane: THREE.PlaneGeometry;
+    barbellBar: THREE.CylinderGeometry;
+    barbellPlate: THREE.CylinderGeometry;
+    guitarBody: THREE.CylinderGeometry;
+    guitarNeck: THREE.BoxGeometry;
+    musicNotePlane: THREE.PlaneGeometry;
+    hitMat: THREE.MeshBasicMaterial;
+    coinBodyMat: THREE.MeshLambertMaterial;
+    limbMat: THREE.MeshLambertMaterial;
+    gloveMat: THREE.MeshLambertMaterial;
+    crownMat: THREE.MeshBasicMaterial;
+    shadowMat: THREE.MeshBasicMaterial;
+    barbellBarMat: THREE.MeshLambertMaterial;
+    barbellPlateMat: THREE.MeshLambertMaterial;
+    guitarBodyMat: THREE.MeshLambertMaterial;
+    guitarNeckMat: THREE.MeshLambertMaterial;
+    musicNoteMat: THREE.MeshBasicMaterial;
+}
+
+let sharedAssets: SharedMascotAssets | null = null;
+
+function getSharedMascotAssets(theme: StudioThemeColors): SharedMascotAssets {
+    if (!sharedAssets) {
+        sharedAssets = {
+            hitBox: new THREE.BoxGeometry(1.15, 1.6, 1.05),
+            shadowDisc: new THREE.CircleGeometry(0.36, 12),
+            floorRing: new THREE.RingGeometry(0.39, 0.46, 16),
+            coinCore: new THREE.CylinderGeometry(0.4, 0.4, 0.13, 16),
+            outerTorus: new THREE.TorusGeometry(0.41, 0.038, 6, 18),
+            faceCircle: new THREE.CircleGeometry(0.39, 16),
+            leadCrown: new THREE.TorusGeometry(0.14, 0.032, 6, 12),
+            armCyl: new THREE.CylinderGeometry(0.038, 0.034, 0.25, 6),
+            handSphere: new THREE.SphereGeometry(0.082, 6, 6),
+            legCyl: new THREE.CylinderGeometry(0.042, 0.038, 0.25, 6),
+            shoeBox: new THREE.BoxGeometry(0.13, 0.095, 0.21),
+            nameplatePlane: new THREE.PlaneGeometry(1.06, 0.265),
+            barbellBar: new THREE.CylinderGeometry(0.022, 0.022, 1.08, 6),
+            barbellPlate: new THREE.CylinderGeometry(0.15, 0.15, 0.065, 12),
+            guitarBody: new THREE.CylinderGeometry(0.16, 0.19, 0.065, 10),
+            guitarNeck: new THREE.BoxGeometry(0.048, 0.4, 0.028),
+            musicNotePlane: new THREE.PlaneGeometry(0.34, 0.34),
+            hitMat: new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }),
+            coinBodyMat: new THREE.MeshLambertMaterial(),
+            limbMat: new THREE.MeshLambertMaterial(),
+            gloveMat: new THREE.MeshLambertMaterial(),
+            crownMat: new THREE.MeshBasicMaterial({ color: '#f59e0b' }),
+            shadowMat: new THREE.MeshBasicMaterial({
+                color: '#082f49',
+                transparent: true,
+                opacity: 0.28,
+                side: THREE.DoubleSide,
+                depthWrite: false,
+            }),
+            barbellBarMat: new THREE.MeshLambertMaterial({ color: '#cbd5e1' }),
+            barbellPlateMat: new THREE.MeshLambertMaterial({ color: '#0ea5e9' }),
+            guitarBodyMat: new THREE.MeshLambertMaterial({ color: '#f97316' }),
+            guitarNeckMat: new THREE.MeshLambertMaterial({ color: '#fef3c7' }),
+            musicNoteMat: new THREE.MeshBasicMaterial({
+                map: getMusicNoteTexture(),
+                transparent: true,
+                depthWrite: false,
+                side: THREE.DoubleSide,
+            }),
+        };
+    }
+    syncSharedMascotTheme(theme);
+    return sharedAssets;
+}
+
+export function syncSharedMascotTheme(theme: StudioThemeColors): void {
+    if (!sharedAssets) return;
+    sharedAssets.coinBodyMat.color.set(theme.isLight ? '#faf2df' : '#1e293b');
+    sharedAssets.limbMat.color.set(theme.isLight ? '#e2e8f0' : '#94a3b8');
+    sharedAssets.gloveMat.color.set(theme.isLight ? '#ffffff' : '#f1f5f9');
+    sharedAssets.shadowMat.opacity = theme.isLight ? 0.24 : 0.34;
+}
+
+function makeInitialTangent(normal: THREE.Vector3, angleSeed: number, out: THREE.Vector3): THREE.Vector3 {
+    const ref = Math.abs(normal.y) < 0.85 ? new THREE.Vector3(0, 1, 0) : new THREE.Vector3(1, 0, 0);
+    const t1 = new THREE.Vector3().crossVectors(ref, normal).normalize();
+    const t2 = new THREE.Vector3().crossVectors(normal, t1).normalize();
+    return out
+        .copy(t1)
+        .multiplyScalar(Math.cos(angleSeed))
+        .addScaledVector(t2, Math.sin(angleSeed))
+        .normalize();
+}
+
+export function createSkillWorkstation(
+    initialSkill: Skill3DNode,
+    initialIndex: number,
+    initialTheme: StudioThemeColors
+): SkillWorkstation {
+    let currentSkill = initialSkill;
+    let currentTheme = initialTheme;
+    type MascotActivity = 'walk' | 'look' | 'wave' | 'stretch' | 'hop' | 'lift' | 'sing' | 'guitar';
+    const IDLE_ACTIVITIES: MascotActivity[] = [
+        'lift',
+        'sing',
+        'guitar',
+        'wave',
+        'stretch',
+        'hop',
+        'look',
+    ];
+
+    const phase = initialIndex * 1.37;
+    let rngState = ((initialIndex + 1) * 2654435761) >>> 0;
+    const nextRand = (): number => {
+        rngState = (rngState * 1664525 + 1013904223) >>> 0;
+        return rngState / 4294967296;
+    };
+
+    // Shuffled deck of all 7 activities so each mascot never repeats an activity before cycling all 7
+    const activityBag: MascotActivity[] = [];
+    let lastIdleActivity: MascotActivity | null = null;
+    const drawNextIdleActivity = (): MascotActivity => {
+        if (activityBag.length === 0) {
+            activityBag.push(...IDLE_ACTIVITIES);
+            for (let i = activityBag.length - 1; i > 0; i--) {
+                const j = Math.floor(nextRand() * (i + 1));
+                const tmp = activityBag[i];
+                activityBag[i] = activityBag[j];
+                activityBag[j] = tmp;
+            }
+            if (lastIdleActivity && activityBag[activityBag.length - 1] === lastIdleActivity) {
+                const swapIdx = activityBag.length - 2;
+                const tmp = activityBag[activityBag.length - 1];
+                activityBag[activityBag.length - 1] = activityBag[swapIdx];
+                activityBag[swapIdx] = tmp;
+            }
+        }
+        const picked = activityBag.pop() ?? 'wave';
+        lastIdleActivity = picked;
+        return picked;
+    };
+
+    let skillColor = resolveThemeColor(currentSkill.color, resolveFallbackPrimary(currentTheme));
+
+    const shared = getSharedMascotAssets(currentTheme);
+
+    const group = new THREE.Group();
+    group.name = `skill-mascot-${currentSkill.id}`;
+
+    // Invisible compact bounding box for pointer raycasting
+    const hitTarget = new THREE.Mesh(shared.hitBox, shared.hitMat);
+    hitTarget.position.set(0, 0.78, 0);
+    hitTarget.userData = { skillId: currentSkill.id };
+    group.add(hitTarget);
+
+    const focusAnchor = new THREE.Object3D();
+    focusAnchor.position.set(0, 0.85, 0);
+    group.add(focusAnchor);
+
+    // Per-skill accent material (shared between rim and shoes to cut material count in half)
+    const accentMat = new THREE.MeshLambertMaterial({
+        color: skillColor,
+    });
+
+    // Contact shadow & accent ring resting on the Earth's surface beneath sneakers
+    const shadowDisc = new THREE.Mesh(shared.shadowDisc, shared.shadowMat);
+    shadowDisc.rotation.x = -Math.PI / 2;
+    shadowDisc.position.y = 0.032;
+    group.add(shadowDisc);
+
+    const floorRingMat = new THREE.MeshBasicMaterial({
+        color: skillColor,
+        transparent: true,
+        opacity: 0.38,
+        side: THREE.DoubleSide,
+        depthWrite: false,
+    });
+    const floorRing = new THREE.Mesh(shared.floorRing, floorRingMat);
+    floorRing.rotation.x = -Math.PI / 2;
+    floorRing.position.y = 0.038;
+    group.add(floorRing);
+
+    // Animated body rig (bobs & tilts while walking around the Earth)
+    const bodyRig = new THREE.Group();
+    group.add(bodyRig);
+
+    // 3D Skill Logo Medallion Body (center at y = 0.76)
+    const logoGroup = new THREE.Group();
+    logoGroup.position.set(0, 0.76, 0);
+    bodyRig.add(logoGroup);
+
+    const coinCore = new THREE.Mesh(shared.coinCore, shared.coinBodyMat);
+    coinCore.rotation.x = Math.PI / 2;
+    logoGroup.add(coinCore);
+
+    const outerTorus = new THREE.Mesh(shared.outerTorus, accentMat);
+    logoGroup.add(outerTorus);
+
+    let logoTexture = createSkillLogoTexture(currentSkill.name, currentSkill.color, currentTheme);
+    const faceMat = new THREE.MeshBasicMaterial({ map: logoTexture, transparent: true });
+
+    const frontFace = new THREE.Mesh(shared.faceCircle, faceMat);
+    frontFace.position.z = 0.068;
+    logoGroup.add(frontFace);
+
+    const backFace = new THREE.Mesh(shared.faceCircle, faceMat);
+    backFace.rotation.y = Math.PI;
+    backFace.position.z = -0.068;
+    logoGroup.add(backFace);
+
+    // Lead star/crown floating above medallion when Admin marks skill as featured (isLead)
+    const leadCrown = new THREE.Mesh(shared.leadCrown, shared.crownMat);
+    leadCrown.rotation.x = Math.PI / 2;
+    leadCrown.position.set(0, 1.28, 0);
+    leadCrown.visible = Boolean(currentSkill.isLead);
+    bodyRig.add(leadCrown);
+
+    // Cute Arms + Gloved Hands attached cleanly to left & right of medallion
+    const buildArm = (side: -1 | 1) => {
+        const pivot = new THREE.Group();
+        pivot.position.set(side * 0.42, 0.74, 0);
+        pivot.rotation.z = side * 0.24;
+        bodyRig.add(pivot);
+
+        const arm = new THREE.Mesh(shared.armCyl, shared.limbMat);
+        arm.position.y = -0.13;
+        pivot.add(arm);
+
+        const hand = new THREE.Mesh(shared.handSphere, shared.gloveMat);
+        hand.position.y = -0.27;
+        pivot.add(hand);
+
+        return pivot;
+    };
+
+    const leftArmPivot = buildArm(-1);
+    const rightArmPivot = buildArm(1);
+
+    // Cute Legs + Sneakers attached to bottom of medallion
+    const buildLeg = (side: -1 | 1) => {
+        const hip = new THREE.Group();
+        hip.position.set(side * 0.15, 0.36, 0);
+        bodyRig.add(hip);
+
+        const leg = new THREE.Mesh(shared.legCyl, shared.limbMat);
+        leg.position.y = -0.12;
+        hip.add(leg);
+
+        const shoe = new THREE.Mesh(shared.shoeBox, accentMat);
+        shoe.position.set(0, -0.28, 0.035);
+        hip.add(shoe);
+
+        return hip;
+    };
+
+    const leftHipPivot = buildLeg(-1);
+    const rightHipPivot = buildLeg(1);
+
+    // Floating camera-facing pill nameplate above the mascot
+    const nameplatePivot = new THREE.Group();
+    nameplatePivot.position.set(0, 1.44, 0);
+    group.add(nameplatePivot);
+
+    const nameplateMat = new THREE.MeshBasicMaterial({
+        map: createNameplateTexture(
+            currentSkill.name,
+            currentSkill.color,
+            currentTheme,
+            Boolean(currentSkill.isLead)
+        ),
+        transparent: true,
+        alphaTest: 0.05,
+        side: THREE.DoubleSide,
+    });
+    const nameplateMesh = new THREE.Mesh(shared.nameplatePlane, nameplateMat);
+    nameplatePivot.add(nameplateMesh);
+
+    // Lightweight activity props (all share pooled geometries/materials; hidden when inactive)
+    const barbellProp = new THREE.Group();
+    barbellProp.visible = false;
+    bodyRig.add(barbellProp);
+
+    const barMesh = new THREE.Mesh(shared.barbellBar, shared.barbellBarMat);
+    barMesh.rotation.z = Math.PI / 2;
+    barbellProp.add(barMesh);
+
+    const leftPlate = new THREE.Mesh(shared.barbellPlate, shared.barbellPlateMat);
+    leftPlate.rotation.z = Math.PI / 2;
+    leftPlate.position.x = -0.45;
+    barbellProp.add(leftPlate);
+
+    const rightPlate = new THREE.Mesh(shared.barbellPlate, shared.barbellPlateMat);
+    rightPlate.rotation.z = Math.PI / 2;
+    rightPlate.position.x = 0.45;
+    barbellProp.add(rightPlate);
+
+    const guitarProp = new THREE.Group();
+    guitarProp.position.set(0.03, 0.66, 0.16);
+    guitarProp.rotation.z = -0.68;
+    guitarProp.visible = false;
+    bodyRig.add(guitarProp);
+
+    const guitarBodyMesh = new THREE.Mesh(shared.guitarBody, shared.guitarBodyMat);
+    guitarBodyMesh.rotation.x = Math.PI / 2;
+    guitarProp.add(guitarBodyMesh);
+
+    const guitarNeckMesh = new THREE.Mesh(shared.guitarNeck, shared.guitarNeckMat);
+    guitarNeckMesh.position.y = 0.25;
+    guitarProp.add(guitarNeckMesh);
+
+    const musicNoteMesh = new THREE.Mesh(shared.musicNotePlane, shared.musicNoteMat);
+    musicNoteMesh.position.set(0.38, 1.32, 0.05);
+    musicNoteMesh.visible = false;
+    group.add(musicNoteMesh);
+
+    // Continuous great-circle walking state on the 3D Earth (never deadlocks or freezes)
+    const normal = new THREE.Vector3(0, 0.35, 0.93).normalize();
+    const tangentDir = makeInitialTangent(normal, initialIndex * 2.19, new THREE.Vector3());
+    const facingDir = tangentDir.clone();
+
+    const sideTangent = new THREE.Vector3();
+    const awayVec = new THREE.Vector3();
+    const camVec = new THREE.Vector3();
+    const rightVec = new THREE.Vector3();
+    const forwardVec = new THREE.Vector3();
+    const basisMat = new THREE.Matrix4();
+    const invGroupQuat = new THREE.Quaternion();
+
+    let walkPhase = phase;
+    let visScale = 1;
+    let hoverBoost = 0;
+    let ringOpacity = 0.38;
+    let waveBlend = 0;
+    let stretchBlend = 0;
+    let lookBlend = 0;
+    let hopBlend = 0;
+    let liftBlend = 0;
+    let singBlend = 0;
+    let guitarBlend = 0;
+    let hasSpawnPos = false;
+    const baseWalkSpeed = 0.46 + (initialIndex % 5) * 0.055;
+    let currentSpeed = baseWalkSpeed;
+
+    let activity: MascotActivity =
+        initialIndex === 0
+            ? 'lift'
+            : initialIndex === 2
+              ? 'sing'
+              : initialIndex === 4
+                ? 'guitar'
+                : initialIndex % 5 === 1
+                  ? 'wave'
+                  : initialIndex % 5 === 3
+                    ? 'stretch'
+                    : 'walk';
+    if (activity !== 'walk') {
+        lastIdleActivity = activity;
+    }
+    let activityTimer =
+        activity === 'walk' ? 2.4 + (initialIndex % 5) * 1.1 : 2.6 + (initialIndex % 3) * 0.6;
+    let activityClock = 0;
+
+    const syncSurfaceTransform = (): void => {
+        group.position.copy(normal).multiplyScalar(EARTH_RADIUS);
+        rightVec.crossVectors(normal, facingDir);
+        if (rightVec.lengthSq() < 0.0001) {
+            makeInitialTangent(normal, phase, facingDir);
+            rightVec.crossVectors(normal, facingDir);
+        }
+        rightVec.normalize();
+        forwardVec.crossVectors(rightVec, normal).normalize();
+        basisMat.makeBasis(rightVec, normal, forwardVec);
+        group.quaternion.setFromRotationMatrix(basisMat);
+    };
+
+    const applyVisualColors = (): void => {
+        skillColor = resolveThemeColor(currentSkill.color, resolveFallbackPrimary(currentTheme));
+        accentMat.color.set(skillColor);
+        floorRingMat.color.set(skillColor);
+        syncSharedMascotTheme(currentTheme);
+        leadCrown.visible = Boolean(currentSkill.isLead);
+        nameplatePivot.position.y = currentSkill.isLead ? 1.54 : 1.42;
+
+        nameplateMat.map = createNameplateTexture(
+            currentSkill.name,
+            currentSkill.color,
+            currentTheme,
+            Boolean(currentSkill.isLead)
+        );
+        nameplateMat.needsUpdate = true;
+
+        logoTexture = createSkillLogoTexture(currentSkill.name, currentSkill.color, currentTheme);
+        faceMat.map = logoTexture;
+        faceMat.needsUpdate = true;
+    };
+
+    const setInitialPosition = (x: number, y: number, z: number): void => {
+        if (hasSpawnPos) return;
+        hasSpawnPos = true;
+        normal.set(x, y, z).normalize();
+        makeInitialTangent(normal, initialIndex * 2.19 + 0.5, tangentDir);
+        facingDir.copy(tangentDir);
+        syncSurfaceTransform();
+    };
+
+    const getPositionNormal = (): { x: number; y: number; z: number } => ({
+        x: normal.x,
+        y: normal.y,
+        z: normal.z,
+    });
+
+    const setSkill = (skill: Skill3DNode, _index: number): void => {
+        const changed =
+            skill.name !== currentSkill.name ||
+            skill.color !== currentSkill.color ||
+            Boolean(skill.isLead) !== Boolean(currentSkill.isLead);
+        currentSkill = skill;
+        hitTarget.userData = { skillId: skill.id };
+        group.name = `skill-mascot-${skill.id}`;
+        if (changed) applyVisualColors();
+    };
+
+    const setTheme = (theme: StudioThemeColors): void => {
+        currentTheme = theme;
+        applyVisualColors();
+    };
+
+    const update: SkillWorkstation['update'] = (dt, elapsed, opts) => {
+        const safeDt = Math.min(Math.max(dt, 0), 0.05);
+
+        visScale = damp(visScale, opts.isVisible ? 1 : 0, 10, safeDt);
+        group.visible = visScale > 0.02;
+        if (!group.visible) return;
+
+        const interactive = opts.isSelected || opts.isHovered;
+        const targetBoost = opts.isSelected ? 0.24 : opts.isHovered ? 0.12 : currentSkill.isLead ? 0.08 : 0;
+        hoverBoost = damp(hoverBoost, targetBoost, 10, safeDt);
+
+        if (!interactive) {
+            activityTimer -= safeDt;
+            activityClock += safeDt;
+
+            if (activityTimer <= 0) {
+                if (activity === 'walk') {
+                    activity = drawNextIdleActivity();
+                    activityTimer = 2.4 + nextRand() * 1.8;
+                } else {
+                    activity = 'walk';
+                    activityTimer = 4.2 + nextRand() * 4.2;
+                }
+                activityClock = 0;
+            }
+
+            if (activity === 'walk') {
+                // Calm great-circle strolling + gentle neighbor deflection
+                sideTangent.crossVectors(normal, tangentDir).normalize();
+                const wanderTurn = Math.sin(elapsed * 0.45 + phase) * 0.34;
+                tangentDir.addScaledVector(sideTangent, wanderTurn * safeDt);
+
+                for (const other of opts.neighbors) {
+                    if (other.id === currentSkill.id) continue;
+                    const dx = normal.x - other.x;
+                    const dy = normal.y - other.y;
+                    const dz = normal.z - other.z;
+                    const chordSq = dx * dx + dy * dy + dz * dz;
+                    if (chordSq > 0.0001 && chordSq < 0.42 * 0.42) {
+                        const chord = Math.sqrt(chordSq);
+                        awayVec
+                            .set(dx, dy, dz)
+                            .addScaledVector(normal, -(dx * normal.x + dy * normal.y + dz * normal.z));
+                        if (awayVec.lengthSq() > 0.0001) {
+                            awayVec.normalize();
+                            tangentDir.addScaledVector(awayVec, (0.42 - chord) * 7.5 * safeDt);
+                        }
+                    }
+                }
+
+                tangentDir.addScaledVector(normal, -normal.dot(tangentDir));
+                if (tangentDir.lengthSq() > 0.0001) {
+                    tangentDir.normalize();
+                } else {
+                    makeInitialTangent(normal, elapsed + phase, tangentDir);
+                }
+
+                currentSpeed = damp(currentSpeed, baseWalkSpeed, 4.5, safeDt);
+                const angularStep = (currentSpeed / EARTH_RADIUS) * safeDt;
+                normal.addScaledVector(tangentDir, angularStep).normalize();
+                tangentDir.addScaledVector(normal, -normal.dot(tangentDir)).normalize();
+
+                facingDir.lerp(tangentDir, 1 - Math.exp(-6.0 * safeDt));
+                facingDir.addScaledVector(normal, -normal.dot(facingDir));
+                if (facingDir.lengthSq() > 0.0001) {
+                    facingDir.normalize();
+                } else {
+                    facingDir.copy(tangentDir);
+                }
+            } else {
+                currentSpeed = damp(currentSpeed, 0, 5.5, safeDt);
+                // Turn calmly toward the camera for showcase activities
+                if (
+                    activity === 'wave' ||
+                    activity === 'lift' ||
+                    activity === 'sing' ||
+                    activity === 'guitar'
+                ) {
+                    camVec.copy(opts.cameraPos).addScaledVector(normal, -EARTH_RADIUS);
+                    camVec.addScaledVector(normal, -normal.dot(camVec));
+                    if (camVec.lengthSq() > 0.0001) {
+                        camVec.normalize();
+                        facingDir.lerp(camVec, 1 - Math.exp(-4.5 * safeDt));
+                        facingDir.addScaledVector(normal, -normal.dot(facingDir));
+                        if (facingDir.lengthSq() > 0.0001) {
+                            facingDir.normalize();
+                        }
+                    }
+                }
+            }
+        } else {
+            currentSpeed = damp(currentSpeed, 0, 8.5, safeDt);
+            // Smoothly turn in the local tangent plane to face the camera when hovered/clicked
+            camVec.copy(opts.cameraPos).addScaledVector(normal, -EARTH_RADIUS);
+            camVec.addScaledVector(normal, -normal.dot(camVec));
+            if (camVec.lengthSq() > 0.0001) {
+                camVec.normalize();
+                facingDir.lerp(camVec, 1 - Math.exp(-8.0 * safeDt));
+                facingDir.addScaledVector(normal, -normal.dot(facingDir));
+                if (facingDir.lengthSq() > 0.0001) {
+                    facingDir.normalize();
+                }
+            }
+        }
+
+        syncSurfaceTransform();
+        group.scale.setScalar(Math.max(0.001, visScale * (1 + hoverBoost)));
+
+        // Calm walking stride + lightweight idle activity blend
+        const strideStrength = Math.min(1, currentSpeed / baseWalkSpeed);
+        walkPhase += (0.4 + strideStrength * 4.1) * safeDt;
+
+        const wantWave = interactive || activity === 'wave';
+        const wantStretch = !interactive && activity === 'stretch';
+        const wantLook = !interactive && activity === 'look';
+        const wantHop = !interactive && activity === 'hop';
+        const wantLift = !interactive && activity === 'lift';
+        const wantSing = !interactive && activity === 'sing';
+        const wantGuitar = !interactive && activity === 'guitar';
+
+        waveBlend = damp(waveBlend, wantWave ? 1 : 0, 7.5, safeDt);
+        stretchBlend = damp(stretchBlend, wantStretch ? 1 : 0, 6.5, safeDt);
+        lookBlend = damp(lookBlend, wantLook ? 1 : 0, 6.5, safeDt);
+        hopBlend = damp(hopBlend, wantHop ? 1 : 0, 7.5, safeDt);
+        liftBlend = damp(liftBlend, wantLift ? 1 : 0, 7.0, safeDt);
+        singBlend = damp(singBlend, wantSing ? 1 : 0, 7.0, safeDt);
+        guitarBlend = damp(guitarBlend, wantGuitar ? 1 : 0, 7.0, safeDt);
+
+        const swing = Math.sin(walkPhase) * 0.56 * strideStrength;
+        const stepBounce = Math.abs(Math.sin(walkPhase)) * 0.052 * strideStrength;
+        const selectedHop = opts.isSelected ? Math.abs(Math.sin(elapsed * 5.2)) * 0.12 : 0;
+        const playHop = hopBlend * Math.abs(Math.sin(activityClock * 5.0)) * 0.18;
+        const stretchLift = stretchBlend * (0.04 + Math.sin(activityClock * 3.2) * 0.025);
+        const singGroove = singBlend * Math.abs(Math.sin(activityClock * 4.8)) * 0.06;
+        const guitarGroove = guitarBlend * Math.abs(Math.sin(activityClock * 5.6)) * 0.05;
+
+        bodyRig.position.y =
+            stepBounce + selectedHop + playHop + stretchLift + singGroove + guitarGroove;
+        bodyRig.rotation.y =
+            lookBlend * Math.sin(activityClock * 2.6) * 0.45 +
+            hopBlend * Math.sin(activityClock * 2.5) * 0.25 +
+            singBlend * Math.sin(activityClock * 2.4) * 0.22;
+        bodyRig.rotation.z =
+            Math.sin(walkPhase) * 0.045 * strideStrength +
+            lookBlend * Math.sin(activityClock * 2.6) * 0.06 +
+            singBlend * Math.sin(activityClock * 2.8) * 0.09 +
+            guitarBlend * Math.sin(activityClock * 3.2) * 0.07;
+        bodyRig.rotation.x =
+            strideStrength * 0.04 - stretchBlend * 0.08 + liftBlend * 0.06;
+
+        leftHipPivot.rotation.x = swing;
+        rightHipPivot.rotation.x = -swing;
+
+        // Smooth arm choreography across all activities
+        const armBusy = Math.min(1, stretchBlend + hopBlend + liftBlend + guitarBlend + singBlend);
+        const armWalkWeight = Math.max(0, 1 - armBusy);
+        const hopArmRaise = hopBlend * (1.25 + Math.sin(activityClock * 5.0) * 0.25);
+        const stretchArmRaise = stretchBlend * (2.35 + Math.sin(activityClock * 3.5) * 0.14);
+        const liftPulse = 0.5 + 0.5 * Math.sin(activityClock * 3.8);
+        const liftArmRaise = liftBlend * (2.35 + liftPulse * 0.45);
+        const singArmSwing = singBlend * (1.1 + Math.sin(activityClock * 5.0) * 0.35);
+
+        leftArmPivot.rotation.x =
+            -swing * 0.8 * armWalkWeight - guitarBlend * 0.65 - singBlend * 0.3;
+        leftArmPivot.rotation.z =
+            -0.24 - stretchArmRaise - hopArmRaise - liftArmRaise + guitarBlend * 0.48;
+
+        rightArmPivot.rotation.x =
+            swing * 0.8 * Math.max(0, armWalkWeight - waveBlend) -
+            guitarBlend * 0.85 -
+            singArmSwing;
+        rightArmPivot.rotation.z =
+            0.24 +
+            waveBlend * (2.1 + Math.sin(elapsed * 9.5) * 0.32) * (1 - stretchBlend - liftBlend) +
+            stretchArmRaise +
+            hopArmRaise +
+            liftArmRaise -
+            guitarBlend * (0.45 + Math.sin(activityClock * 11.0) * 0.28);
+
+        // Toggle & animate activity props cleanly (0 GPU draw calls when invisible)
+        barbellProp.visible = liftBlend > 0.12;
+        if (barbellProp.visible) {
+            barbellProp.position.set(0, 1.12 + liftPulse * 0.26, 0.04);
+            barbellProp.scale.setScalar(Math.min(1, liftBlend * 1.4));
+        }
+
+        guitarProp.visible = guitarBlend > 0.12;
+        if (guitarProp.visible) {
+            guitarProp.scale.setScalar(Math.min(1, guitarBlend * 1.4));
+            guitarProp.rotation.z = -0.68 + Math.sin(activityClock * 5.6) * 0.06;
+        }
+
+        const noteActive = Math.max(singBlend, guitarBlend);
+        musicNoteMesh.visible = noteActive > 0.15;
+        if (musicNoteMesh.visible) {
+            musicNoteMesh.position.set(
+                0.38 + Math.sin(activityClock * 3.2) * 0.06,
+                1.3 + Math.sin(activityClock * 4.5) * 0.09,
+                0.08
+            );
+            musicNoteMesh.scale.setScalar(Math.min(1, noteActive * 1.3));
+        }
+
+        // Contact shadow shrinks subtly on jump/hop
+        const shadowScale = Math.max(0.65, 1 - (stepBounce + selectedHop + playHop) * 1.4);
+        shadowDisc.scale.setScalar(shadowScale);
+
+        // Ring opacity & crown float
+        const targetRing = opts.isSelected ? 0.92 : opts.isHovered ? 0.72 : currentSkill.isLead ? 0.5 : 0.32;
+        ringOpacity = damp(ringOpacity, targetRing, 9.0, safeDt);
+        floorRingMat.opacity = ringOpacity;
+        if (leadCrown.visible) {
+            leadCrown.position.y = 1.28 + Math.sin(elapsed * 3.0 + phase) * 0.03;
+            leadCrown.rotation.z = elapsed * 1.2;
+        }
+
+        // Keep floating nameplate & music note billboarded cleanly toward camera
+        invGroupQuat.copy(group.quaternion).invert();
+        nameplatePivot.quaternion.copy(invGroupQuat).multiply(opts.cameraQuat);
+        if (musicNoteMesh.visible) {
+            musicNoteMesh.quaternion.copy(nameplatePivot.quaternion);
+        }
+    };
+
+    const getHitTarget = (): THREE.Object3D => hitTarget;
+
+    const getFocusTargetWorld = (out: THREE.Vector3): THREE.Vector3 => {
+        group.updateWorldMatrix(true, false);
+        return focusAnchor.getWorldPosition(out);
+    };
+
+    const dispose = (): void => {
+        accentMat.dispose();
+        floorRingMat.dispose();
+        faceMat.dispose();
+        nameplateMat.dispose();
+    };
+
+    return {
+        group,
+        get skill() {
+            return currentSkill;
+        },
+        setSkill,
+        setTheme,
+        setInitialPosition,
+        getPositionNormal,
+        update,
+        getHitTarget,
+        getFocusTargetWorld,
+        dispose,
+    };
+}
