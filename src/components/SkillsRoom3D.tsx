@@ -202,11 +202,12 @@ export const SkillsRoom3D: React.FC<SkillsRoom3DProps> = ({
             const isMobile =
                 typeof window !== 'undefined' &&
                 window.matchMedia('(max-width: 768px), (pointer: coarse)').matches;
+            const getTargetPixelRatio = () => Math.min(window.devicePixelRatio || 1, isMobile ? 1.75 : 2);
 
             let renderer: THREE.WebGLRenderer;
             try {
                 renderer = new THREE.WebGLRenderer({
-                    antialias: !isMobile,
+                    antialias: true,
                     powerPreference: 'high-performance',
                 });
                 if (!renderer.getContext()) {
@@ -218,7 +219,7 @@ export const SkillsRoom3D: React.FC<SkillsRoom3DProps> = ({
                 return;
             }
 
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, isMobile ? 1.0 : 1.25));
+            renderer.setPixelRatio(getTargetPixelRatio());
             renderer.setSize(host.clientWidth || 640, host.clientHeight || 480);
             renderer.shadowMap.enabled = false;
             renderer.toneMapping = THREE.NoToneMapping;
@@ -421,6 +422,7 @@ export const SkillsRoom3D: React.FC<SkillsRoom3DProps> = ({
                 const h = Math.max(1, Math.floor(entry.contentRect.height));
                 camera.aspect = w / h;
                 camera.updateProjectionMatrix();
+                renderer.setPixelRatio(getTargetPixelRatio());
                 renderer.setSize(w, h);
             });
             resizeObserver.observe(host);

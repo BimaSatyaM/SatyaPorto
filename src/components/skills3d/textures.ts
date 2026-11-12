@@ -43,24 +43,29 @@ export function resolveThemeColor(color: string | undefined | null, textPrimaryF
     return color;
 }
 
-function createCanvas(width: number, height: number): [HTMLCanvasElement, CanvasRenderingContext2D] {
+function createCanvas(
+    width: number,
+    height: number,
+    scale = 2
+): [HTMLCanvasElement, CanvasRenderingContext2D] {
     const canvas = document.createElement('canvas');
-    canvas.width = width;
-    canvas.height = height;
+    canvas.width = width * scale;
+    canvas.height = height * scale;
     const ctx = canvas.getContext('2d');
     if (!ctx) {
         throw new Error('Failed to acquire 2D canvas context');
     }
+    ctx.scale(scale, scale);
     return [canvas, ctx];
 }
 
 function configureTexture(canvas: HTMLCanvasElement): THREE.CanvasTexture {
     const texture = new THREE.CanvasTexture(canvas);
     texture.colorSpace = THREE.SRGBColorSpace;
-    texture.generateMipmaps = false;
-    texture.minFilter = THREE.LinearFilter;
+    texture.generateMipmaps = true;
+    texture.minFilter = THREE.LinearMipmapLinearFilter;
     texture.magFilter = THREE.LinearFilter;
-    texture.anisotropy = 1;
+    texture.anisotropy = 4;
     texture.needsUpdate = true;
     return texture;
 }
@@ -120,7 +125,7 @@ function prepareSvgMarkup(rawSvg: string, resolvedColor: string): string {
         svg = svg.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"');
     }
     svg = svg.replace(/\s(width|height)="[^"]*"/gi, '');
-    svg = svg.replace('<svg', '<svg width="128" height="128"');
+    svg = svg.replace('<svg', '<svg width="256" height="256"');
     svg = svg.replace(/currentColor/gi, resolvedColor);
     return svg;
 }

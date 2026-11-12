@@ -127,13 +127,15 @@ function getProceduralEarthTexture(isLight: boolean): THREE.CanvasTexture {
     const cached = earthTextureCache.get(isLight);
     if (cached) return cached;
 
-    // Lightweight 512x256 canvas texture (cached across mounts & theme switches)
+    // 2048x1024 HD procedural canvas texture (cached across mounts & theme switches)
     const w = 512;
     const h = 256;
+    const texScale = 4;
     const canvas = document.createElement('canvas');
-    canvas.width = w;
-    canvas.height = h;
+    canvas.width = w * texScale;
+    canvas.height = h * texScale;
     const ctx = canvas.getContext('2d');
+    ctx?.scale(texScale, texScale);
 
     if (ctx) {
         const oceanGrad = ctx.createLinearGradient(0, 0, 0, h);
@@ -193,9 +195,10 @@ function getProceduralEarthTexture(isLight: boolean): THREE.CanvasTexture {
 
     const tex = new THREE.CanvasTexture(canvas);
     tex.colorSpace = THREE.SRGBColorSpace;
-    tex.generateMipmaps = false;
-    tex.minFilter = THREE.LinearFilter;
+    tex.generateMipmaps = true;
+    tex.minFilter = THREE.LinearMipmapLinearFilter;
     tex.magFilter = THREE.LinearFilter;
+    tex.anisotropy = 4;
     tex.needsUpdate = true;
     earthTextureCache.set(isLight, tex);
     return tex;
@@ -220,7 +223,7 @@ export function createStudioEnvironment(
         map: getProceduralEarthTexture(initialTheme.isLight),
     });
     const earthMesh = new THREE.Mesh(
-        new THREE.SphereGeometry(EARTH_RADIUS, 28, 20),
+        new THREE.SphereGeometry(EARTH_RADIUS, 48, 32),
         earthMat
     );
     earthGroup.add(earthMesh);
@@ -233,7 +236,7 @@ export function createStudioEnvironment(
         depthWrite: false,
     });
     const atmoMesh = new THREE.Mesh(
-        new THREE.SphereGeometry(EARTH_RADIUS * 1.055, 24, 16),
+        new THREE.SphereGeometry(EARTH_RADIUS * 1.055, 40, 28),
         atmoMat
     );
     earthGroup.add(atmoMesh);
@@ -246,7 +249,7 @@ export function createStudioEnvironment(
         depthWrite: false,
     });
     const orbitRing = new THREE.Mesh(
-        new THREE.RingGeometry(EARTH_RADIUS * 1.42, EARTH_RADIUS * 1.44, 40),
+        new THREE.RingGeometry(EARTH_RADIUS * 1.42, EARTH_RADIUS * 1.44, 72),
         orbitRingMat
     );
     orbitRing.rotation.x = Math.PI * 0.42;
