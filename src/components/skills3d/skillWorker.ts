@@ -80,6 +80,17 @@ interface SharedMascotAssets {
     barbellPlate: THREE.CylinderGeometry;
     guitarBody: THREE.CylinderGeometry;
     guitarNeck: THREE.BoxGeometry;
+    carChassisBox: THREE.BoxGeometry;
+    carGlassBox: THREE.BoxGeometry;
+    carSteeringTorus: THREE.TorusGeometry;
+    carWheelCyl: THREE.CylinderGeometry;
+    carRimCyl: THREE.CylinderGeometry;
+    carLightBox: THREE.BoxGeometry;
+    bikeWheelTorus: THREE.TorusGeometry;
+    bikeSpokeBox: THREE.BoxGeometry;
+    bikeTubeCyl: THREE.CylinderGeometry;
+    bikeSeatBox: THREE.BoxGeometry;
+    bikeHandleCyl: THREE.CylinderGeometry;
     headbandTorus: THREE.TorusGeometry;
     earCupCyl: THREE.CylinderGeometry;
     earAccentCyl: THREE.CylinderGeometry;
@@ -95,6 +106,9 @@ interface SharedMascotAssets {
     barbellPlateMat: THREE.MeshLambertMaterial;
     guitarBodyMat: THREE.MeshLambertMaterial;
     guitarNeckMat: THREE.MeshLambertMaterial;
+    carGlassMat: THREE.MeshBasicMaterial;
+    carLightMat: THREE.MeshBasicMaterial;
+    carTailMat: THREE.MeshBasicMaterial;
     headphoneMat: THREE.MeshLambertMaterial;
     headphoneAccentMat: THREE.MeshLambertMaterial;
     musicNoteMat: THREE.MeshBasicMaterial;
@@ -122,6 +136,17 @@ function getSharedMascotAssets(theme: StudioThemeColors): SharedMascotAssets {
             barbellPlate: new THREE.CylinderGeometry(0.15, 0.15, 0.065, 12),
             guitarBody: new THREE.CylinderGeometry(0.16, 0.19, 0.065, 10),
             guitarNeck: new THREE.BoxGeometry(0.048, 0.4, 0.028),
+            carChassisBox: new THREE.BoxGeometry(0.66, 0.24, 1.04),
+            carGlassBox: new THREE.BoxGeometry(0.54, 0.17, 0.04),
+            carSteeringTorus: new THREE.TorusGeometry(0.085, 0.018, 6, 12),
+            carWheelCyl: new THREE.CylinderGeometry(0.14, 0.14, 0.085, 10),
+            carRimCyl: new THREE.CylinderGeometry(0.07, 0.07, 0.094, 8),
+            carLightBox: new THREE.BoxGeometry(0.11, 0.07, 0.03),
+            bikeWheelTorus: new THREE.TorusGeometry(0.21, 0.032, 6, 14),
+            bikeSpokeBox: new THREE.BoxGeometry(0.018, 0.37, 0.018),
+            bikeTubeCyl: new THREE.CylinderGeometry(0.024, 0.024, 0.56, 6),
+            bikeSeatBox: new THREE.BoxGeometry(0.14, 0.05, 0.2),
+            bikeHandleCyl: new THREE.CylinderGeometry(0.02, 0.02, 0.42, 6),
             headbandTorus: new THREE.TorusGeometry(0.45, 0.032, 6, 16, Math.PI),
             earCupCyl: new THREE.CylinderGeometry(0.115, 0.115, 0.085, 10),
             earAccentCyl: new THREE.CylinderGeometry(0.08, 0.08, 0.095, 10),
@@ -143,6 +168,13 @@ function getSharedMascotAssets(theme: StudioThemeColors): SharedMascotAssets {
             barbellPlateMat: new THREE.MeshLambertMaterial({ color: '#0ea5e9' }),
             guitarBodyMat: new THREE.MeshLambertMaterial({ color: '#f97316' }),
             guitarNeckMat: new THREE.MeshLambertMaterial({ color: '#fef3c7' }),
+            carGlassMat: new THREE.MeshBasicMaterial({
+                color: '#bae6fd',
+                transparent: true,
+                opacity: 0.72,
+            }),
+            carLightMat: new THREE.MeshBasicMaterial({ color: '#fef08a' }),
+            carTailMat: new THREE.MeshBasicMaterial({ color: '#ef4444' }),
             headphoneMat: new THREE.MeshLambertMaterial({ color: '#0f172a' }),
             headphoneAccentMat: new THREE.MeshLambertMaterial({ color: '#38bdf8' }),
             musicNoteMat: new THREE.MeshBasicMaterial({
@@ -197,11 +229,21 @@ export function createSkillWorkstation(
         | 'stretch'
         | 'hop'
         | 'lift'
+        | 'car'
+        | 'bike'
         | 'listen'
         | 'sing'
         | 'guitar'
         | 'sleep';
-    const IDLE_ACTIVITIES: MascotActivity[] = ['lift', 'wave', 'stretch', 'hop', 'look'];
+    const IDLE_ACTIVITIES: MascotActivity[] = [
+        'car',
+        'bike',
+        'lift',
+        'wave',
+        'stretch',
+        'hop',
+        'look',
+    ];
 
     const phase = initialIndex * 1.37;
     let rngState = ((initialIndex + 1) * 2654435761) >>> 0;
@@ -424,6 +466,94 @@ export function createSkillWorkstation(
     addEarCup(-1);
     addEarCup(1);
 
+    const carProp = new THREE.Group();
+    carProp.visible = false;
+    group.add(carProp);
+
+    const carChassis = new THREE.Mesh(shared.carChassisBox, accentMat);
+    carChassis.position.set(0, 0.27, 0.04);
+    carProp.add(carChassis);
+
+    const carWindshield = new THREE.Mesh(shared.carGlassBox, shared.carGlassMat);
+    carWindshield.position.set(0, 0.44, 0.36);
+    carWindshield.rotation.x = -0.35;
+    carProp.add(carWindshield);
+
+    const carSteering = new THREE.Mesh(shared.carSteeringTorus, shared.headphoneMat);
+    carSteering.position.set(0, 0.46, 0.23);
+    carSteering.rotation.x = -0.45;
+    carProp.add(carSteering);
+
+    const carWheels: THREE.Group[] = [];
+    for (const wx of [-0.35, 0.35] as const) {
+        for (const wz of [-0.3, 0.36] as const) {
+            const wheelGroup = new THREE.Group();
+            wheelGroup.position.set(wx, 0.14, wz);
+            const tire = new THREE.Mesh(shared.carWheelCyl, shared.headphoneMat);
+            tire.rotation.z = Math.PI / 2;
+            wheelGroup.add(tire);
+            const rim = new THREE.Mesh(shared.carRimCyl, shared.barbellBarMat);
+            rim.rotation.z = Math.PI / 2;
+            wheelGroup.add(rim);
+            carProp.add(wheelGroup);
+            carWheels.push(wheelGroup);
+        }
+    }
+
+    for (const lx of [-0.22, 0.22] as const) {
+        const headlight = new THREE.Mesh(shared.carLightBox, shared.carLightMat);
+        headlight.position.set(lx, 0.29, 0.565);
+        carProp.add(headlight);
+
+        const taillight = new THREE.Mesh(shared.carLightBox, shared.carTailMat);
+        taillight.position.set(lx, 0.29, -0.485);
+        carProp.add(taillight);
+    }
+
+    const bikeProp = new THREE.Group();
+    bikeProp.visible = false;
+    group.add(bikeProp);
+
+    const bikeWheels: THREE.Group[] = [];
+    for (const wz of [-0.4, 0.4] as const) {
+        const wheelGroup = new THREE.Group();
+        wheelGroup.position.set(0, 0.21, wz);
+        const tire = new THREE.Mesh(shared.bikeWheelTorus, shared.headphoneMat);
+        tire.rotation.y = Math.PI / 2;
+        wheelGroup.add(tire);
+        const spokeA = new THREE.Mesh(shared.bikeSpokeBox, shared.barbellBarMat);
+        wheelGroup.add(spokeA);
+        const spokeB = new THREE.Mesh(shared.bikeSpokeBox, shared.barbellBarMat);
+        spokeB.rotation.x = Math.PI / 2;
+        wheelGroup.add(spokeB);
+        bikeProp.add(wheelGroup);
+        bikeWheels.push(wheelGroup);
+    }
+
+    const rearStay = new THREE.Mesh(shared.bikeTubeCyl, accentMat);
+    rearStay.position.set(0, 0.35, -0.22);
+    rearStay.rotation.x = 0.92;
+    bikeProp.add(rearStay);
+
+    const mainTube = new THREE.Mesh(shared.bikeTubeCyl, accentMat);
+    mainTube.position.set(0, 0.4, 0.12);
+    mainTube.rotation.x = -0.95;
+    bikeProp.add(mainTube);
+
+    const frontFork = new THREE.Mesh(shared.bikeTubeCyl, accentMat);
+    frontFork.position.set(0, 0.46, 0.35);
+    frontFork.rotation.x = -0.18;
+    bikeProp.add(frontFork);
+
+    const bikeSeat = new THREE.Mesh(shared.bikeSeatBox, shared.headphoneMat);
+    bikeSeat.position.set(0, 0.49, -0.09);
+    bikeProp.add(bikeSeat);
+
+    const bikeHandlebar = new THREE.Mesh(shared.bikeHandleCyl, shared.headphoneMat);
+    bikeHandlebar.position.set(0, 0.72, 0.31);
+    bikeHandlebar.rotation.z = Math.PI / 2;
+    bikeProp.add(bikeHandlebar);
+
     const musicNoteMesh = new THREE.Mesh(shared.musicNotePlane, shared.musicNoteMat);
     musicNoteMesh.position.set(0.38, 1.32, 0.05);
     musicNoteMesh.visible = false;
@@ -448,6 +578,8 @@ export function createSkillWorkstation(
     const invGroupQuat = new THREE.Quaternion();
 
     let walkPhase = phase;
+    let wheelAngle = 0;
+    let pedalPhase = phase;
     let visScale = 1;
     let hoverBoost = 0;
     let ringOpacity = 0.38;
@@ -456,6 +588,8 @@ export function createSkillWorkstation(
     let lookBlend = 0;
     let hopBlend = 0;
     let liftBlend = 0;
+    let carBlend = 0;
+    let bikeBlend = 0;
     let listenBlend = 0;
     let singBlend = 0;
     let guitarBlend = 0;
@@ -488,9 +622,13 @@ export function createSkillWorkstation(
             ? 'lift'
             : initialIndex % 5 === 1
               ? 'wave'
-              : initialIndex % 5 === 3
-                ? 'stretch'
-                : 'walk';
+              : initialIndex % 5 === 2
+                ? 'bike'
+                : initialIndex % 5 === 3
+                  ? 'stretch'
+                  : initialIndex % 5 === 4
+                    ? 'car'
+                    : 'walk';
     if (activity !== 'walk') {
         lastIdleActivity = activity;
     }
@@ -672,7 +810,10 @@ export function createSkillWorkstation(
                 if (activityTimer <= 0) {
                     if (activity === 'walk') {
                         activity = drawNextIdleActivity();
-                        activityTimer = 2.4 + nextRand() * 1.8;
+                        activityTimer =
+                            activity === 'car' || activity === 'bike'
+                                ? 4.2 + nextRand() * 3.0
+                                : 2.4 + nextRand() * 1.8;
                     } else {
                         activity = 'walk';
                         activityTimer = 4.2 + nextRand() * 4.2;
@@ -680,10 +821,11 @@ export function createSkillWorkstation(
                     activityClock = 0;
                 }
 
-                if (activity === 'walk') {
-                    // Calm great-circle strolling + gentle neighbor deflection
+                if (activity === 'walk' || activity === 'car' || activity === 'bike') {
+                    // Calm great-circle strolling or cruising + gentle neighbor deflection
                     sideTangent.crossVectors(normal, tangentDir).normalize();
-                    const wanderTurn = Math.sin(elapsed * 0.45 + phase) * 0.34;
+                    const wanderTurn =
+                        Math.sin(elapsed * 0.45 + phase) * (activity === 'walk' ? 0.34 : 0.24);
                     tangentDir.addScaledVector(sideTangent, wanderTurn * safeDt);
 
                     for (const other of opts.neighbors) {
@@ -711,7 +853,13 @@ export function createSkillWorkstation(
                         makeInitialTangent(normal, elapsed + phase, tangentDir);
                     }
 
-                    currentSpeed = damp(currentSpeed, baseWalkSpeed, 4.5, safeDt);
+                    const targetMoveSpeed =
+                        activity === 'car'
+                            ? baseWalkSpeed * 2.15
+                            : activity === 'bike'
+                              ? baseWalkSpeed * 1.72
+                              : baseWalkSpeed;
+                    currentSpeed = damp(currentSpeed, targetMoveSpeed, 4.5, safeDt);
                     const angularStep = (currentSpeed / EARTH_RADIUS) * safeDt;
                     normal.addScaledVector(tangentDir, angularStep).normalize();
                     tangentDir.addScaledVector(normal, -normal.dot(tangentDir)).normalize();
@@ -757,9 +905,12 @@ export function createSkillWorkstation(
         syncSurfaceTransform();
         group.scale.setScalar(Math.max(0.001, visScale * (1 + hoverBoost)));
 
-        // Calm walking stride + lightweight idle activity blend
-        const strideStrength = Math.min(1, currentSpeed / baseWalkSpeed);
-        walkPhase += (0.4 + strideStrength * 4.1) * safeDt;
+        // Calm walking stride + lightweight idle & vehicle activity blends
+        const isVehicle = activity === 'car' || activity === 'bike';
+        const walkSpeedRatio = isVehicle ? 0 : Math.min(1, currentSpeed / baseWalkSpeed);
+        walkPhase += (0.4 + walkSpeedRatio * 4.1) * safeDt;
+        wheelAngle += currentSpeed * 6.5 * safeDt;
+        pedalPhase += (1.2 + currentSpeed * 6.0) * safeDt;
 
         const wantWave =
             (interactive && !isListeningNow && !isNightMode) ||
@@ -768,6 +919,8 @@ export function createSkillWorkstation(
         const wantLook = !interactive && !isNightMode && !isListeningNow && activity === 'look';
         const wantHop = !interactive && !isNightMode && !isListeningNow && activity === 'hop';
         const wantLift = !interactive && !isNightMode && !isListeningNow && activity === 'lift';
+        const wantCar = !interactive && !isNightMode && !isListeningNow && activity === 'car';
+        const wantBike = !interactive && !isNightMode && !isListeningNow && activity === 'bike';
         const wantSleep = isNightMode;
         const wantListen = isListeningNow && !isNightMode && (interactive || activity === 'listen');
         const wantSing = isListeningNow && !isNightMode && !interactive && activity === 'sing';
@@ -778,12 +931,16 @@ export function createSkillWorkstation(
         lookBlend = damp(lookBlend, wantLook ? 1 : 0, 6.5, safeDt);
         hopBlend = damp(hopBlend, wantHop ? 1 : 0, 7.5, safeDt);
         liftBlend = damp(liftBlend, wantLift ? 1 : 0, 7.0, safeDt);
+        carBlend = damp(carBlend, wantCar ? 1 : 0, 7.5, safeDt);
+        bikeBlend = damp(bikeBlend, wantBike ? 1 : 0, 7.5, safeDt);
         listenBlend = damp(listenBlend, wantListen ? 1 : 0, 7.0, safeDt);
         singBlend = damp(singBlend, wantSing ? 1 : 0, 7.0, safeDt);
         guitarBlend = damp(guitarBlend, wantGuitar ? 1 : 0, 7.0, safeDt);
         sleepBlend = damp(sleepBlend, wantSleep ? 1 : 0, 6.0, safeDt);
         headphoneBlend = damp(headphoneBlend, isListeningNow ? 1 : 0, 8.5, safeDt);
 
+        const vehicleMask = Math.min(1, carBlend + bikeBlend);
+        const strideStrength = walkSpeedRatio * Math.max(0, 1 - vehicleMask);
         const swing = Math.sin(walkPhase) * 0.56 * strideStrength;
         const stepBounce = Math.abs(Math.sin(walkPhase)) * 0.052 * strideStrength;
         const selectedHop = opts.isSelected && !isNightMode ? Math.abs(Math.sin(elapsed * 5.2)) * 0.09 : 0;
@@ -794,6 +951,8 @@ export function createSkillWorkstation(
         const singGroove = singBlend * (beatLift + Math.abs(Math.sin(activityClock * 4.8)) * 0.05);
         const guitarGroove = guitarBlend * (beatLift + Math.abs(Math.sin(activityClock * 5.6)) * 0.045);
         const sleepBreath = sleepBlend * (Math.sin(elapsed * 1.45 + phase) * 0.018 + smoothMusicEnergy * 0.028);
+        const carRideHeight = carBlend * (0.06 + Math.sin(elapsed * 22 + phase) * 0.007);
+        const bikeRideHeight = bikeBlend * (0.2 + Math.abs(Math.sin(pedalPhase)) * 0.014);
 
         bodyRig.position.y =
             stepBounce +
@@ -803,7 +962,9 @@ export function createSkillWorkstation(
             listenGroove +
             singGroove +
             guitarGroove +
-            sleepBreath;
+            sleepBreath +
+            carRideHeight +
+            bikeRideHeight;
         bodyRig.rotation.y =
             lookBlend * Math.sin(activityClock * 2.6) * 0.45 +
             hopBlend * Math.sin(activityClock * 2.5) * 0.25 +
@@ -812,6 +973,7 @@ export function createSkillWorkstation(
         bodyRig.rotation.z =
             Math.sin(walkPhase) * 0.045 * strideStrength +
             lookBlend * Math.sin(activityClock * 2.6) * 0.06 +
+            bikeBlend * Math.sin(elapsed * 2.2 + phase) * 0.05 +
             listenBlend * Math.sin(elapsed * 3.8 + phase) * (0.08 + smoothMusicEnergy * 0.06) +
             singBlend * Math.sin(activityClock * 2.8) * 0.09 +
             guitarBlend * Math.sin(activityClock * 3.2) * 0.07 +
@@ -820,16 +982,31 @@ export function createSkillWorkstation(
             strideStrength * 0.04 -
             stretchBlend * 0.08 +
             liftBlend * 0.06 +
+            bikeBlend * 0.16 +
             listenBlend * (0.06 + smoothMusicEnergy * 0.14) +
             sleepBlend * (0.17 + Math.sin(elapsed * 2.2 + phase) * 0.035);
 
-        leftHipPivot.rotation.x = swing;
-        rightHipPivot.rotation.x = -swing;
+        leftHipPivot.rotation.x =
+            swing +
+            carBlend * -0.45 +
+            bikeBlend * (-0.35 + Math.sin(pedalPhase) * 0.52);
+        rightHipPivot.rotation.x =
+            -swing +
+            carBlend * -0.45 +
+            bikeBlend * (-0.35 + Math.sin(pedalPhase + Math.PI) * 0.52);
 
         // Smooth arm choreography across all activities
         const armBusy = Math.min(
             1,
-            stretchBlend + hopBlend + liftBlend + listenBlend + guitarBlend + singBlend + sleepBlend
+            stretchBlend +
+                hopBlend +
+                liftBlend +
+                carBlend +
+                bikeBlend +
+                listenBlend +
+                guitarBlend +
+                singBlend +
+                sleepBlend
         );
         const armWalkWeight = Math.max(0, 1 - armBusy);
         const hopArmRaise = hopBlend * (1.25 + Math.sin(activityClock * 5.0) * 0.25);
@@ -841,6 +1018,8 @@ export function createSkillWorkstation(
 
         leftArmPivot.rotation.x =
             -swing * 0.8 * armWalkWeight -
+            carBlend * 1.0 -
+            bikeBlend * 1.12 -
             guitarBlend * 0.65 -
             singBlend * 0.3 -
             listenBlend * (0.25 + listenArmGroove);
@@ -849,11 +1028,15 @@ export function createSkillWorkstation(
             stretchArmRaise -
             hopArmRaise -
             liftArmRaise +
+            carBlend * 0.14 +
+            bikeBlend * 0.12 +
             guitarBlend * 0.48 +
             sleepBlend * 0.12;
 
         rightArmPivot.rotation.x =
             swing * 0.8 * Math.max(0, armWalkWeight - waveBlend) -
+            carBlend * 1.0 -
+            bikeBlend * 1.12 -
             guitarBlend * 0.85 -
             singArmSwing +
             listenBlend * (0.25 + listenArmGroove);
@@ -863,10 +1046,27 @@ export function createSkillWorkstation(
             stretchArmRaise +
             hopArmRaise +
             liftArmRaise -
+            carBlend * 0.14 -
+            bikeBlend * 0.12 -
             guitarBlend * (0.45 + Math.sin(activityClock * 11.0) * 0.28) -
             sleepBlend * 0.12;
 
         // Toggle & animate activity props cleanly (0 GPU draw calls when invisible)
+        carProp.visible = carBlend > 0.1;
+        if (carProp.visible) {
+            carProp.scale.setScalar(Math.min(1, carBlend * 1.25));
+            for (const wheel of carWheels) {
+                wheel.rotation.x = wheelAngle;
+            }
+        }
+
+        bikeProp.visible = bikeBlend > 0.1;
+        if (bikeProp.visible) {
+            bikeProp.scale.setScalar(Math.min(1, bikeBlend * 1.25));
+            for (const wheel of bikeWheels) {
+                wheel.rotation.x = wheelAngle;
+            }
+        }
         barbellProp.visible = liftBlend > 0.12;
         if (barbellProp.visible) {
             barbellProp.position.set(0, 1.12 + liftPulse * 0.26, 0.04);
