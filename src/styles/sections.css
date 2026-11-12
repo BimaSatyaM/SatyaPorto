@@ -1790,19 +1790,47 @@ body.light-theme .skills-3d-music-mode {
         line-height: 1.35;
     }
 
+    .skills-3d-hud-top {
+        top: 10px;
+        left: 10px;
+        right: 10px;
+        gap: 6px;
+    }
+
+    .skills-3d-hud-group {
+        gap: 6px;
+    }
+
+    .skills-3d-hud-group:first-child {
+        flex: 1 1 0%;
+        min-width: 0;
+    }
+
     .skills-3d-hud-btn {
-        padding: 5px 10px;
+        padding: 5px 9px;
         font-size: 11px;
     }
 
     .skills-3d-roster-trigger,
     .skills-3d-music-btn {
-        min-height: 44px;
-        padding: 0 12px;
+        min-height: 38px;
+        padding: 0 10px;
+        gap: 5px;
+    }
+
+    .skills-3d-music-btn {
+        min-width: 0;
+        max-width: 100%;
     }
 
     .skills-3d-music-title {
-        max-width: 118px;
+        min-width: 0;
+        max-width: 104px;
+        font-size: 11px;
+    }
+
+    .skills-3d-roster-wrap {
+        flex-shrink: 0;
     }
 
     .skills-3d-track-play {
@@ -1816,7 +1844,10 @@ body.light-theme .skills-3d-music-mode {
     }
 
     .skills-3d-roster-panel {
-        width: min(256px, calc(100vw - 56px));
+        right: 0;
+        left: auto;
+        width: 250px;
+        max-width: calc(100vw - 44px);
     }
 
     .skills-3d-roster-list {
