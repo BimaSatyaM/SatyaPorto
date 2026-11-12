@@ -202,10 +202,10 @@ export const Home: React.FC = () => {
                 <div className="hero-page-right">
                     <div className="hero-photo-box">
                         <img
-                            src="/assets/foto2.jpg"
+                            src="/assets/foto.png"
                             alt="Bima Satya Mahendra"
-                            width={280}
-                            height={280}
+                            width={260}
+                            height={347}
                             fetchPriority="high"
                         />
                     </div>

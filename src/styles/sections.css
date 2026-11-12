@@ -729,27 +729,27 @@
 }
 
 .hero-photo-box {
-    width: 280px;
-    height: 280px;
+    width: 260px;
+    aspect-ratio: 3 / 4;
     border-radius: var(--radius);
     overflow: hidden;
-    border: 1px solid var(--border);
+    border: none;
     background: transparent;
-    box-shadow: var(--shadow-elevated);
-    transition: transform 300ms var(--ease-spring), border-color 240ms ease, box-shadow 240ms ease;
+    box-shadow: none;
+    transition: transform 300ms var(--ease-spring);
     animation: fadeInUp 420ms var(--ease-spring) 100ms both;
 }
 
 .hero-photo-box:hover {
     transform: translateY(-4px) scale(1.02);
-    border-color: var(--primary);
-    box-shadow: 0 24px 52px rgba(56, 189, 248, 0.16);
 }
 
 .hero-photo-box img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    object-position: center top;
+    transform-origin: center bottom;
     display: block;
     transition: transform 420ms var(--ease-spring);
 }
@@ -771,8 +771,7 @@
     }
 
     .hero-photo-box {
-        width: 210px;
-        height: 210px;
+        width: 200px;
     }
 
     .hero-page-right {
@@ -1325,6 +1324,79 @@ body.light-theme .skills-3d-stage {
     color: var(--primary-ink);
 }
 
+.skills-3d-music-btn.playing {
+    border-color: rgba(56, 189, 248, 0.55);
+}
+
+.skills-3d-music-title {
+    max-width: 190px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.skills-3d-music-mode {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 7px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 700;
+    background: rgba(129, 140, 248, 0.16);
+    color: #818cf8;
+}
+
+body.light-theme .skills-3d-music-mode {
+    background: rgba(79, 70, 229, 0.12);
+    color: #4338ca;
+}
+
+.skills-3d-music-eq {
+    display: inline-flex;
+    align-items: flex-end;
+    gap: 2px;
+    height: 12px;
+}
+
+.skills-3d-music-eq span {
+    width: 2.5px;
+    height: 100%;
+    border-radius: 2px;
+    background: var(--primary);
+    transform-origin: bottom;
+    animation: skillsEqPulse 0.9s ease-in-out infinite alternate;
+}
+
+.skills-3d-music-eq span:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.skills-3d-music-eq span:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes skillsEqPulse {
+    from {
+        transform: scaleY(0.32);
+    }
+
+    to {
+        transform: scaleY(1);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .skills-3d-music-eq span {
+        animation: none;
+        transform: scaleY(0.7);
+    }
+
+    .skills-3d-track-bar-fill {
+        transition: none;
+    }
+}
+
 .skills-3d-roster-wrap {
     position: relative;
 }
@@ -1490,16 +1562,120 @@ body.light-theme .skills-3d-stage {
     left: 14px;
     bottom: 38px;
     display: flex;
-    align-items: center;
-    gap: 12px;
+    flex-direction: column;
+    gap: 8px;
     padding: 10px 14px;
     border-radius: 14px;
     background: var(--bg-card);
     border: 1px solid var(--border);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
     z-index: 2;
+    width: min(300px, calc(100% - 28px));
     max-width: calc(100% - 28px);
     animation: badgeZoomToFront 240ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.skills-3d-active-top {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+}
+
+.skills-3d-track-box {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-top: 7px;
+    border-top: 1px solid var(--border);
+}
+
+.skills-3d-track-row {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+}
+
+.skills-3d-track-cover {
+    width: 34px;
+    height: 34px;
+    border-radius: 7px;
+    object-fit: cover;
+    flex-shrink: 0;
+    border: 1px solid var(--border);
+}
+
+.skills-3d-track-info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    flex: 1;
+}
+
+.skills-3d-track-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.skills-3d-track-artist {
+    font-size: 10.5px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.skills-3d-track-play {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: border-color 180ms ease, transform 180ms ease, color 180ms ease;
+}
+
+.skills-3d-track-play:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    transform: scale(1.06);
+}
+
+.skills-3d-track-progress-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.skills-3d-track-bar {
+    flex: 1;
+    height: 4px;
+    border-radius: 999px;
+    background: var(--border);
+    overflow: hidden;
+}
+
+.skills-3d-track-bar-fill {
+    height: 100%;
+    border-radius: inherit;
+    background: var(--primary);
+    transition: width 220ms linear;
+}
+
+.skills-3d-track-time {
+    font-size: 10px;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-secondary);
+    white-space: nowrap;
 }
 
 .skills-3d-active-icon {
@@ -1619,9 +1795,19 @@ body.light-theme .skills-3d-stage {
         font-size: 11px;
     }
 
-    .skills-3d-roster-trigger {
+    .skills-3d-roster-trigger,
+    .skills-3d-music-btn {
         min-height: 44px;
         padding: 0 12px;
+    }
+
+    .skills-3d-music-title {
+        max-width: 118px;
+    }
+
+    .skills-3d-track-play {
+        min-width: 44px;
+        min-height: 44px;
     }
 
     .skills-3d-roster-close {
@@ -1789,5 +1975,278 @@ body.light-theme .skills-3d-stage {
     .education-details,
     .education-meta {
         font-size: 13px;
+    }
+}
+
+/* ===== DASHBOARD & GITHUB CONTRIBUTIONS ===== */
+.dashboard-grid-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    max-width: 860px;
+    margin: 0 auto;
+}
+
+.github-contrib-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.github-contrib-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.github-contrib-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: -0.01em;
+    margin: 0;
+}
+
+.github-contrib-profile-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    font-size: 12.5px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: border-color 180ms ease, color 180ms ease, transform 180ms var(--ease-spring);
+}
+
+.github-contrib-profile-link:hover {
+    color: var(--text-primary);
+    border-color: var(--primary);
+    transform: translateY(-1px);
+}
+
+.github-contrib-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 18px 20px 14px;
+    box-shadow: var(--shadow-card);
+}
+
+.github-contrib-scroll {
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scrollbar-width: thin;
+}
+
+.github-contrib-matrix {
+    min-width: max-content;
+    display: grid;
+    grid-template-columns: 28px 1fr;
+    column-gap: 8px;
+    row-gap: 6px;
+}
+
+.github-contrib-months {
+    grid-column: 2;
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 11px;
+    column-gap: 3px;
+    height: 15px;
+    align-items: end;
+}
+
+.github-contrib-month {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    line-height: 1;
+}
+
+.github-contrib-weekdays {
+    grid-column: 1;
+    grid-row: 2;
+    display: grid;
+    grid-template-rows: repeat(7, 11px);
+    row-gap: 3px;
+    font-size: 10.5px;
+    color: var(--text-secondary);
+    line-height: 11px;
+}
+
+.github-contrib-weekdays span:nth-child(1) {
+    grid-row: 2;
+}
+
+.github-contrib-weekdays span:nth-child(2) {
+    grid-row: 4;
+}
+
+.github-contrib-weekdays span:nth-child(3) {
+    grid-row: 6;
+}
+
+.github-contrib-weeks {
+    grid-column: 2;
+    grid-row: 2;
+    display: flex;
+    gap: 3px;
+}
+
+.github-contrib-week {
+    display: grid;
+    grid-template-rows: repeat(7, 11px);
+    row-gap: 3px;
+}
+
+.github-contrib-cell {
+    width: 11px;
+    height: 11px;
+    border-radius: 2px;
+    background: #101520;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: transform 120ms ease, outline-color 120ms ease;
+}
+
+.github-contrib-weeks .github-contrib-cell:not(.empty-pad) {
+    cursor: pointer;
+}
+
+.github-contrib-weeks .github-contrib-cell:not(.empty-pad):hover,
+.github-contrib-weeks .github-contrib-cell.active {
+    transform: scale(1.18);
+    outline: 1.5px solid var(--text-primary);
+    outline-offset: 1px;
+}
+
+.github-contrib-cell.empty-pad {
+    background: transparent;
+    border-color: transparent;
+    pointer-events: none;
+}
+
+.github-contrib-cell[data-level='1'] {
+    background: #0e4429;
+    border-color: rgba(255, 255, 255, 0.04);
+}
+
+.github-contrib-cell[data-level='2'] {
+    background: #006d32;
+    border-color: rgba(255, 255, 255, 0.04);
+}
+
+.github-contrib-cell[data-level='3'] {
+    background: #26a641;
+    border-color: rgba(255, 255, 255, 0.06);
+}
+
+.github-contrib-cell[data-level='4'] {
+    background: #39d353;
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+body.light-theme .github-contrib-cell {
+    background: #ebe3cf;
+    border-color: rgba(15, 23, 42, 0.08);
+}
+
+body.light-theme .github-contrib-cell[data-level='1'] {
+    background: #9be9a8;
+    border-color: rgba(27, 31, 35, 0.06);
+}
+
+body.light-theme .github-contrib-cell[data-level='2'] {
+    background: #40c463;
+    border-color: rgba(27, 31, 35, 0.06);
+}
+
+body.light-theme .github-contrib-cell[data-level='3'] {
+    background: #30a14e;
+    border-color: rgba(27, 31, 35, 0.06);
+}
+
+body.light-theme .github-contrib-cell[data-level='4'] {
+    background: #216e39;
+    border-color: rgba(27, 31, 35, 0.06);
+}
+
+.github-contrib-footer {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.github-contrib-inspect {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.github-contrib-legend {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+
+.github-contrib-status {
+    min-height: 128px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-size: 13.5px;
+    color: var(--text-secondary);
+}
+
+.github-contrib-error {
+    flex-wrap: wrap;
+}
+
+.github-contrib-retry {
+    padding: 6px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--bg-elevated);
+    color: var(--text-primary);
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 180ms ease, background-color 180ms ease;
+}
+
+.github-contrib-retry:hover {
+    border-color: var(--primary);
+    background: var(--bg-card-hover);
+}
+
+@media (max-width: 768px) {
+    .github-contrib-card {
+        padding: 14px;
+    }
+
+    .github-contrib-profile-link,
+    .github-contrib-retry {
+        min-height: 44px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .github-contrib-profile-link,
+    .github-contrib-cell,
+    .github-contrib-retry {
+        transition: none;
     }
 }

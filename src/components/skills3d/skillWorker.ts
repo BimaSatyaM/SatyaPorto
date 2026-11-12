@@ -3,6 +3,7 @@ import {
     createNameplateTexture,
     createSkillLogoTexture,
     getMusicNoteTexture,
+    getSleepyZzzTexture,
     resolveThemeColor,
 } from './textures';
 import { EARTH_RADIUS } from './studioRoom';
@@ -15,6 +16,14 @@ export interface MascotNeighbor {
     z: number;
 }
 
+export interface MascotMusicSnapshot {
+    isListening: boolean;
+    isSleepHours: boolean;
+    songIndex: number;
+    progressSec: number;
+    durationSec: number;
+}
+
 export interface SkillWorkstation {
     group: THREE.Group;
     skill: Skill3DNode;
@@ -22,6 +31,7 @@ export interface SkillWorkstation {
     setTheme: (theme: StudioThemeColors) => void;
     setInitialPosition: (x: number, y: number, z: number) => void;
     getPositionNormal: () => { x: number; y: number; z: number };
+    getMusicState: () => MascotMusicSnapshot;
     update: (
         dt: number,
         elapsed: number,
@@ -29,6 +39,11 @@ export interface SkillWorkstation {
             isSelected: boolean;
             isHovered: boolean;
             isVisible: boolean;
+            isJakartaNight: boolean;
+            musicEpoch: number;
+            liveAudioEnergy: number;
+            syncedAudioTime?: number;
+            syncedAudioDuration?: number;
             cameraPos: THREE.Vector3;
             cameraQuat: THREE.Quaternion;
             neighbors: MascotNeighbor[];
@@ -64,7 +79,11 @@ interface SharedMascotAssets {
     barbellPlate: THREE.CylinderGeometry;
     guitarBody: THREE.CylinderGeometry;
     guitarNeck: THREE.BoxGeometry;
+    headbandTorus: THREE.TorusGeometry;
+    earCupCyl: THREE.CylinderGeometry;
+    earAccentCyl: THREE.CylinderGeometry;
     musicNotePlane: THREE.PlaneGeometry;
+    sleepyZzzPlane: THREE.PlaneGeometry;
     hitMat: THREE.MeshBasicMaterial;
     coinBodyMat: THREE.MeshLambertMaterial;
     limbMat: THREE.MeshLambertMaterial;
@@ -75,7 +94,10 @@ interface SharedMascotAssets {
     barbellPlateMat: THREE.MeshLambertMaterial;
     guitarBodyMat: THREE.MeshLambertMaterial;
     guitarNeckMat: THREE.MeshLambertMaterial;
+    headphoneMat: THREE.MeshLambertMaterial;
+    headphoneAccentMat: THREE.MeshLambertMaterial;
     musicNoteMat: THREE.MeshBasicMaterial;
+    sleepyZzzMat: THREE.MeshBasicMaterial;
 }
 
 let sharedAssets: SharedMascotAssets | null = null;
@@ -99,7 +121,11 @@ function getSharedMascotAssets(theme: StudioThemeColors): SharedMascotAssets {
             barbellPlate: new THREE.CylinderGeometry(0.15, 0.15, 0.065, 12),
             guitarBody: new THREE.CylinderGeometry(0.16, 0.19, 0.065, 10),
             guitarNeck: new THREE.BoxGeometry(0.048, 0.4, 0.028),
+            headbandTorus: new THREE.TorusGeometry(0.45, 0.032, 6, 16, Math.PI),
+            earCupCyl: new THREE.CylinderGeometry(0.115, 0.115, 0.085, 10),
+            earAccentCyl: new THREE.CylinderGeometry(0.08, 0.08, 0.095, 10),
             musicNotePlane: new THREE.PlaneGeometry(0.34, 0.34),
+            sleepyZzzPlane: new THREE.PlaneGeometry(0.46, 0.27),
             hitMat: new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }),
             coinBodyMat: new THREE.MeshLambertMaterial(),
             limbMat: new THREE.MeshLambertMaterial(),
@@ -116,8 +142,16 @@ function getSharedMascotAssets(theme: StudioThemeColors): SharedMascotAssets {
             barbellPlateMat: new THREE.MeshLambertMaterial({ color: '#0ea5e9' }),
             guitarBodyMat: new THREE.MeshLambertMaterial({ color: '#f97316' }),
             guitarNeckMat: new THREE.MeshLambertMaterial({ color: '#fef3c7' }),
+            headphoneMat: new THREE.MeshLambertMaterial({ color: '#0f172a' }),
+            headphoneAccentMat: new THREE.MeshLambertMaterial({ color: '#38bdf8' }),
             musicNoteMat: new THREE.MeshBasicMaterial({
                 map: getMusicNoteTexture(),
+                transparent: true,
+                depthWrite: false,
+                side: THREE.DoubleSide,
+            }),
+            sleepyZzzMat: new THREE.MeshBasicMaterial({
+                map: getSleepyZzzTexture(),
                 transparent: true,
                 depthWrite: false,
                 side: THREE.DoubleSide,
@@ -150,20 +184,23 @@ function makeInitialTangent(normal: THREE.Vector3, angleSeed: number, out: THREE
 export function createSkillWorkstation(
     initialSkill: Skill3DNode,
     initialIndex: number,
-    initialTheme: StudioThemeColors
+    initialTheme: StudioThemeColors,
+    playlistLength = 1
 ): SkillWorkstation {
     let currentSkill = initialSkill;
     let currentTheme = initialTheme;
-    type MascotActivity = 'walk' | 'look' | 'wave' | 'stretch' | 'hop' | 'lift' | 'sing' | 'guitar';
-    const IDLE_ACTIVITIES: MascotActivity[] = [
-        'lift',
-        'sing',
-        'guitar',
-        'wave',
-        'stretch',
-        'hop',
-        'look',
-    ];
+    type MascotActivity =
+        | 'walk'
+        | 'look'
+        | 'wave'
+        | 'stretch'
+        | 'hop'
+        | 'lift'
+        | 'listen'
+        | 'sing'
+        | 'guitar'
+        | 'sleep';
+    const IDLE_ACTIVITIES: MascotActivity[] = ['lift', 'wave', 'stretch', 'hop', 'look'];
 
     const phase = initialIndex * 1.37;
     let rngState = ((initialIndex + 1) * 2654435761) >>> 0;
@@ -364,10 +401,37 @@ export function createSkillWorkstation(
     guitarNeckMesh.position.y = 0.25;
     guitarProp.add(guitarNeckMesh);
 
+    const headphoneProp = new THREE.Group();
+    headphoneProp.visible = false;
+    bodyRig.add(headphoneProp);
+
+    const headbandMesh = new THREE.Mesh(shared.headbandTorus, shared.headphoneMat);
+    headbandMesh.position.set(0, 0.76, 0);
+    headphoneProp.add(headbandMesh);
+
+    const addEarCup = (side: -1 | 1) => {
+        const cup = new THREE.Mesh(shared.earCupCyl, shared.headphoneMat);
+        cup.rotation.z = Math.PI / 2;
+        cup.position.set(side * 0.45, 0.76, 0);
+        headphoneProp.add(cup);
+
+        const accent = new THREE.Mesh(shared.earAccentCyl, shared.headphoneAccentMat);
+        accent.rotation.z = Math.PI / 2;
+        accent.position.set(side * 0.465, 0.76, 0);
+        headphoneProp.add(accent);
+    };
+    addEarCup(-1);
+    addEarCup(1);
+
     const musicNoteMesh = new THREE.Mesh(shared.musicNotePlane, shared.musicNoteMat);
     musicNoteMesh.position.set(0.38, 1.32, 0.05);
     musicNoteMesh.visible = false;
     group.add(musicNoteMesh);
+
+    const sleepyZzzMesh = new THREE.Mesh(shared.sleepyZzzPlane, shared.sleepyZzzMat);
+    sleepyZzzMesh.position.set(-0.36, 1.32, 0.06);
+    sleepyZzzMesh.visible = false;
+    group.add(sleepyZzzMesh);
 
     // Continuous great-circle walking state on the 3D Earth (never deadlocks or freezes)
     const normal = new THREE.Vector3(0, 0.35, 0.93).normalize();
@@ -391,8 +455,21 @@ export function createSkillWorkstation(
     let lookBlend = 0;
     let hopBlend = 0;
     let liftBlend = 0;
+    let listenBlend = 0;
     let singBlend = 0;
     let guitarBlend = 0;
+    let sleepBlend = 0;
+    let headphoneBlend = 0;
+    let smoothMusicEnergy = 0;
+    let lastMusicEpoch = -1;
+    let daytimeListener = false;
+    let daytimeMusicStyle: MascotActivity = 'listen';
+    const safePlaylistLen = Math.max(1, playlistLength);
+    let songIndex = (initialIndex * 7 + 3) % safePlaylistLen;
+    let songDurationSec = 185 + (songIndex % 6) * 14;
+    let songProgressSec = (initialIndex * 43 + 19) % songDurationSec;
+    let isListeningState = false;
+    let isSleepState = false;
     let hasSpawnPos = false;
     const baseWalkSpeed = 0.46 + (initialIndex % 5) * 0.055;
     let currentSpeed = baseWalkSpeed;
@@ -400,15 +477,11 @@ export function createSkillWorkstation(
     let activity: MascotActivity =
         initialIndex === 0
             ? 'lift'
-            : initialIndex === 2
-              ? 'sing'
-              : initialIndex === 4
-                ? 'guitar'
-                : initialIndex % 5 === 1
-                  ? 'wave'
-                  : initialIndex % 5 === 3
-                    ? 'stretch'
-                    : 'walk';
+            : initialIndex % 5 === 1
+              ? 'wave'
+              : initialIndex % 5 === 3
+                ? 'stretch'
+                : 'walk';
     if (activity !== 'walk') {
         lastIdleActivity = activity;
     }
@@ -492,81 +565,163 @@ export function createSkillWorkstation(
         const targetBoost = opts.isSelected ? 0.24 : opts.isHovered ? 0.12 : currentSkill.isLead ? 0.08 : 0;
         hoverBoost = damp(hoverBoost, targetBoost, 10, safeDt);
 
+        if (opts.musicEpoch !== lastMusicEpoch) {
+            const wasDaytimeListener = daytimeListener;
+            lastMusicEpoch = opts.musicEpoch;
+            const roll =
+                (((initialIndex + 1) * 2654435761) ^ ((opts.musicEpoch + 3) * 2246822519)) >>> 0;
+            daytimeListener = roll % 100 < 52 || initialIndex % 3 === opts.musicEpoch % 3;
+            daytimeMusicStyle = roll % 4 === 0 ? 'guitar' : roll % 4 === 1 ? 'sing' : 'listen';
+            // Keep selected mascot steady while inspected; otherwise rotate song when starting a daytime listen
+            if (opts.isSelected && wasDaytimeListener) {
+                daytimeListener = true;
+            } else if (!wasDaytimeListener && daytimeListener) {
+                songIndex = (roll + initialIndex * 5) % safePlaylistLen;
+                songDurationSec = 185 + (songIndex % 6) * 14;
+                songProgressSec = roll % Math.max(60, songDurationSec - 30);
+            }
+        }
+
+        const isNightMode = opts.isJakartaNight;
+        const isListeningNow = isNightMode || daytimeListener;
+        isListeningState = isListeningNow;
+        isSleepState = isNightMode;
+
+        if (isListeningNow) {
+            if (
+                opts.isSelected &&
+                opts.syncedAudioDuration !== undefined &&
+                opts.syncedAudioDuration > 0 &&
+                opts.syncedAudioTime !== undefined
+            ) {
+                songDurationSec = opts.syncedAudioDuration;
+                songProgressSec = opts.syncedAudioTime;
+            } else {
+                songProgressSec += safeDt;
+                if (songProgressSec >= songDurationSec) {
+                    songProgressSec = 0;
+                    songIndex = (songIndex + 3 + (initialIndex % 5)) % safePlaylistLen;
+                    songDurationSec = 185 + (songIndex % 6) * 14;
+                }
+            }
+        }
+
+        const selfBeatEnergy = isListeningNow
+            ? 0.24 + 0.52 * Math.pow(0.5 + 0.5 * Math.sin(songProgressSec * 6.4 + phase), 2)
+            : 0;
+        const targetEnergy =
+            opts.isSelected && opts.liveAudioEnergy > 0 ? opts.liveAudioEnergy : selfBeatEnergy;
+        smoothMusicEnergy = damp(smoothMusicEnergy, targetEnergy, 12, safeDt);
+
         if (!interactive) {
-            activityTimer -= safeDt;
             activityClock += safeDt;
 
-            if (activityTimer <= 0) {
-                if (activity === 'walk') {
-                    activity = drawNextIdleActivity();
-                    activityTimer = 2.4 + nextRand() * 1.8;
-                } else {
-                    activity = 'walk';
-                    activityTimer = 4.2 + nextRand() * 4.2;
-                }
-                activityClock = 0;
-            }
-
-            if (activity === 'walk') {
-                // Calm great-circle strolling + gentle neighbor deflection
-                sideTangent.crossVectors(normal, tangentDir).normalize();
-                const wanderTurn = Math.sin(elapsed * 0.45 + phase) * 0.34;
-                tangentDir.addScaledVector(sideTangent, wanderTurn * safeDt);
-
-                for (const other of opts.neighbors) {
-                    if (other.id === currentSkill.id) continue;
-                    const dx = normal.x - other.x;
-                    const dy = normal.y - other.y;
-                    const dz = normal.z - other.z;
-                    const chordSq = dx * dx + dy * dy + dz * dz;
-                    if (chordSq > 0.0001 && chordSq < 0.42 * 0.42) {
-                        const chord = Math.sqrt(chordSq);
-                        awayVec
-                            .set(dx, dy, dz)
-                            .addScaledVector(normal, -(dx * normal.x + dy * normal.y + dz * normal.z));
-                        if (awayVec.lengthSq() > 0.0001) {
-                            awayVec.normalize();
-                            tangentDir.addScaledVector(awayVec, (0.42 - chord) * 7.5 * safeDt);
-                        }
+            if (isNightMode) {
+                activity = 'sleep';
+                currentSpeed = damp(currentSpeed, 0, 6.0, safeDt);
+                // Face calmly toward camera in place while resting
+                camVec.copy(opts.cameraPos).addScaledVector(normal, -EARTH_RADIUS);
+                camVec.addScaledVector(normal, -normal.dot(camVec));
+                if (camVec.lengthSq() > 0.0001) {
+                    camVec.normalize();
+                    facingDir.lerp(camVec, 1 - Math.exp(-3.0 * safeDt));
+                    facingDir.addScaledVector(normal, -normal.dot(facingDir));
+                    if (facingDir.lengthSq() > 0.0001) {
+                        facingDir.normalize();
                     }
                 }
-
-                tangentDir.addScaledVector(normal, -normal.dot(tangentDir));
-                if (tangentDir.lengthSq() > 0.0001) {
-                    tangentDir.normalize();
-                } else {
-                    makeInitialTangent(normal, elapsed + phase, tangentDir);
-                }
-
-                currentSpeed = damp(currentSpeed, baseWalkSpeed, 4.5, safeDt);
-                const angularStep = (currentSpeed / EARTH_RADIUS) * safeDt;
-                normal.addScaledVector(tangentDir, angularStep).normalize();
-                tangentDir.addScaledVector(normal, -normal.dot(tangentDir)).normalize();
-
-                facingDir.lerp(tangentDir, 1 - Math.exp(-6.0 * safeDt));
-                facingDir.addScaledVector(normal, -normal.dot(facingDir));
-                if (facingDir.lengthSq() > 0.0001) {
-                    facingDir.normalize();
-                } else {
-                    facingDir.copy(tangentDir);
+            } else if (isListeningNow) {
+                activity = daytimeMusicStyle;
+                currentSpeed = damp(currentSpeed, 0, 6.0, safeDt);
+                camVec.copy(opts.cameraPos).addScaledVector(normal, -EARTH_RADIUS);
+                camVec.addScaledVector(normal, -normal.dot(camVec));
+                if (camVec.lengthSq() > 0.0001) {
+                    camVec.normalize();
+                    facingDir.lerp(camVec, 1 - Math.exp(-4.8 * safeDt));
+                    facingDir.addScaledVector(normal, -normal.dot(facingDir));
+                    if (facingDir.lengthSq() > 0.0001) {
+                        facingDir.normalize();
+                    }
                 }
             } else {
-                currentSpeed = damp(currentSpeed, 0, 5.5, safeDt);
-                // Turn calmly toward the camera for showcase activities
                 if (
-                    activity === 'wave' ||
-                    activity === 'lift' ||
+                    activity === 'sleep' ||
+                    activity === 'listen' ||
                     activity === 'sing' ||
                     activity === 'guitar'
                 ) {
-                    camVec.copy(opts.cameraPos).addScaledVector(normal, -EARTH_RADIUS);
-                    camVec.addScaledVector(normal, -normal.dot(camVec));
-                    if (camVec.lengthSq() > 0.0001) {
-                        camVec.normalize();
-                        facingDir.lerp(camVec, 1 - Math.exp(-4.5 * safeDt));
-                        facingDir.addScaledVector(normal, -normal.dot(facingDir));
-                        if (facingDir.lengthSq() > 0.0001) {
-                            facingDir.normalize();
+                    activity = 'walk';
+                    activityTimer = 1.6 + nextRand() * 2.8;
+                    activityClock = 0;
+                }
+
+                activityTimer -= safeDt;
+                if (activityTimer <= 0) {
+                    if (activity === 'walk') {
+                        activity = drawNextIdleActivity();
+                        activityTimer = 2.4 + nextRand() * 1.8;
+                    } else {
+                        activity = 'walk';
+                        activityTimer = 4.2 + nextRand() * 4.2;
+                    }
+                    activityClock = 0;
+                }
+
+                if (activity === 'walk') {
+                    // Calm great-circle strolling + gentle neighbor deflection
+                    sideTangent.crossVectors(normal, tangentDir).normalize();
+                    const wanderTurn = Math.sin(elapsed * 0.45 + phase) * 0.34;
+                    tangentDir.addScaledVector(sideTangent, wanderTurn * safeDt);
+
+                    for (const other of opts.neighbors) {
+                        if (other.id === currentSkill.id) continue;
+                        const dx = normal.x - other.x;
+                        const dy = normal.y - other.y;
+                        const dz = normal.z - other.z;
+                        const chordSq = dx * dx + dy * dy + dz * dz;
+                        if (chordSq > 0.0001 && chordSq < 0.42 * 0.42) {
+                            const chord = Math.sqrt(chordSq);
+                            awayVec
+                                .set(dx, dy, dz)
+                                .addScaledVector(normal, -(dx * normal.x + dy * normal.y + dz * normal.z));
+                            if (awayVec.lengthSq() > 0.0001) {
+                                awayVec.normalize();
+                                tangentDir.addScaledVector(awayVec, (0.42 - chord) * 7.5 * safeDt);
+                            }
+                        }
+                    }
+
+                    tangentDir.addScaledVector(normal, -normal.dot(tangentDir));
+                    if (tangentDir.lengthSq() > 0.0001) {
+                        tangentDir.normalize();
+                    } else {
+                        makeInitialTangent(normal, elapsed + phase, tangentDir);
+                    }
+
+                    currentSpeed = damp(currentSpeed, baseWalkSpeed, 4.5, safeDt);
+                    const angularStep = (currentSpeed / EARTH_RADIUS) * safeDt;
+                    normal.addScaledVector(tangentDir, angularStep).normalize();
+                    tangentDir.addScaledVector(normal, -normal.dot(tangentDir)).normalize();
+
+                    facingDir.lerp(tangentDir, 1 - Math.exp(-6.0 * safeDt));
+                    facingDir.addScaledVector(normal, -normal.dot(facingDir));
+                    if (facingDir.lengthSq() > 0.0001) {
+                        facingDir.normalize();
+                    } else {
+                        facingDir.copy(tangentDir);
+                    }
+                } else {
+                    currentSpeed = damp(currentSpeed, 0, 5.5, safeDt);
+                    if (activity === 'wave' || activity === 'lift') {
+                        camVec.copy(opts.cameraPos).addScaledVector(normal, -EARTH_RADIUS);
+                        camVec.addScaledVector(normal, -normal.dot(camVec));
+                        if (camVec.lengthSq() > 0.0001) {
+                            camVec.normalize();
+                            facingDir.lerp(camVec, 1 - Math.exp(-4.5 * safeDt));
+                            facingDir.addScaledVector(normal, -normal.dot(facingDir));
+                            if (facingDir.lengthSq() > 0.0001) {
+                                facingDir.normalize();
+                            }
                         }
                     }
                 }
@@ -593,72 +748,110 @@ export function createSkillWorkstation(
         const strideStrength = Math.min(1, currentSpeed / baseWalkSpeed);
         walkPhase += (0.4 + strideStrength * 4.1) * safeDt;
 
-        const wantWave = interactive || activity === 'wave';
-        const wantStretch = !interactive && activity === 'stretch';
-        const wantLook = !interactive && activity === 'look';
-        const wantHop = !interactive && activity === 'hop';
-        const wantLift = !interactive && activity === 'lift';
-        const wantSing = !interactive && activity === 'sing';
-        const wantGuitar = !interactive && activity === 'guitar';
+        const wantWave =
+            (interactive && !isListeningNow && !isNightMode) ||
+            (!interactive && !isNightMode && !isListeningNow && activity === 'wave');
+        const wantStretch = !interactive && !isNightMode && !isListeningNow && activity === 'stretch';
+        const wantLook = !interactive && !isNightMode && !isListeningNow && activity === 'look';
+        const wantHop = !interactive && !isNightMode && !isListeningNow && activity === 'hop';
+        const wantLift = !interactive && !isNightMode && !isListeningNow && activity === 'lift';
+        const wantSleep = isNightMode;
+        const wantListen = isListeningNow && !isNightMode && (interactive || activity === 'listen');
+        const wantSing = isListeningNow && !isNightMode && !interactive && activity === 'sing';
+        const wantGuitar = isListeningNow && !isNightMode && !interactive && activity === 'guitar';
 
         waveBlend = damp(waveBlend, wantWave ? 1 : 0, 7.5, safeDt);
         stretchBlend = damp(stretchBlend, wantStretch ? 1 : 0, 6.5, safeDt);
         lookBlend = damp(lookBlend, wantLook ? 1 : 0, 6.5, safeDt);
         hopBlend = damp(hopBlend, wantHop ? 1 : 0, 7.5, safeDt);
         liftBlend = damp(liftBlend, wantLift ? 1 : 0, 7.0, safeDt);
+        listenBlend = damp(listenBlend, wantListen ? 1 : 0, 7.0, safeDt);
         singBlend = damp(singBlend, wantSing ? 1 : 0, 7.0, safeDt);
         guitarBlend = damp(guitarBlend, wantGuitar ? 1 : 0, 7.0, safeDt);
+        sleepBlend = damp(sleepBlend, wantSleep ? 1 : 0, 6.0, safeDt);
+        headphoneBlend = damp(headphoneBlend, isListeningNow ? 1 : 0, 8.5, safeDt);
 
         const swing = Math.sin(walkPhase) * 0.56 * strideStrength;
         const stepBounce = Math.abs(Math.sin(walkPhase)) * 0.052 * strideStrength;
-        const selectedHop = opts.isSelected ? Math.abs(Math.sin(elapsed * 5.2)) * 0.12 : 0;
+        const selectedHop = opts.isSelected && !isNightMode ? Math.abs(Math.sin(elapsed * 5.2)) * 0.09 : 0;
         const playHop = hopBlend * Math.abs(Math.sin(activityClock * 5.0)) * 0.18;
         const stretchLift = stretchBlend * (0.04 + Math.sin(activityClock * 3.2) * 0.025);
-        const singGroove = singBlend * Math.abs(Math.sin(activityClock * 4.8)) * 0.06;
-        const guitarGroove = guitarBlend * Math.abs(Math.sin(activityClock * 5.6)) * 0.05;
+        const beatLift = smoothMusicEnergy * 0.085;
+        const listenGroove = listenBlend * (beatLift + Math.abs(Math.sin(elapsed * 5.2 + phase)) * 0.04);
+        const singGroove = singBlend * (beatLift + Math.abs(Math.sin(activityClock * 4.8)) * 0.05);
+        const guitarGroove = guitarBlend * (beatLift + Math.abs(Math.sin(activityClock * 5.6)) * 0.045);
+        const sleepBreath = sleepBlend * (Math.sin(elapsed * 1.45 + phase) * 0.018 + smoothMusicEnergy * 0.028);
 
         bodyRig.position.y =
-            stepBounce + selectedHop + playHop + stretchLift + singGroove + guitarGroove;
+            stepBounce +
+            selectedHop +
+            playHop +
+            stretchLift +
+            listenGroove +
+            singGroove +
+            guitarGroove +
+            sleepBreath;
         bodyRig.rotation.y =
             lookBlend * Math.sin(activityClock * 2.6) * 0.45 +
             hopBlend * Math.sin(activityClock * 2.5) * 0.25 +
+            listenBlend * Math.sin(elapsed * 2.4 + phase) * 0.16 +
             singBlend * Math.sin(activityClock * 2.4) * 0.22;
         bodyRig.rotation.z =
             Math.sin(walkPhase) * 0.045 * strideStrength +
             lookBlend * Math.sin(activityClock * 2.6) * 0.06 +
+            listenBlend * Math.sin(elapsed * 3.8 + phase) * (0.08 + smoothMusicEnergy * 0.06) +
             singBlend * Math.sin(activityClock * 2.8) * 0.09 +
-            guitarBlend * Math.sin(activityClock * 3.2) * 0.07;
+            guitarBlend * Math.sin(activityClock * 3.2) * 0.07 +
+            sleepBlend * Math.sin(elapsed * 1.1 + phase) * 0.085;
         bodyRig.rotation.x =
-            strideStrength * 0.04 - stretchBlend * 0.08 + liftBlend * 0.06;
+            strideStrength * 0.04 -
+            stretchBlend * 0.08 +
+            liftBlend * 0.06 +
+            listenBlend * (0.06 + smoothMusicEnergy * 0.14) +
+            sleepBlend * (0.17 + Math.sin(elapsed * 2.2 + phase) * 0.035);
 
         leftHipPivot.rotation.x = swing;
         rightHipPivot.rotation.x = -swing;
 
         // Smooth arm choreography across all activities
-        const armBusy = Math.min(1, stretchBlend + hopBlend + liftBlend + guitarBlend + singBlend);
+        const armBusy = Math.min(
+            1,
+            stretchBlend + hopBlend + liftBlend + listenBlend + guitarBlend + singBlend + sleepBlend
+        );
         const armWalkWeight = Math.max(0, 1 - armBusy);
         const hopArmRaise = hopBlend * (1.25 + Math.sin(activityClock * 5.0) * 0.25);
         const stretchArmRaise = stretchBlend * (2.35 + Math.sin(activityClock * 3.5) * 0.14);
         const liftPulse = 0.5 + 0.5 * Math.sin(activityClock * 3.8);
         const liftArmRaise = liftBlend * (2.35 + liftPulse * 0.45);
         const singArmSwing = singBlend * (1.1 + Math.sin(activityClock * 5.0) * 0.35);
+        const listenArmGroove = listenBlend * Math.sin(elapsed * 5.4 + phase) * (0.28 + smoothMusicEnergy * 0.25);
 
         leftArmPivot.rotation.x =
-            -swing * 0.8 * armWalkWeight - guitarBlend * 0.65 - singBlend * 0.3;
+            -swing * 0.8 * armWalkWeight -
+            guitarBlend * 0.65 -
+            singBlend * 0.3 -
+            listenBlend * (0.25 + listenArmGroove);
         leftArmPivot.rotation.z =
-            -0.24 - stretchArmRaise - hopArmRaise - liftArmRaise + guitarBlend * 0.48;
+            -0.24 -
+            stretchArmRaise -
+            hopArmRaise -
+            liftArmRaise +
+            guitarBlend * 0.48 +
+            sleepBlend * 0.12;
 
         rightArmPivot.rotation.x =
             swing * 0.8 * Math.max(0, armWalkWeight - waveBlend) -
             guitarBlend * 0.85 -
-            singArmSwing;
+            singArmSwing +
+            listenBlend * (0.25 + listenArmGroove);
         rightArmPivot.rotation.z =
             0.24 +
             waveBlend * (2.1 + Math.sin(elapsed * 9.5) * 0.32) * (1 - stretchBlend - liftBlend) +
             stretchArmRaise +
             hopArmRaise +
             liftArmRaise -
-            guitarBlend * (0.45 + Math.sin(activityClock * 11.0) * 0.28);
+            guitarBlend * (0.45 + Math.sin(activityClock * 11.0) * 0.28) -
+            sleepBlend * 0.12;
 
         // Toggle & animate activity props cleanly (0 GPU draw calls when invisible)
         barbellProp.visible = liftBlend > 0.12;
@@ -673,23 +866,50 @@ export function createSkillWorkstation(
             guitarProp.rotation.z = -0.68 + Math.sin(activityClock * 5.6) * 0.06;
         }
 
-        const noteActive = Math.max(singBlend, guitarBlend);
+        headphoneProp.visible = headphoneBlend > 0.08;
+        if (headphoneProp.visible) {
+            const hpScale = Math.min(1.06, headphoneBlend * (1 + smoothMusicEnergy * 0.06));
+            headphoneProp.scale.setScalar(hpScale);
+        }
+
+        const noteActive = isListeningNow
+            ? Math.max(headphoneBlend, listenBlend, singBlend, guitarBlend)
+            : 0;
         musicNoteMesh.visible = noteActive > 0.15;
         if (musicNoteMesh.visible) {
             musicNoteMesh.position.set(
-                0.38 + Math.sin(activityClock * 3.2) * 0.06,
-                1.3 + Math.sin(activityClock * 4.5) * 0.09,
+                0.38 + Math.sin(elapsed * 3.2 + phase) * 0.06,
+                1.3 + Math.sin(elapsed * 4.5 + phase) * 0.09 + smoothMusicEnergy * 0.06,
                 0.08
             );
-            musicNoteMesh.scale.setScalar(Math.min(1, noteActive * 1.3));
+            musicNoteMesh.scale.setScalar(Math.min(1.15, noteActive * (1.05 + smoothMusicEnergy * 0.22)));
+        }
+
+        sleepyZzzMesh.visible = sleepBlend > 0.15;
+        if (sleepyZzzMesh.visible) {
+            const driftCycle = ((elapsed * 0.42 + phase) % 1);
+            sleepyZzzMesh.position.set(
+                -0.34 - Math.sin(elapsed * 1.8 + phase) * 0.04,
+                1.22 + driftCycle * 0.18,
+                0.08
+            );
+            sleepyZzzMesh.scale.setScalar(Math.min(1, sleepBlend * (0.88 + Math.sin(elapsed * 1.8 + phase) * 0.12)));
         }
 
         // Contact shadow shrinks subtly on jump/hop
-        const shadowScale = Math.max(0.65, 1 - (stepBounce + selectedHop + playHop) * 1.4);
+        const shadowScale = Math.max(0.65, 1 - (stepBounce + selectedHop + playHop + listenGroove) * 1.4);
         shadowDisc.scale.setScalar(shadowScale);
 
         // Ring opacity & crown float
-        const targetRing = opts.isSelected ? 0.92 : opts.isHovered ? 0.72 : currentSkill.isLead ? 0.5 : 0.32;
+        const targetRing = opts.isSelected
+            ? 0.92
+            : opts.isHovered
+              ? 0.72
+              : isListeningNow
+                ? 0.56 + smoothMusicEnergy * 0.24
+                : currentSkill.isLead
+                  ? 0.5
+                  : 0.32;
         ringOpacity = damp(ringOpacity, targetRing, 9.0, safeDt);
         floorRingMat.opacity = ringOpacity;
         if (leadCrown.visible) {
@@ -697,13 +917,24 @@ export function createSkillWorkstation(
             leadCrown.rotation.z = elapsed * 1.2;
         }
 
-        // Keep floating nameplate & music note billboarded cleanly toward camera
+        // Keep floating nameplate, music note & sleepy Zzz billboarded cleanly toward camera
         invGroupQuat.copy(group.quaternion).invert();
         nameplatePivot.quaternion.copy(invGroupQuat).multiply(opts.cameraQuat);
         if (musicNoteMesh.visible) {
             musicNoteMesh.quaternion.copy(nameplatePivot.quaternion);
         }
+        if (sleepyZzzMesh.visible) {
+            sleepyZzzMesh.quaternion.copy(nameplatePivot.quaternion);
+        }
     };
+
+    const getMusicState = (): MascotMusicSnapshot => ({
+        isListening: isListeningState,
+        isSleepHours: isSleepState,
+        songIndex,
+        progressSec: songProgressSec,
+        durationSec: songDurationSec,
+    });
 
     const getHitTarget = (): THREE.Object3D => hitTarget;
 
@@ -728,6 +959,7 @@ export function createSkillWorkstation(
         setTheme,
         setInitialPosition,
         getPositionNormal,
+        getMusicState,
         update,
         getHitTarget,
         getFocusTargetWorld,

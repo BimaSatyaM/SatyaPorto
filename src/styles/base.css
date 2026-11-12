@@ -260,12 +260,6 @@ body.light-theme .hero-cta-secondary:hover {
     border-color: var(--primary);
 }
 
-body.light-theme .hero-photo-box {
-    background: transparent;
-    border-color: #bae6fd;
-    box-shadow: 0 18px 40px rgba(2, 132, 199, 0.14);
-}
-
 body.light-theme .sidebar-avatar {
     background: var(--bg-card);
     padding: 2px;

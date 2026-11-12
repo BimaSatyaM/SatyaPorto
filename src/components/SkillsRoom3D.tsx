@@ -2,9 +2,12 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { getTechIcon } from '../constants/techStack';
+import { useAudio } from '../context/AudioContext';
+import { playlist } from '../data/portfolioData';
 import {
     createSkillWorkstation,
     syncSharedMascotTheme,
+    type MascotMusicSnapshot,
     type MascotNeighbor,
     type SkillWorkstation,
 } from './skills3d/skillWorker';
@@ -30,6 +33,23 @@ function getOverviewCameraPos(_visibleCount: number): THREE.Vector3 {
     return new THREE.Vector3(0, 2.8, 15.2);
 }
 
+function getJakartaSleepHours(now: Date = new Date()): boolean {
+    const hourText = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'Asia/Jakarta',
+        hour: 'numeric',
+        hour12: false,
+    }).format(now);
+    const hour = (Number.parseInt(hourText, 10) || 0) % 24;
+    return hour >= 22 || hour < 7;
+}
+
+function formatTrackTime(seconds: number): string {
+    if (!Number.isFinite(seconds) || seconds < 0) return '0:00';
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+}
+
 export const SkillsRoom3D: React.FC<SkillsRoom3DProps> = ({
     skills,
     visibleSkillIds,
@@ -39,6 +59,8 @@ export const SkillsRoom3D: React.FC<SkillsRoom3DProps> = ({
     const hostRef = useRef<HTMLDivElement | null>(null);
     const rosterWrapRef = useRef<HTMLDivElement | null>(null);
     const rosterTriggerRef = useRef<HTMLButtonElement | null>(null);
+    const stationsRef = useRef<Map<string, SkillWorkstation>>(new Map());
+    const inspectAudioActiveRef = useRef<boolean>(false);
 
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const [hoveredId, setHoveredId] = useState<string | null>(null);
@@ -46,6 +68,22 @@ export const SkillsRoom3D: React.FC<SkillsRoom3DProps> = ({
     const [webglError, setWebglError] = useState(false);
     const [rosterHovered, setRosterHovered] = useState(false);
     const [rosterPinned, setRosterPinned] = useState(false);
+    const [isJakartaSleepHours, setIsJakartaSleepHours] = useState<boolean>(() =>
+        getJakartaSleepHours()
+    );
+    const [activeMusicSnap, setActiveMusicSnap] = useState<MascotMusicSnapshot | null>(null);
+    const [listeningCount, setListeningCount] = useState<number>(0);
+
+    const {
+        isPlaying,
+        currentTrackIndex,
+        currentTime,
+        duration,
+        togglePlay,
+        playTrackAt,
+        pauseAudio,
+        getAudioEnergy,
+    } = useAudio();
 
     const rosterOpen = rosterHovered || rosterPinned;
 
@@ -55,8 +93,53 @@ export const SkillsRoom3D: React.FC<SkillsRoom3DProps> = ({
         visibleSkillIds,
         selectedId,
         hoveredId,
+        isPlaying,
+        currentTrackIndex,
+        currentTime,
+        duration,
+        isJakartaSleepHours,
+        getAudioEnergy,
     });
-    stateRef.current = { skills, visibleSkillIds, selectedId, hoveredId };
+    stateRef.current = {
+        skills,
+        visibleSkillIds,
+        selectedId,
+        hoveredId,
+        isPlaying,
+        currentTrackIndex,
+        currentTime,
+        duration,
+        isJakartaSleepHours,
+        getAudioEnergy,
+    };
+
+    const inspectSkillAudio = (nextSelectedId: string | null) => {
+        if (!nextSelectedId) {
+            if (inspectAudioActiveRef.current) {
+                pauseAudio();
+                inspectAudioActiveRef.current = false;
+            }
+            return;
+        }
+        const snap = stationsRef.current.get(nextSelectedId)?.getMusicState();
+        if (snap?.isListening) {
+            const ratio = snap.progressSec / Math.max(1, snap.durationSec);
+            playTrackAt(snap.songIndex, ratio);
+            inspectAudioActiveRef.current = true;
+        } else if (inspectAudioActiveRef.current) {
+            pauseAudio();
+            inspectAudioActiveRef.current = false;
+        }
+    };
+
+    const inspectSkillAudioRef = useRef(inspectSkillAudio);
+    inspectSkillAudioRef.current = inspectSkillAudio;
+
+    useEffect(() => {
+        const syncClock = () => setIsJakartaSleepHours(getJakartaSleepHours());
+        const timer = window.setInterval(syncClock, 30000);
+        return () => window.clearInterval(timer);
+    }, []);
 
     const resetTriggerRef = useRef<(() => void) | null>(null);
 
@@ -172,6 +255,7 @@ export const SkillsRoom3D: React.FC<SkillsRoom3DProps> = ({
             controls.target.copy(DEFAULT_TARGET);
 
             const stations = new Map<string, SkillWorkstation>();
+            stationsRef.current = stations;
 
             // Smooth camera & globe glide goals (rotates clicked mascot to top-front crest for an upright front view)
             let cameraGlideActive = false;
@@ -224,7 +308,7 @@ export const SkillsRoom3D: React.FC<SkillsRoom3DProps> = ({
                     if (existing) {
                         existing.setSkill(skill, idx);
                     } else {
-                        const ws = createSkillWorkstation(skill, idx, theme);
+                        const ws = createSkillWorkstation(skill, idx, theme, playlist.length);
                         const spawn = getInitialSpawnPosition(idx, currentSkills.length);
                         ws.setInitialPosition(spawn.x, spawn.y, spawn.z);
                         stations.set(skill.id, ws);
@@ -241,6 +325,7 @@ export const SkillsRoom3D: React.FC<SkillsRoom3DProps> = ({
             resetTriggerRef.current = () => {
                 setSelectedId(null);
                 triggerCameraReset(null);
+                inspectSkillAudioRef.current(null);
             };
 
             sceneRefs.current = {
@@ -312,11 +397,10 @@ export const SkillsRoom3D: React.FC<SkillsRoom3DProps> = ({
                 const moved = Math.hypot(e.clientX - downX, e.clientY - downY);
                 if (moved > 6) return;
                 const hit = pickStationId(e.clientX, e.clientY);
-                setSelectedId((prev) => {
-                    const next = hit && prev === hit ? null : hit;
-                    triggerCameraReset(next);
-                    return next;
-                });
+                const next = hit && stateRef.current.selectedId === hit ? null : hit;
+                setSelectedId(next);
+                triggerCameraReset(next);
+                inspectSkillAudioRef.current(next);
             };
 
             const onPointerLeave = () => {
@@ -412,7 +496,16 @@ export const SkillsRoom3D: React.FC<SkillsRoom3DProps> = ({
                     visibleSkillIds: liveVisible,
                     selectedId: liveSelected,
                     hoveredId: liveHovered,
+                    isPlaying: livePlaying,
+                    currentTrackIndex: liveTrackIdx,
+                    currentTime: liveAudioTime,
+                    duration: liveAudioDuration,
+                    isJakartaSleepHours: liveJakartaNight,
+                    getAudioEnergy: sampleEnergy,
                 } = stateRef.current;
+
+                const liveEnergy = livePlaying ? sampleEnergy() : 0;
+                const musicEpoch = Math.floor(elapsed / 18);
 
                 activeNeighbors.length = 0;
                 let slotIdx = 0;
@@ -437,11 +530,21 @@ export const SkillsRoom3D: React.FC<SkillsRoom3DProps> = ({
                     const isVisible = liveVisible.has(id);
                     const isSelected = liveSelected === id;
                     const isHovered = liveHovered === id;
+                    const stationSnap = isSelected ? ws.getMusicState() : null;
+                    const matchesLiveAudio =
+                        Boolean(isSelected && livePlaying && stationSnap?.isListening) &&
+                        liveTrackIdx === stationSnap?.songIndex &&
+                        liveAudioDuration > 0;
 
                     ws.update(dt, elapsed, {
                         isSelected,
                         isHovered,
                         isVisible,
+                        isJakartaNight: liveJakartaNight,
+                        musicEpoch,
+                        liveAudioEnergy: matchesLiveAudio ? liveEnergy : 0,
+                        syncedAudioTime: matchesLiveAudio ? liveAudioTime : undefined,
+                        syncedAudioDuration: matchesLiveAudio ? liveAudioDuration : undefined,
                         cameraPos: localCamPos,
                         cameraQuat: localCamQuat,
                         neighbors: activeNeighbors,
@@ -471,6 +574,7 @@ export const SkillsRoom3D: React.FC<SkillsRoom3DProps> = ({
                     ws.dispose();
                 }
                 stations.clear();
+                stationsRef.current = new Map();
                 studioEnv.dispose();
                 renderer.dispose();
                 sceneRefs.current = null;
@@ -491,6 +595,26 @@ export const SkillsRoom3D: React.FC<SkillsRoom3DProps> = ({
         sceneRefs.current?.reconcileStations();
     }, [skills, visibleSkillIds, selectedId]);
 
+    // Sample inspected logoson song & visible listener count cleanly at 4Hz
+    useEffect(() => {
+        const targetId = hoveredId ?? selectedId ?? leadSkillId;
+        const sample = () => {
+            const snap = targetId ? stationsRef.current.get(targetId)?.getMusicState() ?? null : null;
+            setActiveMusicSnap(snap);
+
+            let count = 0;
+            for (const [id, ws] of stationsRef.current) {
+                if (visibleSkillIds.has(id) && ws.getMusicState().isListening) {
+                    count++;
+                }
+            }
+            setListeningCount(count);
+        };
+        sample();
+        const interval = window.setInterval(sample, 250);
+        return () => window.clearInterval(interval);
+    }, [hoveredId, selectedId, leadSkillId, visibleSkillIds]);
+
     if (webglError) {
         return null;
     }
@@ -501,17 +625,94 @@ export const SkillsRoom3D: React.FC<SkillsRoom3DProps> = ({
         ? resolveThemeColor(activeTech?.color || activeSkill.color, textFallback)
         : '#38bdf8';
 
+    const activeTrackInfo =
+        activeMusicSnap && activeMusicSnap.isListening
+            ? playlist[activeMusicSnap.songIndex] || playlist[0]
+            : null;
+    const isInspectAudioSynced =
+        Boolean(selectedId && activeSkill?.id === selectedId && activeMusicSnap?.isListening) &&
+        isPlaying &&
+        currentTrackIndex === activeMusicSnap?.songIndex;
+    const displayDurationSec =
+        isInspectAudioSynced && duration > 0 ? duration : activeMusicSnap?.durationSec || 200;
+    const displayProgressSec = isInspectAudioSynced
+        ? currentTime
+        : activeMusicSnap?.progressSec || 0;
+    const displayProgressPct = Math.max(
+        0,
+        Math.min(100, (displayProgressSec / Math.max(1, displayDurationSec)) * 100)
+    );
+
     const handleSelectRosterSkill = (skillId: string) => {
         setSelectedId(skillId);
         sceneRefs.current?.triggerCameraReset(skillId);
+        inspectSkillAudio(skillId);
         setRosterPinned(false);
         setRosterHovered(false);
+    };
+
+    const handleCardMusicToggle = () => {
+        if (!activeSkill || !activeMusicSnap?.isListening) return;
+        if (isInspectAudioSynced) {
+            togglePlay();
+            inspectAudioActiveRef.current = !isPlaying;
+            return;
+        }
+        setSelectedId(activeSkill.id);
+        sceneRefs.current?.triggerCameraReset(activeSkill.id);
+        inspectSkillAudio(activeSkill.id);
     };
 
     return (
         <div className="skills-3d-stage" aria-label="Interactive 3D Skills Studio">
             <div className="skills-3d-hud-top">
                 <div className="skills-3d-hud-group">
+                    <button
+                        type="button"
+                        className={`skills-3d-hud-btn skills-3d-music-btn ${isInspectAudioSynced ? 'playing' : ''}`}
+                        onClick={() => {
+                            if (selectedId && activeMusicSnap?.isListening) {
+                                handleCardMusicToggle();
+                            } else if (visibleSkills.length > 0) {
+                                const firstListening = visibleSkills.find((s) =>
+                                    stationsRef.current.get(s.id)?.getMusicState().isListening
+                                );
+                                if (firstListening) {
+                                    handleSelectRosterSkill(firstListening.id);
+                                }
+                            }
+                        }}
+                        aria-pressed={isInspectAudioSynced}
+                        title={
+                            isInspectAudioSynced && activeTrackInfo
+                                ? `Listening with ${activeSkill?.name}: ${activeTrackInfo.title}`
+                                : 'Tap any headphone logoson to hear its song'
+                        }
+                    >
+                        {isInspectAudioSynced ? (
+                            <span className="skills-3d-music-eq" aria-hidden="true">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </span>
+                        ) : (
+                            <i className="fas fa-headphones" aria-hidden="true"></i>
+                        )}
+                        <span className="skills-3d-music-title">
+                            {isInspectAudioSynced && activeTrackInfo
+                                ? `${activeSkill?.name}: ${activeTrackInfo.title}`
+                                : isJakartaSleepHours
+                                  ? `All ${visibleSkills.length} Listening`
+                                  : `${listeningCount} Listening · Tap to hear`}
+                        </span>
+                        {isJakartaSleepHours && (
+                            <span className="skills-3d-music-mode" aria-label="Jakarta night mode">
+                                <i className="fas fa-moon" aria-hidden="true"></i>
+                                Zzz
+                            </span>
+                        )}
+                    </button>
+
                     {(selectedId || activeSkill) && (
                         <button
                             type="button"
@@ -645,27 +846,82 @@ export const SkillsRoom3D: React.FC<SkillsRoom3DProps> = ({
                     className="skills-3d-active-card"
                     style={{ borderColor: `${activeColor}66` }}
                 >
-                    <span
-                        className="skills-3d-active-icon"
-                        style={{ color: activeColor }}
-                    >
-                        {activeTech ? activeTech.icon : <i className="fas fa-code"></i>}
-                    </span>
-                    <div className="skills-3d-active-meta">
-                        <span className="skills-3d-active-name">
-                            {activeSkill.name}
-                            {activeSkill.isLead && (
-                                <i
-                                    className="fas fa-star"
-                                    style={{ color: '#f59e0b', fontSize: '12px' }}
-                                    title="Featured 3D Skill (set in Dashboard)"
-                                ></i>
-                            )}
+                    <div className="skills-3d-active-top">
+                        <span
+                            className="skills-3d-active-icon"
+                            style={{ color: activeColor }}
+                        >
+                            {activeTech ? activeTech.icon : <i className="fas fa-code"></i>}
                         </span>
-                        <span className="skills-3d-active-cats">
-                            {activeSkill.categories.join(' · ')}
-                        </span>
+                        <div className="skills-3d-active-meta">
+                            <span className="skills-3d-active-name">
+                                {activeSkill.name}
+                                {activeSkill.isLead && (
+                                    <i
+                                        className="fas fa-star"
+                                        style={{ color: '#f59e0b', fontSize: '12px' }}
+                                        title="Featured 3D Skill (set in Dashboard)"
+                                    ></i>
+                                )}
+                            </span>
+                            <span className="skills-3d-active-cats">
+                                {activeSkill.categories.join(' · ')}
+                            </span>
+                        </div>
                     </div>
+
+                    {activeTrackInfo && activeMusicSnap?.isListening && (
+                        <div className="skills-3d-track-box">
+                            <div className="skills-3d-track-row">
+                                <img
+                                    src={activeTrackInfo.cover}
+                                    alt={`${activeTrackInfo.title} cover`}
+                                    className="skills-3d-track-cover"
+                                    width={34}
+                                    height={34}
+                                />
+                                <div className="skills-3d-track-info">
+                                    <span className="skills-3d-track-title">
+                                        {activeTrackInfo.title}
+                                    </span>
+                                    <span className="skills-3d-track-artist">
+                                        {activeTrackInfo.artist}
+                                    </span>
+                                </div>
+                                <button
+                                    type="button"
+                                    className="skills-3d-track-play"
+                                    onClick={handleCardMusicToggle}
+                                    aria-label={
+                                        isInspectAudioSynced
+                                            ? `Pause ${activeTrackInfo.title}`
+                                            : `Hear ${activeTrackInfo.title}`
+                                    }
+                                    title={
+                                        isInspectAudioSynced
+                                            ? 'Pause song'
+                                            : 'Hear song at exact timestamp'
+                                    }
+                                >
+                                    <i
+                                        className={`fas ${isInspectAudioSynced ? 'fa-pause' : 'fa-play'}`}
+                                        aria-hidden="true"
+                                    ></i>
+                                </button>
+                            </div>
+                            <div className="skills-3d-track-progress-row">
+                                <div className="skills-3d-track-bar" aria-hidden="true">
+                                    <div
+                                        className="skills-3d-track-bar-fill"
+                                        style={{ width: `${displayProgressPct}%` }}
+                                    ></div>
+                                </div>
+                                <span className="skills-3d-track-time">
+                                    {formatTrackTime(displayProgressSec)} / {formatTrackTime(displayDurationSec)}
+                                </span>
+                            </div>
+                        </div>
+                    )}
                 </div>
             )}
 

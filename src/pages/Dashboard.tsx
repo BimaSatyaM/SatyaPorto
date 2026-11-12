@@ -4,6 +4,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { db } from '../firebase/config';
 import { collection, addDoc, onSnapshot, doc, deleteDoc, writeBatch, serverTimestamp } from 'firebase/firestore';
 import { AVAILABLE_TECH, getTechIcon } from '../constants/techStack';
+import { GitHubContributions } from '../components/GitHubContributions';
 
 // Automated Tech Skill Classifier Helper
 const classifyTechnology = (name: string): string[] => {
@@ -225,35 +226,28 @@ export const Dashboard: React.FC = () => {
             !skillsList.some(s => s.name.toLowerCase() === tech.name.toLowerCase())
     );
 
-    // If visitor or public (not whitelisted admin)
-    if (!user || !isAdmin) {
-        return (
-            <section id="dashboard" className="section" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', textAlign: 'center', padding: '40px 20px' }}>
-                <div className="auth-notice-card" style={{ maxWidth: '480px', padding: '40px 30px' }}>
-                    <i className="fas fa-tools auth-notice-icon" style={{ fontSize: '48px', color: 'var(--primary)', marginBottom: '20px' }}></i>
-                    <h2 style={{ fontSize: '24px', fontWeight: '500', color: 'var(--text-primary)', marginBottom: '10px' }}>{t('dashboard.title')}</h2>
-                    <p style={{ fontSize: '15px', color: 'var(--text-secondary)', lineHeight: '1.6' }}>
-                        {t('dashboard.underConstruction')}
-                    </p>
-                </div>
-            </section>
-        );
-    }
-
-    // Render Whitelisted Admin Panel View
+    // Render GitHub contributions for all visitors, plus admin panels when signed in as admin
+    const isWhitelistedAdmin = Boolean(user && isAdmin);
     const selectedIconInfo = getTechIcon(selectedTechName);
 
     return (
         <section id="dashboard" className="section">
             <div className="about-header">
                 <h2 className="about-title">
-                    <i className="fas fa-sliders-h" style={{ marginRight: '10px' }}></i>{t('dashboard.title')} Admin
+                    <i className={isWhitelistedAdmin ? 'fas fa-sliders-h' : 'fab fa-github'} style={{ marginRight: '10px' }}></i>
+                    {isWhitelistedAdmin ? `${t('dashboard.title')} Admin` : t('dashboard.title')}
                 </h2>
-                <p className="about-subtitle">{t('dashboard.subtitle')}</p>
+                <p className="about-subtitle">
+                    {isWhitelistedAdmin ? t('dashboard.subtitle') : t('dashboard.publicSubtitle')}
+                </p>
             </div>
             <div className="about-divider"></div>
 
-            <div className="dashboard-grid-layout" style={{ display: 'flex', flexDirection: 'column', gap: '30px', maxWidth: '760px', margin: '0 auto' }}>
+            <div className="dashboard-grid-layout">
+                <GitHubContributions username="BimaSatyaM" />
+
+                {isWhitelistedAdmin && (
+                    <>
 
                 {/* 1. TECH SKILL CLASSIFIER PANEL CARD */}
                 <div className="post-form-container" style={{ margin: 0, width: '100%' }}>
@@ -484,6 +478,8 @@ export const Dashboard: React.FC = () => {
                         </>
                     )}
                 </div>
+                    </>
+                )}
 
             </div>
         </section>

@@ -270,6 +270,7 @@ export function createNameplateTexture(
 }
 
 let musicNoteTex: THREE.CanvasTexture | null = null;
+let sleepyZzzTex: THREE.CanvasTexture | null = null;
 
 export function getMusicNoteTexture(): THREE.CanvasTexture {
     if (musicNoteTex) return musicNoteTex;
@@ -296,10 +297,38 @@ export function getMusicNoteTexture(): THREE.CanvasTexture {
     return musicNoteTex;
 }
 
+export function getSleepyZzzTexture(): THREE.CanvasTexture {
+    if (sleepyZzzTex) return sleepyZzzTex;
+    const width = 96;
+    const height = 56;
+    const [canvas, ctx] = createCanvas(width, height);
+
+    ctx.clearRect(0, 0, width, height);
+    drawRoundedRect(ctx, 4, 6, width - 8, height - 12, 22);
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.82)';
+    ctx.fill();
+    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = '#818cf8';
+    ctx.stroke();
+
+    ctx.fillStyle = '#c7d2fe';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = '800 23px "Inter", "Segoe UI", system-ui, sans-serif';
+    ctx.fillText('Zzz', width / 2, height / 2 + 1);
+
+    sleepyZzzTex = configureTexture(canvas);
+    return sleepyZzzTex;
+}
+
 export function disposeTextureCache(): void {
     if (musicNoteTex) {
         musicNoteTex.dispose();
         musicNoteTex = null;
+    }
+    if (sleepyZzzTex) {
+        sleepyZzzTex.dispose();
+        sleepyZzzTex = null;
     }
     if (svgQueueRaf && typeof cancelAnimationFrame !== 'undefined') {
         cancelAnimationFrame(svgQueueRaf);
