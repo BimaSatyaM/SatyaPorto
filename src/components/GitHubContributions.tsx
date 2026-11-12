@@ -100,30 +100,49 @@ export const GitHubContributions: React.FC<GitHubContributionsProps> = ({ userna
 
     const loadContributions = useCallback(async (signal?: AbortSignal) => {
         setError(null);
+        const encodedUsername = encodeURIComponent(username);
+        const endpoints = [
+            `/api/github-contributions?username=${encodedUsername}`,
+            `https://github-contributions-api.jogruber.de/v4/${encodedUsername}?y=last`,
+        ];
+
         try {
-            const res = await fetch(
-                `https://github-contributions-api.jogruber.de/v4/${encodeURIComponent(username)}?y=last`,
-                { signal }
-            );
-            if (!res.ok) {
-                throw new Error(`HTTP ${res.status}`);
+            let lastError: Error | null = null;
+            for (const endpoint of endpoints) {
+                try {
+                    const res = await fetch(endpoint, { signal });
+                    const contentType = res.headers.get('content-type') ?? '';
+                    if (!res.ok || !contentType.includes('application/json')) {
+                        lastError = new Error(`HTTP ${res.status}`);
+                        continue;
+                    }
+                    const json = (await res.json()) as {
+                        total?: { lastYear?: number };
+                        contributions?: ContributionDay[];
+                    };
+                    const days = Array.isArray(json.contributions) ? json.contributions : [];
+                    if (days.length === 0) {
+                        lastError = new Error('Empty contribution dataset');
+                        continue;
+                    }
+                    const total =
+                        typeof json.total?.lastYear === 'number'
+                            ? json.total.lastYear
+                            : days.reduce((sum, d) => sum + (d.count || 0), 0);
+                    const nextPayload: ContributionPayload = { total, days };
+                    setData(nextPayload);
+                    try {
+                        window.localStorage.setItem(`${CACHE_KEY_PREFIX}${username}`, JSON.stringify(nextPayload));
+                    } catch {
+                        // Ignore storage quota errors
+                    }
+                    return;
+                } catch (err) {
+                    if (signal?.aborted) throw err;
+                    lastError = err instanceof Error ? err : new Error('Unable to load activity');
+                }
             }
-            const json = (await res.json()) as {
-                total?: { lastYear?: number };
-                contributions?: ContributionDay[];
-            };
-            const days = Array.isArray(json.contributions) ? json.contributions : [];
-            const total =
-                typeof json.total?.lastYear === 'number'
-                    ? json.total.lastYear
-                    : days.reduce((sum, d) => sum + (d.count || 0), 0);
-            const nextPayload: ContributionPayload = { total, days };
-            setData(nextPayload);
-            try {
-                window.localStorage.setItem(`${CACHE_KEY_PREFIX}${username}`, JSON.stringify(nextPayload));
-            } catch {
-                // Ignore storage quota errors
-            }
+            throw lastError ?? new Error('Unable to load activity');
         } catch (err) {
             if (signal?.aborted) return;
             setError(err instanceof Error ? err.message : 'Unable to load activity');
