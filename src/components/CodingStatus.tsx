@@ -171,14 +171,27 @@ export const CodingStatus: React.FC = () => {
                     <span className="wakatime-stat-value">{status.totalDigital} • {status.timezone}</span>
                 </div>
 
-                {/* Card 5: Current Project & AI Sessions */}
+                {/* Card 5: Active Projects Today & AI Sessions */}
                 <div className="wakatime-stat-box">
                     <span className="wakatime-stat-label">
-                        {lang === 'ID' ? 'Proyek Aktif' : 'Current Project'}
+                        {status.projects.length > 1
+                            ? (lang === 'ID' ? 'Proyek Teratas Hari Ini' : 'Top Projects Today')
+                            : (lang === 'ID' ? 'Proyek Aktif' : 'Active Project')}
                     </span>
                     <div className="wakatime-project-wrap">
                         <span className="wakatime-stat-value">
-                            {status.project || (lang === 'ID' ? 'Belum ada proyek aktif' : 'No active project')}
+                            {status.project ? (
+                                <>
+                                    {status.project}
+                                    {status.projects[0]?.text && (
+                                        <span className="wakatime-project-primary-time">
+                                            {' '}• {status.projects[0].text}
+                                        </span>
+                                    )}
+                                </>
+                            ) : (
+                                lang === 'ID' ? 'Belum ada proyek aktif' : 'No active project'
+                            )}
                         </span>
                         {status.aiSessions > 0 && (
                             <span className="wakatime-ai-badge" title="Antigravity 2.0 AI Sessions">
@@ -187,6 +200,17 @@ export const CodingStatus: React.FC = () => {
                             </span>
                         )}
                     </div>
+                    {status.projects.length > 1 && (
+                        <div className="wakatime-sub-projects" aria-label="Other active projects today">
+                            <span className="wakatime-sub-projects-label">
+                                {lang === 'ID' ? 'Juga aktif: ' : 'Also active: '}
+                            </span>
+                            {status.projects
+                                .slice(1)
+                                .map((p) => `${p.name}${p.text ? ` (${p.text})` : ''}`)
+                                .join(' • ')}
+                        </div>
+                    )}
                 </div>
 
                 {/* Card 6: All-Time Coding Since Joined */}
