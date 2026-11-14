@@ -121,6 +121,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
         }
 
         // Optional share URL support (e.g. public embed JSON from wakatime.com/share)
+        let allTimeBaseSeconds = 0;
         const shareUrl = process.env.WAKATIME_SHARE_URL;
         if (shareUrl && !allTimeText) {
             const shareRes = await fetch(shareUrl, {
@@ -129,13 +130,36 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
             }).catch(() => null);
             if (shareRes?.ok) {
                 const shareJson = (await shareRes.json()) as {
-                    data?: { grand_total?: { text?: string }; text?: string };
-                    grand_total?: { text?: string };
+                    data?: {
+                        grand_total?: {
+                            text?: string;
+                            human_readable_total_including_other_language?: string;
+                            human_readable_total?: string;
+                            total_seconds_including_other_language?: number;
+                            total_seconds?: number;
+                        };
+                        text?: string;
+                    };
+                    grand_total?: {
+                        text?: string;
+                        human_readable_total_including_other_language?: string;
+                        human_readable_total?: string;
+                        total_seconds_including_other_language?: number;
+                        total_seconds?: number;
+                    };
                     text?: string;
                 };
+
+                const gt = shareJson?.data?.grand_total || shareJson?.grand_total;
+                allTimeBaseSeconds =
+                    gt?.total_seconds_including_other_language ||
+                    gt?.total_seconds ||
+                    0;
+
                 allTimeText =
-                    shareJson?.data?.grand_total?.text ||
-                    shareJson?.grand_total?.text ||
+                    gt?.human_readable_total_including_other_language ||
+                    gt?.human_readable_total ||
+                    gt?.text ||
                     shareJson?.data?.text ||
                     shareJson?.text ||
                     null;
@@ -149,6 +173,15 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
 
         const formatted = formatHours(hours, minutes, grandTotal?.text);
         const totalDigital = grandTotal?.digital || `${hours}:${minutes.toString().padStart(2, '0')}`;
+
+        // Combine all-time baseline with today's live activity so all-time ticks live
+        if (allTimeBaseSeconds > 0) {
+            const combinedAllTimeSecs = allTimeBaseSeconds + totalSeconds;
+            const allHours = Math.floor(combinedAllTimeSecs / 3600);
+            const allMins = Math.floor((combinedAllTimeSecs % 3600) / 60);
+            const combinedFormatted = formatHours(allHours, allMins, allTimeText || undefined);
+            allTimeText = combinedFormatted.en;
+        }
 
         const rawProjects = wakaData?.data?.projects || [];
         const rawLanguages = wakaData?.data?.languages || [];
