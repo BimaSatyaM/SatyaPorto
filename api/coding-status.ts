@@ -100,7 +100,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
 
     const headOnly = req.method === 'HEAD';
     const apiKey = resolveWakaTimeApiKey();
-    const cacheHeader = 'public, s-maxage=60, stale-while-revalidate=180';
+    const cacheHeader = 'no-cache, no-store, must-revalidate';
 
     try {
         let wakaData: WakaTimeStatusBarResponse | null = null;

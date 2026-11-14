@@ -59,7 +59,10 @@ export const CodingStatus: React.FC = () => {
 
         const fetchStatus = async () => {
             try {
-                const res = await fetch('/api/coding-status', { signal: controller.signal });
+                const res = await fetch('/api/coding-status', {
+                    cache: 'no-store',
+                    signal: controller.signal,
+                });
                 if (!res.ok) return;
                 const data = (await res.json()) as CodingStatusData;
                 if (!isMounted) return;
