@@ -107,7 +107,7 @@ export const CodingStatus: React.FC = () => {
           : 'Away / Idle';
 
     const todayCodingTime = lang === 'ID' ? status.totalHoursId : status.totalHoursEn;
-    const allTimeValue = status.allTimeText || (status.totalSeconds > 0 ? todayCodingTime : 'N/A');
+    const allTimeValue = status.allTimeText || 'N/A';
 
     return (
         <section className="wakatime-section" aria-label="WakaTime Statistics Dashboard">

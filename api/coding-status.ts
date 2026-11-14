@@ -128,10 +128,17 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
                 signal: AbortSignal.timeout(5000),
             }).catch(() => null);
             if (shareRes?.ok) {
-                const shareJson = (await shareRes.json()) as { data?: { grand_total?: { text?: string } } };
-                if (shareJson?.data?.grand_total?.text) {
-                    allTimeText = shareJson.data.grand_total.text;
-                }
+                const shareJson = (await shareRes.json()) as {
+                    data?: { grand_total?: { text?: string }; text?: string };
+                    grand_total?: { text?: string };
+                    text?: string;
+                };
+                allTimeText =
+                    shareJson?.data?.grand_total?.text ||
+                    shareJson?.grand_total?.text ||
+                    shareJson?.data?.text ||
+                    shareJson?.text ||
+                    null;
             }
         }
 
