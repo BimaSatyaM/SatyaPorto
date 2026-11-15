@@ -243,6 +243,9 @@ export function createSkillWorkstation(
         'stretch',
         'hop',
         'look',
+        'guitar',
+        'sing',
+        'listen',
     ];
 
     const phase = initialIndex * 1.37;
@@ -598,7 +601,6 @@ export function createSkillWorkstation(
     let smoothMusicEnergy = 0;
     let lastMusicEpoch = -1;
     let daytimeListener = false;
-    let daytimeMusicStyle: MascotActivity = 'listen';
     const safePlaylistLen = Math.max(1, playlistLength);
     const pickRandomSongIndex = (exclude?: number): number => {
         if (safePlaylistLen <= 1) return 0;
@@ -620,20 +622,32 @@ export function createSkillWorkstation(
     let activity: MascotActivity =
         initialIndex === 0
             ? 'lift'
-            : initialIndex % 5 === 1
+            : initialIndex % 8 === 1
               ? 'wave'
-              : initialIndex % 5 === 2
+              : initialIndex % 8 === 2
                 ? 'bike'
-                : initialIndex % 5 === 3
+                : initialIndex % 8 === 3
                   ? 'stretch'
-                  : initialIndex % 5 === 4
+                  : initialIndex % 8 === 4
                     ? 'car'
-                    : 'walk';
+                    : initialIndex % 8 === 5
+                      ? 'guitar'
+                      : initialIndex % 8 === 6
+                        ? 'sing'
+                        : initialIndex % 8 === 7
+                          ? 'listen'
+                          : 'walk';
     if (activity !== 'walk') {
         lastIdleActivity = activity;
     }
     let activityTimer =
-        activity === 'walk' ? 2.4 + (initialIndex % 5) * 1.1 : 2.6 + (initialIndex % 3) * 0.6;
+        activity === 'walk'
+            ? 12.0 + (initialIndex % 5) * 2.5
+            : activity === 'car' || activity === 'bike'
+              ? 18.0 + (initialIndex % 4) * 3.0
+              : activity === 'lift'
+                ? 14.0 + (initialIndex % 3) * 2.5
+                : 10.0 + (initialIndex % 3) * 2.0;
     let activityClock = 0;
 
     const syncSurfaceTransform = (): void => {
@@ -717,8 +731,7 @@ export function createSkillWorkstation(
             lastMusicEpoch = opts.musicEpoch;
             const roll =
                 (((initialIndex + 1) * 2654435761) ^ ((opts.musicEpoch + 3) * 2246822519)) >>> 0;
-            daytimeListener = roll % 100 < 52 || initialIndex % 3 === opts.musicEpoch % 3;
-            daytimeMusicStyle = roll % 4 === 0 ? 'guitar' : roll % 4 === 1 ? 'sing' : 'listen';
+            daytimeListener = roll % 100 < 45 || initialIndex % 4 === opts.musicEpoch % 4;
             // Keep selected mascot steady while inspected; otherwise shuffle song when starting a daytime listen
             if (opts.isSelected && wasDaytimeListener) {
                 daytimeListener = true;
@@ -730,7 +743,12 @@ export function createSkillWorkstation(
         }
 
         const isNightMode = opts.isJakartaNight;
-        const isListeningNow = isNightMode || daytimeListener;
+        const isListeningNow =
+            isNightMode ||
+            daytimeListener ||
+            activity === 'guitar' ||
+            activity === 'sing' ||
+            activity === 'listen';
         isListeningState = isListeningNow;
         isSleepState = isNightMode;
 
@@ -781,28 +799,10 @@ export function createSkillWorkstation(
                         facingDir.normalize();
                     }
                 }
-            } else if (isListeningNow) {
-                activity = daytimeMusicStyle;
-                currentSpeed = damp(currentSpeed, 0, 6.0, safeDt);
-                camVec.copy(opts.cameraPos).addScaledVector(normal, -EARTH_RADIUS);
-                camVec.addScaledVector(normal, -normal.dot(camVec));
-                if (camVec.lengthSq() > 0.0001) {
-                    camVec.normalize();
-                    facingDir.lerp(camVec, 1 - Math.exp(-4.8 * safeDt));
-                    facingDir.addScaledVector(normal, -normal.dot(facingDir));
-                    if (facingDir.lengthSq() > 0.0001) {
-                        facingDir.normalize();
-                    }
-                }
             } else {
-                if (
-                    activity === 'sleep' ||
-                    activity === 'listen' ||
-                    activity === 'sing' ||
-                    activity === 'guitar'
-                ) {
+                if (activity === 'sleep') {
                     activity = 'walk';
-                    activityTimer = 1.6 + nextRand() * 2.8;
+                    activityTimer = 12.0 + nextRand() * 8.0;
                     activityClock = 0;
                 }
 
@@ -810,13 +810,26 @@ export function createSkillWorkstation(
                 if (activityTimer <= 0) {
                     if (activity === 'walk') {
                         activity = drawNextIdleActivity();
-                        activityTimer =
-                            activity === 'car' || activity === 'bike'
-                                ? 4.2 + nextRand() * 3.0
-                                : 2.4 + nextRand() * 1.8;
+                        if (activity === 'car') {
+                            activityTimer = 20.0 + nextRand() * 12.0;
+                        } else if (activity === 'bike') {
+                            activityTimer = 18.0 + nextRand() * 10.0;
+                        } else if (activity === 'lift') {
+                            activityTimer = 14.0 + nextRand() * 8.0;
+                        } else if (activity === 'stretch') {
+                            activityTimer = 12.0 + nextRand() * 6.0;
+                        } else if (
+                            activity === 'guitar' ||
+                            activity === 'sing' ||
+                            activity === 'listen'
+                        ) {
+                            activityTimer = 14.0 + nextRand() * 8.0;
+                        } else {
+                            activityTimer = 8.0 + nextRand() * 6.0;
+                        }
                     } else {
                         activity = 'walk';
-                        activityTimer = 4.2 + nextRand() * 4.2;
+                        activityTimer = 14.0 + nextRand() * 10.0;
                     }
                     activityClock = 0;
                 }
@@ -873,7 +886,13 @@ export function createSkillWorkstation(
                     }
                 } else {
                     currentSpeed = damp(currentSpeed, 0, 5.5, safeDt);
-                    if (activity === 'wave' || activity === 'lift') {
+                    if (
+                        activity === 'wave' ||
+                        activity === 'lift' ||
+                        activity === 'guitar' ||
+                        activity === 'sing' ||
+                        activity === 'listen'
+                    ) {
                         camVec.copy(opts.cameraPos).addScaledVector(normal, -EARTH_RADIUS);
                         camVec.addScaledVector(normal, -normal.dot(camVec));
                         if (camVec.lengthSq() > 0.0001) {
@@ -912,19 +931,21 @@ export function createSkillWorkstation(
         wheelAngle += currentSpeed * 6.5 * safeDt;
         pedalPhase += (1.2 + currentSpeed * 6.0) * safeDt;
 
+        const isPropActive =
+            carBlend > 0.3 || bikeBlend > 0.3 || liftBlend > 0.3 || guitarBlend > 0.3;
         const wantWave =
-            (interactive && !isListeningNow && !isNightMode) ||
-            (!interactive && !isNightMode && !isListeningNow && activity === 'wave');
-        const wantStretch = !interactive && !isNightMode && !isListeningNow && activity === 'stretch';
-        const wantLook = !interactive && !isNightMode && !isListeningNow && activity === 'look';
-        const wantHop = !interactive && !isNightMode && !isListeningNow && activity === 'hop';
-        const wantLift = !interactive && !isNightMode && !isListeningNow && activity === 'lift';
-        const wantCar = !interactive && !isNightMode && !isListeningNow && activity === 'car';
-        const wantBike = !interactive && !isNightMode && !isListeningNow && activity === 'bike';
+            (!isPropActive && interactive && !isNightMode) ||
+            (!interactive && !isNightMode && activity === 'wave');
+        const wantStretch = !isNightMode && activity === 'stretch';
+        const wantLook = !interactive && !isNightMode && activity === 'look';
+        const wantHop = !interactive && !isNightMode && activity === 'hop';
+        const wantLift = !isNightMode && activity === 'lift';
+        const wantCar = !isNightMode && activity === 'car';
+        const wantBike = !isNightMode && activity === 'bike';
         const wantSleep = isNightMode;
-        const wantListen = isListeningNow && !isNightMode && (interactive || activity === 'listen');
-        const wantSing = isListeningNow && !isNightMode && !interactive && activity === 'sing';
-        const wantGuitar = isListeningNow && !isNightMode && !interactive && activity === 'guitar';
+        const wantListen = !isNightMode && activity === 'listen';
+        const wantSing = !isNightMode && activity === 'sing';
+        const wantGuitar = !isNightMode && activity === 'guitar';
 
         waveBlend = damp(waveBlend, wantWave ? 1 : 0, 7.5, safeDt);
         stretchBlend = damp(stretchBlend, wantStretch ? 1 : 0, 6.5, safeDt);
@@ -943,7 +964,10 @@ export function createSkillWorkstation(
         const strideStrength = walkSpeedRatio * Math.max(0, 1 - vehicleMask);
         const swing = Math.sin(walkPhase) * 0.56 * strideStrength;
         const stepBounce = Math.abs(Math.sin(walkPhase)) * 0.052 * strideStrength;
-        const selectedHop = opts.isSelected && !isNightMode ? Math.abs(Math.sin(elapsed * 5.2)) * 0.09 : 0;
+        const selectedHop =
+            opts.isSelected && !isNightMode && vehicleMask < 0.3
+                ? Math.abs(Math.sin(elapsed * 5.2)) * 0.09
+                : 0;
         const playHop = hopBlend * Math.abs(Math.sin(activityClock * 5.0)) * 0.18;
         const stretchLift = stretchBlend * (0.04 + Math.sin(activityClock * 3.2) * 0.025);
         const beatLift = smoothMusicEnergy * 0.085;
@@ -953,6 +977,10 @@ export function createSkillWorkstation(
         const sleepBreath = sleepBlend * (Math.sin(elapsed * 1.45 + phase) * 0.018 + smoothMusicEnergy * 0.028);
         const carRideHeight = carBlend * (0.06 + Math.sin(elapsed * 22 + phase) * 0.007);
         const bikeRideHeight = bikeBlend * (0.2 + Math.abs(Math.sin(pedalPhase)) * 0.014);
+        const musicBounce =
+            isListeningNow && !isNightMode
+                ? smoothMusicEnergy * 0.035 + Math.abs(Math.sin(elapsed * 4.8 + phase)) * 0.018
+                : 0;
 
         bodyRig.position.y =
             stepBounce +
@@ -964,7 +992,8 @@ export function createSkillWorkstation(
             guitarGroove +
             sleepBreath +
             carRideHeight +
-            bikeRideHeight;
+            bikeRideHeight +
+            musicBounce;
         bodyRig.rotation.y =
             lookBlend * Math.sin(activityClock * 2.6) * 0.45 +
             hopBlend * Math.sin(activityClock * 2.5) * 0.25 +
@@ -977,7 +1006,8 @@ export function createSkillWorkstation(
             listenBlend * Math.sin(elapsed * 3.8 + phase) * (0.08 + smoothMusicEnergy * 0.06) +
             singBlend * Math.sin(activityClock * 2.8) * 0.09 +
             guitarBlend * Math.sin(activityClock * 3.2) * 0.07 +
-            sleepBlend * Math.sin(elapsed * 1.1 + phase) * 0.085;
+            sleepBlend * Math.sin(elapsed * 1.1 + phase) * 0.085 +
+            (isListeningNow && !isNightMode ? Math.sin(elapsed * 3.2 + phase) * 0.03 : 0);
         bodyRig.rotation.x =
             strideStrength * 0.04 -
             stretchBlend * 0.08 +

@@ -507,7 +507,7 @@ export const SkillsRoom3D: React.FC<SkillsRoom3DProps> = ({
                 } = stateRef.current;
 
                 const liveEnergy = livePlaying ? sampleEnergy() : 0;
-                const musicEpoch = Math.floor(elapsed / 18);
+                const musicEpoch = Math.floor(elapsed / 45);
 
                 activeNeighbors.length = 0;
                 let slotIdx = 0;
@@ -675,22 +675,24 @@ export const SkillsRoom3D: React.FC<SkillsRoom3DProps> = ({
                         type="button"
                         className={`skills-3d-hud-btn skills-3d-music-btn ${isInspectAudioSynced ? 'playing' : ''}`}
                         onClick={() => {
-                            if (selectedId && activeMusicSnap?.isListening) {
-                                handleCardMusicToggle();
-                            } else if (visibleSkills.length > 0) {
-                                const firstListening = visibleSkills.find((s) =>
-                                    stationsRef.current.get(s.id)?.getMusicState().isListening
-                                );
-                                if (firstListening) {
-                                    handleSelectRosterSkill(firstListening.id);
+                            const listening = visibleSkills.filter((s) =>
+                                stationsRef.current.get(s.id)?.getMusicState().isListening
+                            );
+                            const candidateList = listening.length > 0 ? listening : visibleSkills;
+                            if (candidateList.length > 0) {
+                                const unselected = candidateList.filter((s) => s.id !== selectedId);
+                                const pool = unselected.length > 0 ? unselected : candidateList;
+                                const randomSkill = pool[Math.floor(Math.random() * pool.length)];
+                                if (randomSkill) {
+                                    handleSelectRosterSkill(randomSkill.id);
                                 }
                             }
                         }}
                         aria-pressed={isInspectAudioSynced}
                         title={
                             isInspectAudioSynced && activeTrackInfo
-                                ? `Listening with ${activeSkill?.name}: ${activeTrackInfo.title}`
-                                : 'Tap any headphone logoson to hear its song'
+                                ? `Listening with ${activeSkill?.name}: ${activeTrackInfo.title} · Tap to hear another`
+                                : 'Tap to hear a random listening logoson'
                         }
                     >
                         {isInspectAudioSynced ? (
