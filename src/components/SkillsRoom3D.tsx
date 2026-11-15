@@ -81,6 +81,7 @@ export const SkillsRoom3D: React.FC<SkillsRoom3DProps> = ({
         duration,
         togglePlay,
         playTrackAt,
+        preloadTrack,
         pauseAudio,
         getAudioEnergy,
     } = useAudio();
@@ -605,6 +606,9 @@ export const SkillsRoom3D: React.FC<SkillsRoom3DProps> = ({
         const sample = () => {
             const snap = targetId ? stationsRef.current.get(targetId)?.getMusicState() ?? null : null;
             setActiveMusicSnap(snap);
+            if (snap?.isListening) {
+                preloadTrack(snap.songIndex);
+            }
 
             let count = 0;
             for (const [id, ws] of stationsRef.current) {
@@ -617,7 +621,7 @@ export const SkillsRoom3D: React.FC<SkillsRoom3DProps> = ({
         sample();
         const interval = window.setInterval(sample, 250);
         return () => window.clearInterval(interval);
-    }, [hoveredId, selectedId, leadSkillId, visibleSkillIds]);
+    }, [hoveredId, selectedId, leadSkillId, visibleSkillIds, preloadTrack]);
 
     if (webglError) {
         return null;
