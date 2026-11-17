@@ -831,6 +831,24 @@
     display: inline-block;
 }
 
+.project-timeline-badge.upcoming {
+    background: rgba(24, 16, 4, 0.48);
+    border-color: rgba(251, 191, 36, 0.35);
+}
+
+.project-timeline-badge.upcoming .timeline-status-subtext {
+    color: #fbbf24;
+}
+
+.project-timeline-badge.upcoming .timeline-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #f59e0b;
+    box-shadow: 0 0 8px rgba(245, 158, 11, 0.75);
+    display: inline-block;
+}
+
 /* Calendar Timeline Picker UI in PostForm */
 .timeline-section-card {
     background: rgba(255, 255, 255, 0.02);
@@ -924,6 +942,40 @@
     background: #22c55e;
     box-shadow: 0 0 8px #22c55e;
     animation: timeline-pulse 2s infinite;
+}
+
+.timeline-upcoming-pill-active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 42px;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0 16px;
+    background: rgba(245, 158, 11, 0.12);
+    border: 1px solid rgba(245, 158, 11, 0.35);
+    border-radius: 8px;
+    color: #fcd34d;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    user-select: none;
+}
+
+.timeline-upcoming-pill-active:hover {
+    background: rgba(245, 158, 11, 0.2);
+    border-color: rgba(245, 158, 11, 0.55);
+}
+
+.timeline-upcoming-pill-active .timeline-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #f59e0b;
+    box-shadow: 0 0 8px rgba(245, 158, 11, 0.8);
 }
 
 .timeline-live-preview {

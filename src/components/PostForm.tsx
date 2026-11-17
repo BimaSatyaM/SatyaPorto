@@ -5,6 +5,8 @@ import { useAuth } from '../context/AuthContext';
 import { AVAILABLE_TECH } from '../constants/techStack';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
+export type ProjectStatus = 'ongoing' | 'completed' | 'upcoming';
+
 interface PostData {
     id: string;
     title: string;
@@ -17,7 +19,7 @@ interface PostData {
     imageUrls?: string[];
     featured?: boolean;
     timeline?: string;
-    projectStatus?: 'ongoing' | 'completed';
+    projectStatus?: ProjectStatus;
 }
 
 interface PostFormProps {
@@ -43,7 +45,7 @@ export const PostForm: React.FC<PostFormProps> = ({ editData, onCancelEdit }) =>
     const [urlInput, setUrlInput] = useState('');
     const [featured, setFeatured] = useState(false);
     const [timeline, setTimeline] = useState('');
-    const [projectStatus, setProjectStatus] = useState<'ongoing' | 'completed'>('ongoing');
+    const [projectStatus, setProjectStatus] = useState<ProjectStatus>('ongoing');
 
     // Calendar date picker states
     const [startDate, setStartDate] = useState('');
@@ -60,10 +62,15 @@ export const PostForm: React.FC<PostFormProps> = ({ editData, onCancelEdit }) =>
         return `${dayNum} ${monthName} ${year}`;
     };
 
-    const computeTimeline = (start: string, end: string, ongoing: boolean): string => {
+    const computeTimeline = (start: string, end: string, status: ProjectStatus): string => {
+        if (status === 'upcoming') {
+            if (!start) return 'Not Yet Started';
+            const formattedStart = formatDateToDisplay(start);
+            return `${formattedStart} - Upcoming`;
+        }
         if (!start) return '';
         const formattedStart = formatDateToDisplay(start);
-        if (ongoing) {
+        if (status === 'ongoing') {
             return `${formattedStart} - Present`;
         }
         if (end) {
@@ -73,9 +80,11 @@ export const PostForm: React.FC<PostFormProps> = ({ editData, onCancelEdit }) =>
         return formattedStart;
     };
 
-    const parseTimelineToDates = (timelineStr: string) => {
-        if (!timelineStr) return { start: '', end: '', isPresent: true };
-        const isPresent = timelineStr.toLowerCase().includes('present');
+    const parseTimelineToDates = (timelineStr: string, statusHint?: ProjectStatus) => {
+        if (!timelineStr) return { start: '', end: '', isPresent: statusHint !== 'completed' };
+        const lower = timelineStr.toLowerCase();
+        const isPresent = lower.includes('present');
+        const isUpcoming = statusHint === 'upcoming' || lower.includes('upcoming') || lower.includes('not yet started') || lower.includes('planned');
         const parts = timelineStr.split(/\s*-\s*/);
         const startPart = parts[0]?.trim() || '';
         const endPart = parts[1]?.replace(/\(Done\)/i, '').replace(/\(Completed\)/i, '').trim() || '';
@@ -102,27 +111,27 @@ export const PostForm: React.FC<PostFormProps> = ({ editData, onCancelEdit }) =>
 
         return {
             start: parsePartToYMD(startPart),
-            end: isPresent ? '' : parsePartToYMD(endPart),
+            end: isPresent || isUpcoming ? '' : parsePartToYMD(endPart),
             isPresent
         };
     };
 
     const handleStartDateChange = (val: string) => {
         setStartDate(val);
-        const computed = computeTimeline(val, endDate, isOngoing);
+        const computed = computeTimeline(val, endDate, projectStatus);
         setTimeline(computed);
     };
 
     const handleEndDateChange = (val: string) => {
         setEndDate(val);
-        const computed = computeTimeline(startDate, val, false);
+        const computed = computeTimeline(startDate, val, 'completed');
         setTimeline(computed);
     };
 
-    const handleToggleOngoing = (checked: boolean) => {
-        setIsOngoing(checked);
-        setProjectStatus(checked ? 'ongoing' : 'completed');
-        const computed = computeTimeline(startDate, endDate, checked);
+    const handleStatusChange = (nextStatus: ProjectStatus) => {
+        setProjectStatus(nextStatus);
+        setIsOngoing(nextStatus === 'ongoing');
+        const computed = computeTimeline(startDate, endDate, nextStatus);
         setTimeline(computed);
     };
 
@@ -159,17 +168,24 @@ export const PostForm: React.FC<PostFormProps> = ({ editData, onCancelEdit }) =>
             
             setFeatured(editData.featured || false);
             setTimeline(editData.timeline || '');
-            setProjectStatus(editData.projectStatus || (editData.timeline && !editData.timeline.toLowerCase().includes('present') ? 'completed' : 'ongoing'));
+            const inferredStatus: ProjectStatus =
+                editData.projectStatus ||
+                (editData.timeline && /upcoming|not yet started|planned/i.test(editData.timeline)
+                    ? 'upcoming'
+                    : editData.timeline && !editData.timeline.toLowerCase().includes('present')
+                      ? 'completed'
+                      : 'ongoing');
+            setProjectStatus(inferredStatus);
 
             if (editData.timeline) {
-                const parsed = parseTimelineToDates(editData.timeline);
+                const parsed = parseTimelineToDates(editData.timeline, inferredStatus);
                 setStartDate(parsed.start);
                 setEndDate(parsed.end);
-                setIsOngoing(parsed.isPresent);
+                setIsOngoing(inferredStatus === 'ongoing');
             } else {
                 setStartDate('');
                 setEndDate('');
-                setIsOngoing(true);
+                setIsOngoing(inferredStatus === 'ongoing');
             }
         } else {
             setTitle('');
@@ -390,6 +406,7 @@ export const PostForm: React.FC<PostFormProps> = ({ editData, onCancelEdit }) =>
         setError(null);
 
         const primaryImage = imageUrls.length > 0 ? imageUrls[0].trim() : null;
+        const resolvedTimeline = timeline.trim() || (projectStatus === 'upcoming' ? 'Not Yet Started' : '');
 
         try {
             if (editData) {
@@ -405,8 +422,8 @@ export const PostForm: React.FC<PostFormProps> = ({ editData, onCancelEdit }) =>
                     imageUrl: primaryImage,
                     imageUrls: imageUrls,
                     featured,
-                    timeline: timeline.trim() || null,
-                    projectStatus: timeline.trim() ? projectStatus : null,
+                    timeline: resolvedTimeline || null,
+                    projectStatus: resolvedTimeline ? projectStatus : null,
                     updatedAt: serverTimestamp()
                 });
                 if (onCancelEdit) onCancelEdit();
@@ -423,8 +440,8 @@ export const PostForm: React.FC<PostFormProps> = ({ editData, onCancelEdit }) =>
                     imageUrl: primaryImage,
                     imageUrls: imageUrls,
                     featured,
-                    timeline: timeline.trim() || null,
-                    projectStatus: timeline.trim() ? projectStatus : null,
+                    timeline: resolvedTimeline || null,
+                    projectStatus: resolvedTimeline ? projectStatus : null,
                     userId: user.uid,
                     userDisplayName: user.displayName || 'Anonymous User',
                     userPhotoURL: user.photoURL || null,
@@ -769,7 +786,7 @@ export const PostForm: React.FC<PostFormProps> = ({ editData, onCancelEdit }) =>
                             <i className="far fa-calendar-alt" style={{ color: 'var(--primary)' }}></i>
                             Project Timeline / Calendar Date
                         </label>
-                        {timeline && (
+                        {(timeline || projectStatus === 'upcoming') && (
                             <button
                                 type="button"
                                 onClick={handleClearTimeline}
@@ -783,7 +800,9 @@ export const PostForm: React.FC<PostFormProps> = ({ editData, onCancelEdit }) =>
                     <div className="timeline-picker-container">
                         {/* Start Date Picker */}
                         <div className="timeline-picker-field">
-                            <span className="picker-sublabel">Start Date</span>
+                            <span className="picker-sublabel">
+                                {projectStatus === 'upcoming' ? 'Planned Start (Optional)' : 'Start Date'}
+                            </span>
                             <input
                                 type="date"
                                 value={startDate}
@@ -794,21 +813,38 @@ export const PostForm: React.FC<PostFormProps> = ({ editData, onCancelEdit }) =>
 
                         <div className="timeline-arrow-separator">➔</div>
 
-                        {/* End Date Picker or Present display */}
+                        {/* End Date Picker, Present display, or Not Yet Started display */}
                         <div className="timeline-picker-field">
                             <span className="picker-sublabel">End Date</span>
 
-                            {isOngoing ? (
+                            {projectStatus === 'upcoming' ? (
+                                <div
+                                    className="timeline-upcoming-pill-active"
+                                    onClick={() => handleStatusChange('ongoing')}
+                                    title="Project is Upcoming (not yet started). Click here or change Status to switch."
+                                    role="button"
+                                    tabIndex={0}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' || e.key === ' ') {
+                                            e.preventDefault();
+                                            handleStatusChange('ongoing');
+                                        }
+                                    }}
+                                >
+                                    <span className="timeline-dot"></span>
+                                    <span>Not Yet Started</span>
+                                </div>
+                            ) : isOngoing ? (
                                 <div 
                                     className="timeline-present-pill-active" 
-                                    onClick={() => handleToggleOngoing(false)}
+                                    onClick={() => handleStatusChange('completed')}
                                     title="Project is Ongoing. Click here or select 'Completed' in Status to pick an End Date."
                                     role="button"
                                     tabIndex={0}
                                     onKeyDown={(e) => {
                                         if (e.key === 'Enter' || e.key === ' ') {
                                             e.preventDefault();
-                                            handleToggleOngoing(false);
+                                            handleStatusChange('completed');
                                         }
                                     }}
                                 >
@@ -831,31 +867,34 @@ export const PostForm: React.FC<PostFormProps> = ({ editData, onCancelEdit }) =>
                             <select
                                 id="projectStatus"
                                 value={projectStatus}
-                                onChange={(e) => {
-                                    const nextStatus = e.target.value as 'ongoing' | 'completed';
-                                    setProjectStatus(nextStatus);
-                                    setIsOngoing(nextStatus === 'ongoing');
-                                    const computed = computeTimeline(startDate, endDate, nextStatus === 'ongoing');
-                                    setTimeline(computed);
-                                }}
+                                onChange={(e) => handleStatusChange(e.target.value as ProjectStatus)}
                                 className="post-input post-select timeline-date-input"
                                 style={{ height: '42px', cursor: 'pointer' }}
                             >
                                 <option value="ongoing">Ongoing</option>
                                 <option value="completed">Completed</option>
+                                <option value="upcoming">Upcoming</option>
                             </select>
                         </div>
                     </div>
 
                     {/* Live Badge Preview */}
-                    {timeline && (
+                    {(timeline || projectStatus === 'upcoming') && (
                         <div className="timeline-live-preview">
                             <span className="preview-label">Card Top-Right Preview:</span>
-                            <div className={`project-timeline-badge ${isOngoing ? 'ongoing' : 'completed'}`}>
-                                <span className="timeline-date-text">{timeline}</span>
+                            <div className={`project-timeline-badge ${projectStatus}`}>
+                                <span className="timeline-date-text">
+                                    {timeline || 'Not Yet Started'}
+                                </span>
                                 <span className="timeline-status-subtext">
                                     <span className="timeline-dot"></span>
-                                    <span>{isOngoing ? 'Ongoing' : 'Completed'}</span>
+                                    <span>
+                                        {projectStatus === 'upcoming'
+                                            ? 'Upcoming'
+                                            : projectStatus === 'ongoing'
+                                              ? 'Ongoing'
+                                              : 'Completed'}
+                                    </span>
                                 </span>
                             </div>
                         </div>

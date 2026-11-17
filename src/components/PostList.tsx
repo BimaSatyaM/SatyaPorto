@@ -35,7 +35,7 @@ interface Post {
     imageUrls?: string[];
     featured?: boolean;
     timeline?: string;
-    projectStatus?: 'ongoing' | 'completed';
+    projectStatus?: 'ongoing' | 'completed' | 'upcoming';
 }
 
 interface PostListProps {
@@ -601,17 +601,35 @@ export const PostList: React.FC<PostListProps> = ({
 
                                     {/* Top Right Badges Container: Timeline & Featured */}
                                     <div className="card-top-right-badges">
-                                        {post.timeline && (() => {
-                                            const cleanDates = post.timeline.replace(/\s*\((?:Done|Completed)\)/gi, '').trim();
-                                            const isCompleted = post.projectStatus === 'completed' || 
-                                                post.timeline.toLowerCase().includes('done') || 
-                                                post.timeline.toLowerCase().includes('completed') || 
-                                                !post.timeline.toLowerCase().includes('present');
-                                            const statusLabel = isCompleted ? 'Completed' : 'Ongoing';
+                                        {(post.timeline || post.projectStatus === 'upcoming') && (() => {
+                                            const rawTimeline = post.timeline || 'Not Yet Started';
+                                            const cleanDates = rawTimeline.replace(/\s*\((?:Done|Completed)\)/gi, '').trim();
+                                            const lowerTimeline = rawTimeline.toLowerCase();
+                                            const isUpcoming =
+                                                post.projectStatus === 'upcoming' ||
+                                                lowerTimeline.includes('upcoming') ||
+                                                lowerTimeline.includes('not yet started') ||
+                                                lowerTimeline.includes('planned');
+                                            const isCompleted =
+                                                !isUpcoming &&
+                                                (post.projectStatus === 'completed' ||
+                                                    lowerTimeline.includes('done') ||
+                                                    lowerTimeline.includes('completed') ||
+                                                    !lowerTimeline.includes('present'));
+                                            const statusClass = isUpcoming
+                                                ? 'upcoming'
+                                                : isCompleted
+                                                  ? 'completed'
+                                                  : 'ongoing';
+                                            const statusLabel = isUpcoming
+                                                ? 'Upcoming'
+                                                : isCompleted
+                                                  ? 'Completed'
+                                                  : 'Ongoing';
 
                                             return (
                                                 <div 
-                                                    className={`project-timeline-badge ${isCompleted ? 'completed' : 'ongoing'}`}
+                                                    className={`project-timeline-badge ${statusClass}`}
                                                     title={`Project Timeline: ${cleanDates} (${statusLabel})`}
                                                 >
                                                     <span className="timeline-date-text">{cleanDates}</span>
