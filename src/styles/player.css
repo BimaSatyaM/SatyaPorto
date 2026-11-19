@@ -1,4 +1,3 @@
-/* ===== SIDEBAR INTEGRATED MUSIC PLAYER ===== */
 .player {
     position: relative;
     bottom: auto;
@@ -25,12 +24,10 @@
     border-color: color-mix(in srgb, var(--primary) 40%, var(--border));
 }
 
-/* Remove legacy text indicators */
 .player::before {
     display: none;
 }
 
-/* Top Row: Track Metadata */
 .player-top-row {
     display: flex;
     align-items: center;
@@ -68,7 +65,6 @@
     transform: scale(1.06);
 }
 
-/* Subtle 3-bar equalizer overlay visible only while playing */
 .player-eq-bars {
     position: absolute;
     inset: 0;
@@ -151,7 +147,6 @@
     color: var(--primary);
 }
 
-/* Controls Row */
 .player-controls-row {
     display: flex;
     align-items: center;
@@ -201,7 +196,6 @@
     color: var(--primary-ink) !important;
 }
 
-/* Progress Row */
 .player-progress-row {
     display: flex;
     align-items: center;
@@ -252,7 +246,6 @@
     background: var(--primary);
 }
 
-/* Volume Row */
 .player-volume-row {
     display: flex;
     align-items: center;
@@ -303,7 +296,6 @@
     background: var(--primary);
 }
 
-/* Spinner anim when playing on mobile cover is disabled, let it spin only if wanted */
 #badgeCover.spinning {
     animation: fa-spin 10s infinite linear;
 }

@@ -36,7 +36,6 @@ export const Contact: React.FC = () => {
             <h2 className="contact-section-title">{t('contact.socialTitle')}</h2>
             
             <div className="contact-grid-container">
-                {/* Gmail Card */}
                 <a 
                     href="mailto:bmasatyaa@gmail.com" 
                     target="_blank" 
@@ -58,7 +57,6 @@ export const Contact: React.FC = () => {
                     </div>
                 </a>
 
-                {/* Instagram Card */}
                 <a 
                     href="https://www.instagram.com/bmasatyaa/" 
                     target="_blank" 
@@ -80,7 +78,6 @@ export const Contact: React.FC = () => {
                     </div>
                 </a>
 
-                {/* LinkedIn Card */}
                 <a 
                     href="https://www.linkedin.com/in/bimasatya/" 
                     target="_blank" 
@@ -102,7 +99,6 @@ export const Contact: React.FC = () => {
                     </div>
                 </a>
 
-                {/* Github Card */}
                 <a 
                     href="https://github.com/BimaSatyaM" 
                     target="_blank" 
@@ -125,7 +121,6 @@ export const Contact: React.FC = () => {
                 </a>
             </div>
 
-            {/* SEND ME A MESSAGE SECTION */}
             <div className="contact-form-section">
                 <h2 className="contact-section-title">{t('contact.sendTitle')}</h2>
                 <form id="contactForm" className="contact-form" onSubmit={handleContactSubmit}>

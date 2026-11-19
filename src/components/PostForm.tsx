@@ -541,7 +541,6 @@ export const PostForm: React.FC<PostFormProps> = ({ editData, onCancelEdit }) =>
                     />
                 </div>
 
-                {/* TECH STACK AUTOCOMPLETE SELECTOR */}
                 <div className="post-form-group" ref={dropdownRef} style={{ position: 'relative' }}>
                     <label>Tech Stack & Tools</label>
                     <div className="searchable-dropdown-container">
@@ -559,7 +558,6 @@ export const PostForm: React.FC<PostFormProps> = ({ editData, onCancelEdit }) =>
                             autoComplete="off"
                         />
 
-                        {/* Autocomplete Dropdown List */}
                         {isDropdownOpen && (
                             <div className="searchable-dropdown-menu">
                                 <div className="dropdown-options-list">
@@ -587,7 +585,6 @@ export const PostForm: React.FC<PostFormProps> = ({ editData, onCancelEdit }) =>
                         )}
                     </div>
 
-                    {/* Selected Tech Tags Preview Pills */}
                     {selectedTechs.length > 0 && (
                         <div className="selected-tech-tags-wrapper">
                             {selectedTechs.map((tech) => {
@@ -616,7 +613,6 @@ export const PostForm: React.FC<PostFormProps> = ({ editData, onCancelEdit }) =>
                     )}
                 </div>
 
-                {/* MULTI-PHOTO UPLOAD & PILE PREVIEW SECTION */}
                 <div className="post-form-group">
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                         <label style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -635,7 +631,6 @@ export const PostForm: React.FC<PostFormProps> = ({ editData, onCancelEdit }) =>
                     </div>
 
                     <div className="image-upload-wrapper" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                        {/* Drag & Drop Zone */}
                         <div 
                             className={`photo-dropzone ${isDragging ? 'dragging' : ''}`}
                             onDragOver={handleDragOver}
@@ -699,7 +694,6 @@ export const PostForm: React.FC<PostFormProps> = ({ editData, onCancelEdit }) =>
                             </div>
                         )}
 
-                        {/* Multi-Photo Thumbnails Strip Preview */}
                         {imageUrls.length > 0 && (
                             <div>
                                 <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '8px' }}>
@@ -761,7 +755,6 @@ export const PostForm: React.FC<PostFormProps> = ({ editData, onCancelEdit }) =>
                                         </div>
                                     ))}
 
-                                    {/* Quick Add More Card */}
                                     <label className="form-photo-add-more-card" title="Add more photos">
                                         <i className="fas fa-plus"></i>
                                         <span>Add More</span>
@@ -779,7 +772,6 @@ export const PostForm: React.FC<PostFormProps> = ({ editData, onCancelEdit }) =>
                     </div>
                 </div>
 
-                {/* PROJECT CALENDAR TIMELINE & STATUS SECTION */}
                 <div className="post-form-group timeline-section-card">
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
                         <label style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -798,7 +790,6 @@ export const PostForm: React.FC<PostFormProps> = ({ editData, onCancelEdit }) =>
                     </div>
 
                     <div className="timeline-picker-container">
-                        {/* Start Date Picker */}
                         <div className="timeline-picker-field">
                             <span className="picker-sublabel">
                                 {projectStatus === 'upcoming' ? 'Planned Start (Optional)' : 'Start Date'}
@@ -813,7 +804,6 @@ export const PostForm: React.FC<PostFormProps> = ({ editData, onCancelEdit }) =>
 
                         <div className="timeline-arrow-separator">➔</div>
 
-                        {/* End Date Picker, Present display, or Not Yet Started display */}
                         <div className="timeline-picker-field">
                             <span className="picker-sublabel">End Date</span>
 
@@ -861,7 +851,6 @@ export const PostForm: React.FC<PostFormProps> = ({ editData, onCancelEdit }) =>
                             )}
                         </div>
 
-                        {/* Status dropdown */}
                         <div className="timeline-picker-field status-field">
                             <span className="picker-sublabel">Status</span>
                             <select
@@ -878,7 +867,6 @@ export const PostForm: React.FC<PostFormProps> = ({ editData, onCancelEdit }) =>
                         </div>
                     </div>
 
-                    {/* Live Badge Preview */}
                     {(timeline || projectStatus === 'upcoming') && (
                         <div className="timeline-live-preview">
                             <span className="preview-label">Card Top-Right Preview:</span>

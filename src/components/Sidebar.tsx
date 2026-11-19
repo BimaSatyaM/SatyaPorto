@@ -56,7 +56,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
     return (
         <aside className={`sidebar ${sidebarActive ? 'active' : ''}`} aria-label="Sidebar navigation">
-            {/* PROFILE/AVATAR SECTION */}
             <div className="sidebar-profile">
                 <button
                     type="button"
@@ -72,7 +71,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <span className="sidebar-profile-username">@bmasatyaa</span>
             </div>
 
-            {/* CONTROLS (LANGUAGE & THEME SEGMENTED SWITCHES) */}
             <div className="sidebar-controls">
                 <div className="lang-toggle-pill" role="group" aria-label="Language switcher">
                     <button
@@ -117,10 +115,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 </div>
             </div>
 
-            {/* DIVIDER LINE BELOW CONTROLS */}
             <div className="sidebar-divider"></div>
 
-            {/* NAVIGATION MENU */}
             <nav className="nav-menu" aria-label="Primary pages">
                 {menuItems.map((item) => {
                     const isActive = activeSection === item.id;
@@ -144,18 +140,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </nav>
 
 
-            {/* DIVIDER LINE */}
             <div className="sidebar-divider"></div>
 
-            {/* AUDIO PLAYER */}
             <div className="sidebar-player-wrapper">
                 <Player />
             </div>
 
-            {/* DIVIDER LINE */}
             <div className="sidebar-divider"></div>
 
-            {/* USER AUTHENTICATION PANEL */}
             <div className="sidebar-auth">
                 {!user ? (
                     <div className="auth-login-buttons">
@@ -187,10 +179,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 )}
             </div>
 
-            {/* DIVIDER LINE */}
             <div className="sidebar-divider"></div>
 
-            {/* COPYRIGHT */}
             <div className="sidebar-copyright">
                 <p>{t('sidebar.copyright1')}</p>
                 <p className="copyright-author">{t('sidebar.copyright2')}</p>

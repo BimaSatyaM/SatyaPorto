@@ -45,7 +45,6 @@ export const Projects: React.FC = () => {
             </div>
             <div className="about-divider"></div>
 
-            {/* Render form if logged in as Admin */}
             {user && isAdmin && (
                 <PostForm 
                     editData={editingPost} 
@@ -53,7 +52,6 @@ export const Projects: React.FC = () => {
                 />
             )}
 
-            {/* Renders the grid list of project posts for all visitors */}
             <PostList onEditPost={handleEditPost} />
         </section>
     );

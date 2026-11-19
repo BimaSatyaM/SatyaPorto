@@ -116,7 +116,6 @@ export const ImageModal: React.FC<ImageModalProps> = ({
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
         >
-            {/* Top Bar with Title, Counter, and Close Button */}
             <div className="image-modal-top-bar" onClick={(e) => e.stopPropagation()}>
                 <div className="image-modal-header-info">
                     {title && <h3 className="image-modal-title">{title}</h3>}
@@ -142,7 +141,6 @@ export const ImageModal: React.FC<ImageModalProps> = ({
                 </div>
             </div>
 
-            {/* Left navigation arrow */}
             {allImages.length > 1 && (
                 <button 
                     type="button" 
@@ -155,7 +153,6 @@ export const ImageModal: React.FC<ImageModalProps> = ({
                 </button>
             )}
 
-            {/* Center Image Container */}
             <div className="image-modal-img-container" onClick={(e) => e.stopPropagation()}>
                 <img 
                     key={currentImg}
@@ -166,7 +163,6 @@ export const ImageModal: React.FC<ImageModalProps> = ({
                 />
             </div>
 
-            {/* Right navigation arrow */}
             {allImages.length > 1 && (
                 <button 
                     type="button" 
@@ -179,7 +175,6 @@ export const ImageModal: React.FC<ImageModalProps> = ({
                 </button>
             )}
 
-            {/* Bottom Interactive Thumbnail Strip Gallery */}
             {allImages.length > 1 && (
                 <div className="image-modal-bottom-gallery" onClick={(e) => e.stopPropagation()}>
                     <div className="image-modal-thumbs-strip" ref={thumbnailsRef}>

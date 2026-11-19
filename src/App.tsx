@@ -89,7 +89,6 @@ const PortfolioContent: React.FC = () => {
 
     return (
         <div className="app">
-            {/* SIDEBAR - NOW INTEGRATES THE AUDIO PLAYER & PROFILE */}
             <Sidebar
                 sidebarActive={sidebarActive}
                 setSidebarActive={setSidebarActive}
@@ -104,7 +103,6 @@ const PortfolioContent: React.FC = () => {
                 onClick={() => setSidebarActive(false)}
             />
 
-            {/* Mobile Sidebar Hamburger Toggle Header */}
             <button 
                 type="button"
                 className="menu-toggle"
@@ -117,7 +115,6 @@ const PortfolioContent: React.FC = () => {
                 <i className={`fas ${sidebarActive ? 'fa-times' : 'fa-bars'}`} aria-hidden="true"></i>
             </button>
 
-            {/* MAIN PANEL */}
             <main className="main-content" ref={mainContentRef}>
                 <div className="content-wrapper" onClick={() => {
                     if (sidebarActive) setSidebarActive(false);
@@ -137,7 +134,6 @@ const PortfolioContent: React.FC = () => {
                 </div>
             </main>
 
-            {/* FULLIMAGE AVATAR MODAL */}
             <ImageModal
                 isOpen={isAvatarModalOpen}
                 imageSrc="/assets/foto.jpg"

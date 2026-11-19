@@ -114,7 +114,6 @@ export const CodingStatus: React.FC = () => {
 
     return (
         <section className="wakatime-section" aria-label="WakaTime Statistics Dashboard">
-            {/* Header sitting seamlessly on background */}
             <div className="wakatime-header">
                 <div className="wakatime-header-left">
                     <h3 className="wakatime-title">
@@ -137,9 +136,7 @@ export const CodingStatus: React.FC = () => {
                 </div>
             </div>
 
-            {/* 2-Column Grid merged directly into background */}
             <div className="wakatime-grid">
-                {/* Card 1: Start Date */}
                 <div className="wakatime-stat-box">
                     <span className="wakatime-stat-label">
                         {lang === 'ID' ? 'Tanggal Mulai' : 'Start Date'}
@@ -147,7 +144,6 @@ export const CodingStatus: React.FC = () => {
                     <span className="wakatime-stat-value">{status.dateText}</span>
                 </div>
 
-                {/* Card 2: Live Status */}
                 <div className="wakatime-stat-box">
                     <span className="wakatime-stat-label">
                         {lang === 'ID' ? 'Status Langsung' : 'Live Status'}
@@ -158,7 +154,6 @@ export const CodingStatus: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Card 3: Today's Coding Time */}
                 <div className="wakatime-stat-box">
                     <span className="wakatime-stat-label">
                         {lang === 'ID' ? 'Waktu Coding Hari Ini' : "Today's Coding Time"}
@@ -166,7 +161,6 @@ export const CodingStatus: React.FC = () => {
                     <span className="wakatime-stat-value accent">{todayCodingTime}</span>
                 </div>
 
-                {/* Card 4: Digital Timer & Timezone */}
                 <div className="wakatime-stat-box">
                     <span className="wakatime-stat-label">
                         {lang === 'ID' ? 'Timer Digital & Zona Waktu' : 'Digital Timer & Timezone'}
@@ -174,7 +168,6 @@ export const CodingStatus: React.FC = () => {
                     <span className="wakatime-stat-value">{status.totalDigital} • {status.timezone}</span>
                 </div>
 
-                {/* Card 5: Active Projects Today */}
                 <div className="wakatime-stat-box">
                     <span className="wakatime-stat-label">
                         {status.projects.length > 1
@@ -210,7 +203,6 @@ export const CodingStatus: React.FC = () => {
                     )}
                 </div>
 
-                {/* Card 6: All-Time Coding Since Joined */}
                 <div className="wakatime-stat-box">
                     <span className="wakatime-stat-label">
                         {lang === 'ID' ? 'Total Coding Sejak Bergabung' : 'All-Time Coding Since Joined'}
@@ -218,7 +210,6 @@ export const CodingStatus: React.FC = () => {
                     <span className="wakatime-stat-value">{allTimeValue}</span>
                 </div>
 
-                {/* Card 7: Top Languages (Full Width) */}
                 <div className="wakatime-stat-box full-width">
                     <span className="wakatime-stat-label">
                         {lang === 'ID' ? 'Bahasa Pemrograman Teratas' : 'Top Languages'}

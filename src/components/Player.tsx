@@ -152,7 +152,6 @@ export const Player: React.FC = () => {
 
     return (
         <div className={`player ${isPlaying ? 'is-playing' : ''}`}>
-            {/* TOP ROW: Track Metadata & Like */}
             <div className="player-top-row">
                 <div className="player-left">
                     <div className="player-cover">
@@ -181,7 +180,6 @@ export const Player: React.FC = () => {
                 </button>
             </div>
 
-            {/* CONTROLS ROW */}
             <div className="player-controls-row">
                 <button
                     type="button"
@@ -220,7 +218,6 @@ export const Player: React.FC = () => {
                 </button>
             </div>
 
-            {/* PROGRESS ROW */}
             <div className="player-progress-row">
                 <span id="currentTime">
                     {localProgressPct !== null
@@ -243,7 +240,6 @@ export const Player: React.FC = () => {
                 <span id="totalTime">{formatTime(duration)}</span>
             </div>
 
-            {/* BOTTOM VOLUME ROW */}
             <div className="player-volume-row">
                 <button
                     type="button"

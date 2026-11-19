@@ -47,7 +47,7 @@ export interface ContributionsResponse {
 const GITHUB_USERNAME_RE = /^[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,37}[a-zA-Z0-9])?$/;
 const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
-/** Validates GitHub's username format to prevent SSRF and path injection. */
+// Validates GitHub's username format to prevent SSRF and path injection.
 export function isValidGitHubUsername(username: string): boolean {
     return GITHUB_USERNAME_RE.test(username);
 }
@@ -66,7 +66,7 @@ function stripTagsAndEntities(raw: string): string {
         .trim();
 }
 
-/** Parses GitHub's public contribution calendar HTML fragment into sorted calendar days. */
+// Parses GitHub's public contribution calendar HTML fragment into sorted calendar days.
 export function parseGitHubContributionsHtml(html: string): Pick<ContributionsResponse, 'total' | 'contributions'> {
     const tipCounts = new Map<string, number>();
     for (const match of html.matchAll(/<tool-tip\b([^>]*)>([\s\S]*?)<\/tool-tip>/g)) {
@@ -109,7 +109,7 @@ export function parseGitHubContributionsHtml(html: string): Pick<ContributionsRe
     };
 }
 
-/** Parses GitHub's contribution activity timeline section and pagination cursor. */
+// Parses GitHub's contribution activity timeline section and pagination cursor.
 export function parseGitHubActivityHtml(html: string): ActivityMonthGroup | undefined {
     const actIdx = html.lastIndexOf('contribution-activity-listing');
     const source = actIdx !== -1 ? html.slice(actIdx) : html;

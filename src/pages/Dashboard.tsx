@@ -251,7 +251,6 @@ export const Dashboard: React.FC = () => {
                 {isWhitelistedAdmin && (
                     <>
 
-                {/* 1. TECH SKILL CLASSIFIER PANEL CARD */}
                 <div className="post-form-container" style={{ margin: 0, width: '100%' }}>
                     <h3 
                         className="post-form-title"
@@ -273,7 +272,6 @@ export const Dashboard: React.FC = () => {
                             )}
 
                             <div className="post-form" style={{ marginTop: '16px' }}>
-                        {/* Autocomplete Input Select */}
                         <div className="post-form-group" ref={dropdownRef} style={{ position: 'relative' }}>
                             <label>Search & Select Technology</label>
                             <div className="searchable-dropdown-container">
@@ -319,12 +317,10 @@ export const Dashboard: React.FC = () => {
                             </div>
                         </div>
 
-                        {/* Automatic Classification Fields */}
                         {selectedTechName && (
                             <form onSubmit={handleAddSkill} style={{ marginTop: '20px', borderTop: '1px solid var(--border)', paddingTop: '20px' }}>
                                 <div className="classification-preview-box" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#1c1c1e', padding: '16px 20px', borderRadius: '12px', border: '1px solid var(--border)', marginBottom: '20px' }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                        {/* Badge Preview */}
                                         <div
                                             className="skill-badge"
                                             style={{
@@ -342,7 +338,6 @@ export const Dashboard: React.FC = () => {
                                         <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Live preview</span>
                                     </div>
 
-                                    {/* Color Indicator */}
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                         <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Color:</span>
                                         <span style={{ width: '14px', height: '14px', borderRadius: '50%', background: selectedColor }} />
@@ -398,7 +393,6 @@ export const Dashboard: React.FC = () => {
                     )}
                 </div>
 
-                {/* 2. CURRENT ACTIVE SKILLS LIST CARD */}
                 <div className="about-content-box" style={{ margin: 0, padding: '24px 30px' }}>
                     <h3 
                         onClick={() => setIsSkillsListOpen(!isSkillsListOpen)}

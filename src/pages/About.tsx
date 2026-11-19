@@ -34,7 +34,6 @@ export const About: React.FC = () => {
                 </p>
             </div>
 
-            {/* CV DOWNLOAD SECTION */}
             <div className="cv-download-container" style={{ marginTop: '20px', marginBottom: '20px' }}>
                 <a 
                     href={cvPath} 
@@ -58,7 +57,6 @@ export const About: React.FC = () => {
 
             <div className="about-divider"></div>
 
-            {/* EDUCATION SECTION */}
             <div className="education-section">
                 <h3 className="education-section-title">
                     <i className="fas fa-graduation-cap"></i> {t('about.eduTitle')}
@@ -66,7 +64,6 @@ export const About: React.FC = () => {
                 <p className="education-section-subtitle">{t('about.eduSubtitle')}</p>
                 
                 <div className="education-list">
-                    {/* ITERA Card */}
                     <div className="education-card">
                         <div className="education-logo">
                             <img 
@@ -88,7 +85,6 @@ export const About: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* SMAN 3 Card */}
                     <div className="education-card">
                         <div className="education-logo">
                             <img 
@@ -114,7 +110,6 @@ export const About: React.FC = () => {
 
         <div className="about-divider"></div>
 
-        {/* EXPERIENCE SECTION */}
         <div className="education-section" style={{ marginTop: '30px' }}>
             <h3 className="education-section-title">
                 <i className="fas fa-briefcase"></i> {t('about.expTitle')}

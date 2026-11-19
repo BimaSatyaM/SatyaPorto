@@ -457,7 +457,6 @@ export const PostList: React.FC<PostListProps> = ({
 
     return (
         <div className="project-feed-wrapper">
-            {/* FILTER PILLS */}
             {showFilters && (
                 <>
                     <div className="project-filters-container">
@@ -551,7 +550,6 @@ export const PostList: React.FC<PostListProps> = ({
 
                         return (
                             <div key={post.id} className="project-grid-card">
-                                {/* Thumbnail Image Section */}
                                 <div 
                                     className={`project-card-image-wrapper ${isMultiple ? 'photo-pile-container' : ''}`}
                                     onClick={() => {
@@ -573,7 +571,6 @@ export const PostList: React.FC<PostListProps> = ({
                                     }}
                                     style={{ cursor: postImages.length > 0 ? 'pointer' : 'default' }}
                                 >
-                                    {/* Visual stacked layers behind for realistic photo pile effect */}
                                     {isMultiple && (
                                         <>
                                             <div className="photo-pile-layer layer-2" />
@@ -599,7 +596,6 @@ export const PostList: React.FC<PostListProps> = ({
                                         </div>
                                     )}
 
-                                    {/* Top Right Badges Container: Timeline & Featured */}
                                     <div className="card-top-right-badges">
                                         {(post.timeline || post.projectStatus === 'upcoming') && (() => {
                                             const rawTimeline = post.timeline || 'Not Yet Started';
@@ -641,7 +637,6 @@ export const PostList: React.FC<PostListProps> = ({
                                             );
                                         })()}
 
-                                        {/* Featured Ribbon Badge */}
                                         {post.featured && (
                                             <span className="featured-ribbon-badge">
                                                 <i className="fas fa-thumbtack"></i> Featured
@@ -649,14 +644,12 @@ export const PostList: React.FC<PostListProps> = ({
                                         )}
                                     </div>
 
-                                    {/* Multi-Photo Pile Count Badge */}
                                     {isMultiple && (
                                         <span className="photo-pile-badge" title={`${postImages.length} photos in this post`}>
                                             <i className="fas fa-images"></i> {safeIdx + 1}/{postImages.length}
                                         </span>
                                     )}
 
-                                    {/* Prev / Next Navigation Buttons */}
                                     {isMultiple && (
                                         <>
                                             <button 
@@ -678,7 +671,6 @@ export const PostList: React.FC<PostListProps> = ({
                                                 <i className="fas fa-chevron-right"></i>
                                             </button>
 
-                                            {/* Bottom mini indicator dots */}
                                             <div className="photo-pile-dots-container">
                                                 {postImages.map((_, dotIdx) => (
                                                     <span 
@@ -695,12 +687,10 @@ export const PostList: React.FC<PostListProps> = ({
                                     )}
                                 </div>
 
-                                {/* Project Info Area */}
                                 <div className="project-card-details">
                                     <div className="project-title-row">
                                         <h4>{post.title}</h4>
 
-                                        {/* Admin action overlays */}
                                         {user && isAdmin && (
                                             <div className="card-admin-actions">
                                                 {onEditPost && (
@@ -725,7 +715,6 @@ export const PostList: React.FC<PostListProps> = ({
 
                                     <p className="project-card-desc">{post.description}</p>
 
-                                    {/* Tech stack icons representation */}
                                     {post.techStack && post.techStack.length > 0 && (
                                         <div className="project-tech-icons-row">
                                             {post.techStack.map((tech) => {
@@ -746,9 +735,7 @@ export const PostList: React.FC<PostListProps> = ({
                                         </div>
                                     )}
 
-                                    {/* Card Footer Interactions Bar */}
                                     <div className="project-card-actions-row" style={{ flexWrap: 'wrap', gap: '8px' }}>
-                                        {/* Render active reactions, sorted by count */}
                                         {Object.entries(post.reactions || {})
                                             .filter(([_, uids]) => uids && uids.length > 0)
                                             .sort((a, b) => b[1].length - a[1].length)
@@ -777,7 +764,6 @@ export const PostList: React.FC<PostListProps> = ({
                                             );
                                         })}
 
-                                        {/* Add reaction picker button */}
                                         <div style={{ position: 'relative', display: 'inline-block' }}>
                                             {tooltipState && tooltipState.postId === post.id && tooltipState.key === 'add-btn' && (
                                                 <div className="reaction-login-tooltip">
@@ -820,7 +806,6 @@ export const PostList: React.FC<PostListProps> = ({
                                         )}
                                     </div>
 
-                                    {/* Inline Emoji Selector Drawer */}
                                     {activePickerPostId === post.id && (
                                         <div className="reaction-emoji-picker-inline" ref={pickerRef}>
                                             <div className="picker-inline-header">
@@ -856,7 +841,6 @@ export const PostList: React.FC<PostListProps> = ({
                                         </div>
                                     )}
 
-                                    {/* Comments drawers in the card */}
                                     {isCommentsOpen && (
                                         <div className="post-comments-section" style={{ borderTop: '1px solid var(--border)', marginTop: '16px', paddingTop: '16px' }}>
                                             {postComments.length > 0 && (
@@ -906,7 +890,6 @@ export const PostList: React.FC<PostListProps> = ({
 
                                             {user ? (
                                                 <form onSubmit={(e) => handleAddComment(e, post.id)} className="comment-form">
-                                                    {/* Attached Image Thumbnail Preview */}
                                                     {commentImages[post.id] && (
                                                         <div className="comment-preview-attached-box">
                                                             <img src={commentImages[post.id]} alt="Attachment Preview" />
@@ -994,7 +977,6 @@ export const PostList: React.FC<PostListProps> = ({
                 </div>
             )}
 
-            {/* FULLSCREEN MULTI-IMAGE VIEWER MODAL */}
             {previewModal && (
                 <ImageModal
                     isOpen={true}

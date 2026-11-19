@@ -1,6 +1,3 @@
-/* ===== FIREBASE AUTH & FIRESTORE POSTS STYLING ===== */
-
-/* Sidebar Auth Section */
 .sidebar-auth {
     padding: 0 16px;
     display: flex;
@@ -100,7 +97,6 @@
     color: #ef4444;
 }
 
-/* Post Form Container */
 .post-form-container {
     background: var(--bg-card);
     border: 1px solid var(--border);
@@ -213,7 +209,6 @@
     transform: none;
 }
 
-/* Post Cards & Feed List */
 .post-list-container {
     display: flex;
     flex-direction: column;
@@ -359,7 +354,6 @@
     color: var(--primary-ink);
 }
 
-/* Empty or Auth Notice Card */
 .auth-notice-card {
     background: var(--bg-card);
     border: 1px dashed var(--border);
@@ -387,7 +381,6 @@
     margin-bottom: 4px;
 }
 
-/* Spinner & Notification Alerts */
 .post-spinner {
     animation: post-spin 1s linear infinite;
 }
@@ -410,7 +403,6 @@
     gap: 8px;
 }
 
-/* Post Reaction & Comments Styling */
 .post-actions-bar {
     display: flex;
     align-items: center;
@@ -441,7 +433,6 @@
     color: #ef4444;
 }
 
-/* Comments Drawer UI */
 .post-comments-section {
     border-top: 1px solid var(--border);
     padding-top: 12px;
@@ -460,7 +451,6 @@
     padding-right: 4px;
 }
 
-/* Custom Scrollbar for Comments */
 .comments-list::-webkit-scrollbar {
     width: 4px;
 }
@@ -546,7 +536,6 @@
     opacity: 0.9;
 }
 
-/* Redesigned 2-Column Grid & Filter Pills */
 .project-feed-wrapper {
     max-width: 1000px;
     width: 100%;
@@ -608,7 +597,6 @@
     color: var(--primary);
 }
 
-/* Grid Layout */
 .projects-grid-layout {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 350px));
@@ -671,7 +659,6 @@
     display: block;
 }
 
-/* Custom placeholder for projects in development */
 .project-card-placeholder {
     width: 100%;
     height: 100%;
@@ -715,7 +702,6 @@
     }
 }
 
-/* Card Top-Right Badges Container */
 .card-top-right-badges {
     position: absolute;
     top: 12px;
@@ -743,14 +729,12 @@
     white-space: nowrap;
 }
 
-/* Standalone fallback if outside card-top-right-badges */
 .project-card-image-wrapper > .featured-ribbon-badge {
     position: absolute;
     top: 12px;
     right: 12px;
 }
 
-/* Project Timeline / Status Badge */
 .project-timeline-badge {
     background: rgba(0, 0, 0, 0.42);
     backdrop-filter: blur(8px);
@@ -849,7 +833,6 @@
     display: inline-block;
 }
 
-/* Calendar Timeline Picker UI in PostForm */
 .timeline-section-card {
     background: rgba(255, 255, 255, 0.02);
     border: 1px solid var(--border);
@@ -898,7 +881,7 @@
     justify-content: center;
     opacity: 0.6;
     user-select: none;
-    margin-top: 26px; /* align with the 42px inputs */
+    margin-top: 26px;
 }
 
 .timeline-date-input {
@@ -995,7 +978,6 @@
     font-weight: 600;
 }
 
-/* Preset helper pills in PostForm */
 .timeline-preset-pill {
     background: rgba(255, 255, 255, 0.06);
     border: 1px solid rgba(255, 255, 255, 0.12);
@@ -1012,8 +994,6 @@
     color: #fff;
     border-color: var(--primary);
 }
-
-
 
 .project-card-details {
     padding: 20px;
@@ -1166,7 +1146,6 @@
     color: #ef4444;
 }
 
-/* Post Form Updates styling */
 .post-form-row {
     margin-bottom: 0px;
 }
@@ -1189,7 +1168,6 @@
     border-color: var(--primary);
 }
 
-/* Searchable Autocomplete Dropdown Tag Selector */
 .searchable-dropdown-container {
     position: relative;
     width: 100%;
@@ -1214,7 +1192,6 @@
     padding: 8px 0;
 }
 
-/* Scrollbar styling inside dropdown option list */
 .dropdown-options-list::-webkit-scrollbar {
     width: 6px;
 }
@@ -1274,7 +1251,6 @@
     color: var(--primary);
 }
 
-/* Selected Tech Tags Capsule list styling */
 .selected-tech-tags-list {
     display: flex;
     flex-wrap: wrap;
@@ -1319,30 +1295,26 @@
     color: #ef4444;
 }
 
-/* Horizontal Slider Showcase Layout */
 .projects-slider-layout {
     display: flex;
     gap: 20px;
     overflow-x: auto;
     padding: 10px 4px 20px 4px;
     width: 100%;
-    scrollbar-width: none; /* Hide default Firefox scrollbar */
-    -ms-overflow-style: none; /* Hide default IE/Edge scrollbar */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
 }
 
-/* Hide default Chrome/Safari scrollbar */
 .projects-slider-layout::-webkit-scrollbar {
     display: none;
 }
 
-/* Override card properties when rendered inside the slider */
 .projects-slider-layout .project-grid-card {
     flex: 0 0 min(350px, 82vw);
     max-width: min(350px, 82vw);
     width: min(350px, 82vw);
 }
 
-/* Slider navigation buttons style */
 .slider-outer-wrapper {
     position: relative;
     width: 100%;
@@ -1364,7 +1336,7 @@
     cursor: pointer;
     z-index: 10;
     transition: all 0.2s ease;
-    opacity: 0; /* invisible by default, visible on outer hover */
+    opacity: 0;
     box-shadow: var(--shadow-card);
 }
 
@@ -1390,18 +1362,17 @@
 
 @media (max-width: 768px) {
     .slider-nav-btn {
-        display: none; /* hide arrow buttons on mobile/touch screens to let native swiping work */
+        display: none;
     }
 }
 
-/* Sleek Premium Custom Scrollbar indicator for Slider */
 .slider-scrollbar-track {
     position: relative;
-    width: 120px; /* compact centered visual length */
+    width: 120px;
     height: 4px;
     background: var(--border);
     border-radius: 4px;
-    margin: 16px auto 0 auto; /* space below cards */
+    margin: 16px auto 0 auto;
     overflow: hidden;
 }
 
@@ -1415,7 +1386,6 @@
     transition: left 0.1s ease-out, width 0.1s ease-out;
 }
 
-/* Multi-Emoji Reaction Styles */
 .reaction-add-btn {
     display: flex;
     align-items: center;
@@ -1436,7 +1406,6 @@
     background: rgba(56, 189, 248, 0.05);
 }
 
-/* Inline emoji selection drawer */
 .reaction-emoji-picker-inline {
     background: var(--bg-elevated);
     border: 1px solid var(--border);
@@ -1552,7 +1521,6 @@
     }
 }
 
-/* Shimmer/Skeleton loader animation */
 .skeleton-card {
     pointer-events: none;
     border: 1px solid var(--border);
@@ -1624,7 +1592,6 @@
     display: inline-block;
 }
 
-/* Shimmer keyframe overlay */
 .shimmer {
     position: relative;
     overflow: hidden;
@@ -1654,7 +1621,6 @@
     }
 }
 
-/* ===== NEWS CHAT CHANNEL STYLES (FULL SCREEN WITHOUT BOX) ===== */
 #news.section {
     display: flex;
     flex-direction: column;
@@ -1850,7 +1816,6 @@
     font-style: italic;
 }
 
-/* Chat Attachments styling */
 .chat-attach-btn {
     width: 38px;
     height: 38px;
@@ -1924,7 +1889,6 @@
     color: var(--text-secondary);
 }
 
-/* Chat Attachment Preview Bar */
 .chat-attachment-preview-bar {
     padding: 10px 4px;
     background: transparent;
@@ -2002,7 +1966,6 @@
     text-overflow: ellipsis;
 }
 
-/* Full-Screen Chat Image Lightbox Modal */
 .chat-lightbox {
     position: fixed;
     top: 0;
@@ -2104,12 +2067,10 @@
     }
 }
 
-/* News page overrides to close top & bottom gaps */
 #news.section {
     margin-bottom: 0;
 }
 
-/* WhatsApp-style smiley reaction trigger button & hover behavior */
 .chat-bubble-container {
     position: relative;
     display: flex;
@@ -2150,7 +2111,6 @@
     color: var(--text-primary);
 }
 
-/* Floating Emoji Picker Popover */
 .chat-floating-emoji-picker {
     position: absolute;
     top: calc(100% + 6px);
@@ -2167,7 +2127,6 @@
     animation: fadeInUpTooltip 0.25s ease-out forwards;
 }
 
-/* ===== MULTI-PHOTO FORM DROPZONE & PREVIEWS ===== */
 .photo-dropzone {
     border: 2px dashed var(--border);
     border-radius: 12px;
@@ -2370,14 +2329,11 @@
     color: #fff;
 }
 
-
-/* ===== MULTI-PHOTO PILED UP CARD STYLING ===== */
 .photo-pile-container {
     position: relative;
     user-select: none;
 }
 
-/* Stacked photo layers behind main image */
 .photo-pile-layer {
     position: absolute;
     inset: 0;
@@ -2431,7 +2387,6 @@
     }
 }
 
-/* Multi-Photo Count Badge */
 .photo-pile-badge {
     position: absolute;
     top: 12px;
@@ -2457,7 +2412,6 @@
     font-size: 11px;
 }
 
-/* Floating Navigation Arrows on Card */
 .photo-pile-nav-btn {
     position: absolute;
     top: 50%;
@@ -2498,7 +2452,6 @@
     border-color: var(--primary);
 }
 
-/* Bottom Mini Indicator Dots */
 .photo-pile-dots-container {
     position: absolute;
     bottom: 10px;
@@ -2534,14 +2487,12 @@
     border-radius: 4px;
 }
 
-/* Touch devices support */
 @media (hover: none) {
     .photo-pile-nav-btn {
         opacity: 0.85;
     }
 }
 
-/* ===== FULLSCREEN IMAGE MODAL CAROUSEL ===== */
 .image-modal {
     position: fixed;
     top: 0;
@@ -2567,7 +2518,6 @@
     }
 }
 
-/* Top Bar Header with Title, Counter, and Close Button */
 .image-modal-top-bar {
     position: absolute;
     top: 0;
@@ -2724,7 +2674,6 @@
     margin-bottom: 50px;
 }
 
-/* Bottom Interactive Thumbnail Strip Gallery */
 .image-modal-bottom-gallery {
     position: absolute;
     bottom: 18px;
@@ -2839,8 +2788,6 @@
     border-radius: 4px;
 }
 
-
-/* ===== COMMENT PHOTO ATTACHMENTS & PASTE ===== */
 .comment-attached-img-container {
     margin-top: 8px;
     max-width: 180px;
@@ -2929,6 +2876,4 @@
     color: var(--primary);
     border-color: var(--primary);
 }
-
-
 

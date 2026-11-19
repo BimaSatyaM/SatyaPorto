@@ -1,4 +1,3 @@
-/* ===== APP GRID ===== */
 .app {
     display: grid;
     grid-template-columns: 280px 1fr;
@@ -13,7 +12,6 @@
     overflow: hidden;
 }
 
-/* ===== SIDEBAR (Panel Kiri) ===== */
 .app>.sidebar {
     grid-column: 1;
     grid-row: 1;
@@ -150,7 +148,6 @@
     }
 }
 
-/* Hide legacy playlist */
 .playlist-section {
     display: none;
 }
@@ -159,7 +156,6 @@
     display: none;
 }
 
-/* ===== MAIN CONTENT (Panel Tengah) ===== */
 .app>.main-content {
     grid-column: 2;
     grid-row: 1;
@@ -180,7 +176,6 @@
     height: 0;
 }
 
-/* ===== MENU TOGGLE (Mobile) ===== */
 .menu-toggle {
     display: none;
     position: fixed;
@@ -227,7 +222,6 @@
     scroll-margin-top: 80px;
 }
 
-/* ===== SIDEBAR PROFILE SECTION ===== */
 .sidebar-profile {
     display: flex;
     flex-direction: column;
@@ -279,7 +273,6 @@
     color: var(--text-secondary);
 }
 
-/* ===== SIDEBAR CONTROLS BAR ===== */
 .sidebar-controls {
     display: flex;
     justify-content: center;
@@ -335,7 +328,6 @@
     background: var(--bg-pill);
 }
 
-/* ===== SMART ASSISTANT ===== */
 .smart-assistant-btn {
     width: 100%;
     padding: 12px;
@@ -360,7 +352,6 @@
     transform: scale(1.02);
 }
 
-/* ===== SIDEBAR DIVIDER ===== */
 .sidebar-divider {
     border-top: 1px solid var(--border);
     margin: 2px 0;
@@ -368,7 +359,6 @@
     opacity: 0.75;
 }
 
-/* ===== SIDEBAR COPYRIGHT ===== */
 .sidebar-copyright {
     text-align: center;
     color: var(--text-secondary);
@@ -385,7 +375,6 @@
     font-weight: 500;
 }
 
-/* ===== SPOTIFY TOAST ===== */
 .spotify-toast {
     position: fixed;
     bottom: 24px;

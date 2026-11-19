@@ -350,9 +350,7 @@ export const News: React.FC = () => {
             </div>
             <div className="about-divider"></div>
 
-            {/* Chat Container */}
             <div className="chat-container">
-                {/* Messages List Area */}
                 <div className="chat-messages-list">
                     {loading ? (
                         <div style={{ margin: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', color: 'var(--text-secondary)' }}>
@@ -391,7 +389,6 @@ export const News: React.FC = () => {
                                         </div>
                                         <div className="chat-bubble-container">
                                             <div className="chat-bubble" style={{ maxWidth: '440px', padding: allImages.length > 0 ? '8px 10px' : '10px 16px' }}>
-                                                {/* Piled-Up Multi-Photo Stack Gallery */}
                                                 {allImages.length > 0 && (
                                                     <div 
                                                         className="photo-pile-container" 
@@ -437,7 +434,6 @@ export const News: React.FC = () => {
                                                                 }}
                                                             />
 
-                                                            {/* In-Card Slider Navigation Arrows */}
                                                             {isMultiPhoto && (
                                                                 <>
                                                                     <button 
@@ -469,7 +465,6 @@ export const News: React.FC = () => {
                                                                         <i className="fas fa-chevron-right"></i>
                                                                     </button>
 
-                                                                    {/* Indicator Dots */}
                                                                     <div className="photo-pile-dots-container">
                                                                         {allImages.map((_, dotIdx) => (
                                                                             <span 
@@ -490,7 +485,6 @@ export const News: React.FC = () => {
 
                                                 {msg.text && <p style={{ margin: 0 }}>{msg.text}</p>}
                                                 
-                                                {/* Render active reactions inside bubble */}
                                                 {msg.reactions && Object.entries(msg.reactions).filter(([_, uids]) => uids && uids.length > 0).length > 0 && (
                                                     <div className="chat-reactions-row" style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '8px', alignItems: 'center' }}>
                                                         {Object.entries(msg.reactions)
@@ -525,7 +519,6 @@ export const News: React.FC = () => {
                                                 )}
                                             </div>
 
-                                            {/* Smiley reaction button next to bubble, visible on hover */}
                                             <div className="chat-reaction-action-container">
                                                 {tooltipState && tooltipState.msgId === msg.id && tooltipState.key === 'add-btn' && (
                                                     <div className="reaction-login-tooltip" style={{ bottom: '100%', left: '50%', transform: 'translateX(-50%)', marginBottom: '8px' }}>
@@ -547,7 +540,6 @@ export const News: React.FC = () => {
                                                     <i className="far fa-smile"></i>
                                                 </button>
 
-                                                {/* Floating Emoji Picker Popover */}
                                                 {activePickerMsgId === msg.id && (
                                                     <div className="chat-floating-emoji-picker" ref={pickerRef}>
                                                         <div className="picker-inline-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
@@ -587,7 +579,6 @@ export const News: React.FC = () => {
                                                 )}
                                             </div>
 
-                                            {/* Deletion controls */}
                                             {user && isAdmin && (
                                                 <button
                                                     onClick={() => handleDeleteMessage(msg.id)}
@@ -607,7 +598,6 @@ export const News: React.FC = () => {
                     <div ref={chatEndRef} />
                 </div>
 
-                {/* Multi-Photo Attachment Preview Bar */}
                 {user && isAdmin && previewUrls.length > 0 && (
                     <div className="chat-attachment-preview-bar">
                         {previewUrls.map((url, idx) => (
@@ -629,7 +619,6 @@ export const News: React.FC = () => {
                     </div>
                 )}
 
-                {/* Input Area */}
                 <div className="chat-input-area">
                     {user && isAdmin ? (
                         <form onSubmit={handleSend} className="chat-input-form">
@@ -677,7 +666,6 @@ export const News: React.FC = () => {
                 </div>
             </div>
 
-            {/* Fullscreen Multi-Photo Image Modal */}
             <ImageModal 
                 isOpen={!!previewModal}
                 images={previewModal?.images}

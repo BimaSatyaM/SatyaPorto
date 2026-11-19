@@ -212,17 +212,14 @@ export const Home: React.FC = () => {
                 </div>
             </div>
 
-            {/* DIVIDER LINE LIKE THE PHOTO */}
             <div className="skills-divider"></div>
 
-            {/* SKILLS CONTAINER SECTION */}
             <div className="skills-section">
                 <h3 className="skills-title">
                     <span className="code-bracket">&lt;/&gt;</span> {t('home.skillsTitle')}
                 </h3>
                 <p className="skills-subtitle">{t('home.skillsSubtitle')}</p>
 
-                {/* Categories filter pills */}
                 <div className="skills-filters">
                     {categories.map(cat => (
                         <button
@@ -248,7 +245,6 @@ export const Home: React.FC = () => {
                     </Skills3DErrorBoundary>
                 )}
 
-                {/* Fallback skills badges grid when WebGL is unavailable or skills are empty */}
                 {(webglFallback || (!loadingSkills && skills.length === 0)) && (
                 <div className="skills-grid" key={selectedCategory}>
                     {loadingSkills ? (
@@ -282,10 +278,8 @@ export const Home: React.FC = () => {
                 </div>
                 )}
 
-                {/* Divider Line */}
                 <div className="about-divider"></div>
 
-                {/* COMMUNITY PROJECT FEED SECTION */}
                 <div className="education-section" style={{ marginTop: '24px' }}>
                     <h3 className="education-section-title">
                         <i className="fas fa-project-diagram"></i> {t('home.projectShowcaseTitle')}

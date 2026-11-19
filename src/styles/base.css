@@ -1,4 +1,3 @@
-/* ===== RESET ===== */
 *,
 *::before,
 *::after {
@@ -57,7 +56,6 @@ body {
     --player-h: 0px;
 }
 
-/* Base interaction affordances & keyboard focus ring */
 a[href],
 button:not(:disabled),
 summary,
@@ -84,7 +82,6 @@ textarea:disabled,
     outline-offset: 2px;
 }
 
-/* Hide scrollbar while preserving full scrollability */
 html,
 body,
 * {
@@ -130,7 +127,6 @@ body,
     font-weight: 900;
 }
 
-/* ===== LIGHT THEME VARIABLES OVERRIDES (Cheerful Daylight Sky Canvas + Cream Surfaces) ===== */
 body.light-theme {
     --primary: #0369a1;
     --primary-hover: #075985;
@@ -168,7 +164,6 @@ body.light-theme .app {
     background: var(--bg-main);
 }
 
-/* Cheerful sunlit sky, warm cream & soft mint atmosphere matching bright daylight references */
 body.light-theme .app > .main-content {
     background:
         radial-gradient(circle at 10% 8%, rgba(186, 230, 253, 0.58) 0%, transparent 44%),
@@ -209,7 +204,6 @@ body.light-theme .theme-toggle-pill {
     box-shadow: 0 2px 8px rgba(2, 132, 199, 0.06);
 }
 
-/* Pastel sky / mint / lavender card accents with warm light-cream elevation */
 body.light-theme .about-content-box,
 body.light-theme .player,
 body.light-theme .about-card-link:nth-child(3n+1) .about-card,
@@ -262,7 +256,6 @@ body.light-theme .sidebar-avatar {
     border-color: #e6dec8;
 }
 
-/* ===== SHARED MOTION & PAGE TRANSITIONS ===== */
 @keyframes pageSectionEnter {
     from {
         opacity: 0;
