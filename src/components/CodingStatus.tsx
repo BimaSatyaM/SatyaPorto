@@ -174,7 +174,7 @@ export const CodingStatus: React.FC = () => {
                     <span className="wakatime-stat-value">{status.totalDigital} • {status.timezone}</span>
                 </div>
 
-                {/* Card 5: Active Projects Today & AI Sessions */}
+                {/* Card 5: Active Projects Today */}
                 <div className="wakatime-stat-box">
                     <span className="wakatime-stat-label">
                         {status.projects.length > 1
@@ -196,12 +196,6 @@ export const CodingStatus: React.FC = () => {
                                 lang === 'ID' ? 'Belum ada proyek aktif' : 'No active project'
                             )}
                         </span>
-                        {status.aiSessions > 0 && (
-                            <span className="wakatime-ai-badge" title="Antigravity 2.0 AI Sessions">
-                                <i className="fas fa-robot" aria-hidden="true" />
-                                {status.aiSessions} AI Session{status.aiSessions > 1 ? 's' : ''}
-                            </span>
-                        )}
                     </div>
                     {status.projects.length > 1 && (
                         <div className="wakatime-sub-projects" aria-label="Other active projects today">

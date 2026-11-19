@@ -2223,25 +2223,6 @@ body.light-theme .skills-3d-music-mode {
     opacity: 0.8;
 }
 
-.wakatime-ai-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 2px 8px;
-    border-radius: 999px;
-    background: rgba(99, 102, 241, 0.12);
-    border: 1px solid rgba(99, 102, 241, 0.28);
-    color: #818cf8;
-    font-size: 11px;
-    font-weight: 600;
-}
-
-body.light-theme .wakatime-ai-badge {
-    background: rgba(79, 70, 229, 0.08);
-    border-color: rgba(79, 70, 229, 0.22);
-    color: #4f46e5;
-}
-
 /* Languages List & Progress Bars */
 .wakatime-languages-list {
     display: flex;
