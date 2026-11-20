@@ -9,20 +9,50 @@ export const Contact: React.FC = () => {
     const [formName, setFormName] = useState('');
     const [formEmail, setFormEmail] = useState('');
     const [formMessage, setFormMessage] = useState('');
-    const [formStatus, setFormStatus] = useState<'idle' | 'sending' | 'sent'>('idle');
+    const [formStatus, setFormStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
+    const [formError, setFormError] = useState('');
 
-    const handleContactSubmit = (e: React.FormEvent) => {
+    const handleContactSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        const name = formName.trim();
+        const email = formEmail.trim();
+        const message = formMessage.trim();
+        if (!name || !email || !message) return;
+
         setFormStatus('sending');
-        setTimeout(() => {
+        setFormError('');
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+        try {
+            const response = await fetch('/api/contact', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                },
+                body: JSON.stringify({ name, email, message }),
+                signal: controller.signal,
+            });
+
+            const data = (await response.json().catch(() => ({}))) as { ok?: boolean; error?: string };
+            if (!response.ok || !data.ok) {
+                throw new Error(data.error || `HTTP ${response.status}`);
+            }
+
             setFormStatus('sent');
+            setFormName('');
+            setFormEmail('');
+            setFormMessage('');
             setTimeout(() => {
                 setFormStatus('idle');
-                setFormName('');
-                setFormEmail('');
-                setFormMessage('');
-            }, 2000);
-        }, 1200);
+            }, 4000);
+        } catch (err) {
+            setFormStatus('error');
+            setFormError(err instanceof Error && err.name !== 'AbortError' ? err.message : '');
+        } finally {
+            clearTimeout(timeoutId);
+        }
     };
 
     return (
@@ -37,7 +67,7 @@ export const Contact: React.FC = () => {
             
             <div className="contact-grid-container">
                 <a 
-                    href="mailto:bmasatyaa@gmail.com" 
+                    href="mailto:bimasatyamahendra07@gmail.com" 
                     target="_blank" 
                     rel="noreferrer" 
                     className="contact-card card-gmail"
@@ -157,8 +187,8 @@ export const Contact: React.FC = () => {
                             onChange={(e) => setFormMessage(e.target.value)}
                         ></textarea>
                     </div>
-                    <button type="submit" className="btn-primary" disabled={formStatus !== 'idle'}>
-                        {formStatus === 'idle' && (
+                    <button type="submit" className="btn-primary" disabled={formStatus === 'sending'}>
+                        {(formStatus === 'idle' || formStatus === 'error') && (
                             <>
                                 <i className="fas fa-paper-plane" aria-hidden="true"></i> {t('contact.sendBtn')}
                             </>
@@ -177,6 +207,11 @@ export const Contact: React.FC = () => {
                     {formStatus === 'sent' && (
                         <div className="contact-sent-status" role="status">
                             <i className="fas fa-check-circle" aria-hidden="true"></i> {t('contact.sentNotice')}
+                        </div>
+                    )}
+                    {formStatus === 'error' && (
+                        <div className="contact-error-status" role="alert">
+                            <i className="fas fa-exclamation-circle" aria-hidden="true"></i> {formError || t('contact.errorNotice')}
                         </div>
                     )}
                 </form>

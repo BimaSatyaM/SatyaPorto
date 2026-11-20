@@ -537,6 +537,20 @@
     animation: fadeInUp 240ms var(--ease-spring) both;
 }
 
+.contact-error-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #ef4444;
+    font-size: 13px;
+    font-weight: 600;
+    animation: fadeInUp 240ms var(--ease-spring) both;
+}
+
 .social-links {
     background: var(--bg-card);
     padding: 20px;
